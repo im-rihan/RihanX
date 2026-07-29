@@ -153,13 +153,144 @@ Supports every vanilla biome and structure (tab-complete).
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/item info` | `rihanx.item.info` | Held item info |
-| `/item give <material> [amount] [player]` | `rihanx.item.give` | Give items |
+| `/item give <material> [amount] [player]` | `rihanx.item.give` | Give items (`rihanx.item.give.others` for other players) |
 | `/item rename <name…>` | `rihanx.item.rename` | Rename (MiniMessage) |
-| `/item lore <text…>` | `rihanx.item.lore` | Set lore |
-| `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant (**costs XP levels**; free with `rihanx.item.enchant.free`) |
+| `/item lore <text…>` | `rihanx.item.lore` | Add lore line |
+| `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant (**costs XP**; free with `rihanx.item.enchant.free`) |
 | `/item repair` | `rihanx.item.repair` | Repair held item |
 
-Examples: `/item give diamond 64` · `/rx item give netherite_sword 1 Steve`
+#### Give usage
+
+```text
+/item give <material> [amount] [player]
+/rx item give <material> [amount] [player]
+```
+
+Examples:
+
+```text
+/item give diamond 64
+/item give redstone 64
+/item give repeater 16
+/item give netherite_sword 1 Steve
+```
+
+**Material names** use vanilla item ids: lowercase, underscores (`redstone`, `oak_log`, `diamond_pickaxe`). Tab-complete suggests materials. Almost every Minecraft item/block that is an item works.
+
+#### Common materials reference
+
+**Redstone**
+
+| Item | Material |
+|------|----------|
+| Redstone dust | `redstone` |
+| Redstone block | `redstone_block` |
+| Redstone torch | `redstone_torch` |
+| Redstone lamp | `redstone_lamp` |
+| Repeater | `repeater` |
+| Comparator | `comparator` |
+| Observer | `observer` |
+| Piston | `piston` |
+| Sticky piston | `sticky_piston` |
+| Lever | `lever` |
+| Target | `target` |
+| Daylight detector | `daylight_detector` |
+| Tripwire hook | `tripwire_hook` |
+| Hopper | `hopper` |
+| Dropper | `dropper` |
+| Dispenser | `dispenser` |
+| Copper bulb | `copper_bulb` |
+| Calibrated sculk sensor | `calibrated_sculk_sensor` |
+| Sculk sensor | `sculk_sensor` |
+| Slime block | `slime_block` |
+| Honey block | `honey_block` |
+
+**Ores / minerals**
+
+| Item | Material |
+|------|----------|
+| Coal | `coal` |
+| Copper ingot | `copper_ingot` |
+| Iron ingot | `iron_ingot` |
+| Gold ingot | `gold_ingot` |
+| Diamond | `diamond` |
+| Emerald | `emerald` |
+| Lapis lazuli | `lapis_lazuli` |
+| Amethyst shard | `amethyst_shard` |
+| Netherite ingot | `netherite_ingot` |
+| Ancient debris | `ancient_debris` |
+| Quartz | `quartz` |
+| Raw iron / gold / copper | `raw_iron` · `raw_gold` · `raw_copper` |
+
+**Blocks**
+
+| Item | Material |
+|------|----------|
+| Stone / cobble / deepslate | `stone` · `cobblestone` · `deepslate` |
+| Dirt / grass | `dirt` · `grass_block` |
+| Sand / gravel | `sand` · `gravel` |
+| Glass | `glass` |
+| Obsidian | `obsidian` |
+| Glowstone | `glowstone` |
+| Oak / spruce / birch log | `oak_log` · `spruce_log` · `birch_log` |
+| Oak / spruce / birch plank | `oak_planks` · `spruce_planks` · `birch_planks` |
+| Chest / ender chest / barrel | `chest` · `ender_chest` · `barrel` |
+| Crafting table / furnace | `crafting_table` · `furnace` · `blast_furnace` · `smoker` |
+| Anvil | `anvil` |
+| Enchanting table | `enchanting_table` |
+| Beacon | `beacon` |
+| Scaffolding | `scaffolding` |
+| Torches | `torch` · `soul_torch` |
+
+**Tools / weapons / armor** (swap material prefix: `wooden_`, `stone_`, `iron_`, `golden_`, `diamond_`, `netherite_`)
+
+| Type | Example |
+|------|---------|
+| Sword | `diamond_sword` |
+| Pickaxe | `diamond_pickaxe` |
+| Axe | `diamond_axe` |
+| Shovel | `diamond_shovel` |
+| Hoe | `diamond_hoe` |
+| Bow / crossbow / trident | `bow` · `crossbow` · `trident` |
+| Shield / elytra | `shield` · `elytra` |
+| Helmet / chest / legs / boots | `netherite_helmet` · `netherite_chestplate` · `netherite_leggings` · `netherite_boots` |
+
+**Food / farming**
+
+| Item | Material |
+|------|----------|
+| Bread / steak / golden carrot | `bread` · `cooked_beef` · `golden_carrot` |
+| Golden apple / enchanted | `golden_apple` · `enchanted_golden_apple` |
+| Wheat / carrot / potato | `wheat` · `carrot` · `potato` |
+| Bone meal / bone | `bone_meal` · `bone` |
+| Water / lava bucket | `water_bucket` · `lava_bucket` |
+| Milk bucket | `milk_bucket` |
+
+**Mob drops / misc**
+
+| Item | Material |
+|------|----------|
+| Gunpowder / string / feather | `gunpowder` · `string` · `feather` |
+| Ender pearl / eye | `ender_pearl` · `ender_eye` |
+| Blaze rod / powder | `blaze_rod` · `blaze_powder` |
+| Totem of undying | `totem_of_undying` |
+| Name tag / saddle | `name_tag` · `saddle` |
+| Firework rocket | `firework_rocket` |
+| Arrow / tipped | `arrow` · `spectral_arrow` |
+| Spyglass / brush | `spyglass` · `brush` |
+| Bundle | `bundle` |
+
+Any other vanilla item id works the same way (for example `cyan_concrete`, `oak_sign`, `music_disc_cat`). If unsure, start typing and use tab-complete.
+
+#### Enchant
+
+```text
+/item enchant <enchant> [level]
+```
+
+Examples: `/item enchant sharpness 5` · `/item enchant unbreaking 3` · `/item enchant mending 1`
+
+Common enchant ids: `sharpness`, `efficiency`, `fortune`, `silk_touch`, `unbreaking`, `mending`, `protection`, `fire_aspect`, `knockback`, `looting`, `power`, `punch`, `flame`, `infinity`, `fortune`, `respiration`, `aqua_affinity`, `depth_strider`, `soul_speed`, `swift_sneak`, `feather_falling`, `thorns`, `loyalty`, `channeling`, `riptide`, `impaling`, `multishot`, `piercing`, `quick_charge`, `density`, `breach`, `wind_burst`.
 
 Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-enchant-level`, capped by `max-cost` (default: 1 XP level per enchant level, max 30). Example: `/item enchant sharpness 5` costs **5** levels. Set `require-xp: false` to disable, or grant `rihanx.item.enchant.free`.
 
