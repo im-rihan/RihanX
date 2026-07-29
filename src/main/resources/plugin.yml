@@ -35,13 +35,13 @@ permissions:
       rihanx.performance.*: true
   rihanx.use:
     description: Access the /rihanx root command.
-    default: true
+    default: op
   rihanx.admin:
     description: Admin reload, debug, cache, and config tools.
     default: op
   rihanx.slime:
     description: Base slime module.
-    default: true
+    default: op
   rihanx.slime.*:
     description: All slime subcommands.
     default: op
@@ -53,17 +53,17 @@ permissions:
       rihanx.slime.map: true
       rihanx.slime.tp: true
   rihanx.slime.nearest:
-    default: true
+    default: op
   rihanx.slime.search:
-    default: true
+    default: op
   rihanx.slime.density:
-    default: true
+    default: op
   rihanx.slime.map:
-    default: true
+    default: op
   rihanx.slime.tp:
     default: op
   rihanx.world:
-    default: true
+    default: op
   rihanx.world.*:
     default: op
     children:
@@ -77,7 +77,7 @@ permissions:
       rihanx.world.spawn: true
       rihanx.world.setspawn: true
   rihanx.world.info:
-    default: true
+    default: op
   rihanx.world.seed:
     default: op
   rihanx.world.weather:
@@ -89,11 +89,11 @@ permissions:
   rihanx.world.border:
     default: op
   rihanx.world.spawn:
-    default: true
+    default: op
   rihanx.world.setspawn:
     default: op
   rihanx.find:
-    default: true
+    default: op
   rihanx.find.*:
     default: op
     children:
@@ -101,11 +101,11 @@ permissions:
       rihanx.find.biome: true
       rihanx.find.structure: true
   rihanx.find.biome:
-    default: true
+    default: op
   rihanx.find.structure:
-    default: true
+    default: op
   rihanx.chunk:
-    default: true
+    default: op
   rihanx.chunk.*:
     default: op
     children:
@@ -118,7 +118,7 @@ permissions:
       rihanx.chunk.entities: true
       rihanx.chunk.tileentities: true
   rihanx.chunk.info:
-    default: true
+    default: op
   rihanx.chunk.load:
     default: op
   rihanx.chunk.unload:
@@ -126,13 +126,13 @@ permissions:
   rihanx.chunk.regenerate:
     default: op
   rihanx.chunk.border:
-    default: true
+    default: op
   rihanx.chunk.entities:
-    default: true
+    default: op
   rihanx.chunk.tileentities:
-    default: true
+    default: op
   rihanx.tp:
-    default: true
+    default: op
   rihanx.tp.*:
     default: op
     children:
@@ -159,13 +159,13 @@ permissions:
   rihanx.tp.chunk:
     default: op
   rihanx.tp.random:
-    default: true
+    default: op
   rihanx.tp.safe:
-    default: true
+    default: op
   rihanx.tp.back:
-    default: true
+    default: op
   rihanx.player:
-    default: true
+    default: op
   rihanx.player.*:
     default: op
     children:
@@ -205,7 +205,7 @@ permissions:
   rihanx.player.cleareffects:
     default: op
   rihanx.player.ping:
-    default: true
+    default: op
   rihanx.inventory:
     default: op
   rihanx.inventory.*:
@@ -225,7 +225,7 @@ permissions:
   rihanx.inventory.repair:
     default: op
   rihanx.item:
-    default: true
+    default: op
   rihanx.item.*:
     default: op
     children:
@@ -238,7 +238,7 @@ permissions:
       rihanx.item.enchant: true
       rihanx.item.repair: true
   rihanx.item.info:
-    default: true
+    default: op
   rihanx.item.give:
     default: op
   rihanx.item.give.others:
@@ -252,7 +252,7 @@ permissions:
   rihanx.item.repair:
     default: op
   rihanx.search:
-    default: true
+    default: op
   rihanx.search.*:
     default: op
     children:
@@ -264,19 +264,19 @@ permissions:
       rihanx.search.spawner: true
       rihanx.search.village: true
   rihanx.search.slime:
-    default: true
+    default: op
   rihanx.search.cave:
-    default: true
+    default: op
   rihanx.search.lava:
-    default: true
+    default: op
   rihanx.search.water:
-    default: true
+    default: op
   rihanx.search.spawner:
-    default: true
+    default: op
   rihanx.search.village:
-    default: true
+    default: op
   rihanx.server:
-    default: true
+    default: op
   rihanx.server.*:
     default: op
     children:
@@ -287,15 +287,15 @@ permissions:
       rihanx.server.memory: true
       rihanx.server.uptime: true
   rihanx.server.info:
-    default: true
+    default: op
   rihanx.server.tps:
-    default: true
+    default: op
   rihanx.server.mspt:
-    default: true
+    default: op
   rihanx.server.memory:
     default: op
   rihanx.server.uptime:
-    default: true
+    default: op
   rihanx.performance:
     default: op
   rihanx.performance.*:

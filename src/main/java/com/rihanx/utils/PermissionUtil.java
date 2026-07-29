@@ -17,6 +17,14 @@ public final class PermissionUtil {
         return sender.hasPermission(permission) || sender.hasPermission(PermissionNodes.ALL);
     }
 
+    /**
+     * Ops-only gate for powerful admin commands (give, god, fly, gamemode, etc.).
+     * Console always counts as op.
+     */
+    public static boolean hasOpOnly(@NotNull CommandSender sender, @NotNull String permission) {
+        return sender.isOp() && has(sender, permission);
+    }
+
     public static boolean hasOrAdmin(@NotNull CommandSender sender, @NotNull String permission) {
         return has(sender, permission) || sender.hasPermission(PermissionNodes.ADMIN);
     }

@@ -92,6 +92,10 @@ public final class PlayerService {
     }
 
     public void toggleGod(@NotNull CommandSender sender, @NotNull Player target) {
+        if (!target.isOp()) {
+            messages.send(sender, "no-permission");
+            return;
+        }
         boolean enabled = godManager.toggle(target);
         if (sender instanceof Player player && player.equals(target)) {
             messages.send(sender, enabled ? "player-god-on" : "player-god-off");

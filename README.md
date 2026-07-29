@@ -6,6 +6,8 @@ Root commands: `/rihanx`, `/rx`, `/rihan`
 
 Permission prefix: `rihanx.*`
 
+**OP-only by default.** Every permission node (including `/rx` itself) defaults to `op`. Non-ops cannot use the plugin unless you explicitly grant nodes via a permissions plugin — and powerful commands (give, god, fly, gamemode, vanish, inventory tools, etc.) additionally require the sender to be an operator (`isOp()`).
+
 ---
 
 ## Requirements

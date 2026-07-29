@@ -616,23 +616,23 @@ public final class RihanXCommand implements CommandExecutor {
                 playerService.sendInfo(sender, target);
             }
             case "heal" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_HEAL, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_HEAL, messages)) return true;
                 playerService.heal(target);
             }
             case "feed" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_FEED, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_FEED, messages)) return true;
                 playerService.feed(target);
             }
             case "fly" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_FLY, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_FLY, messages)) return true;
                 playerService.toggleFly(target);
             }
             case "god" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_GOD, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_GOD, messages)) return true;
                 playerService.toggleGod(sender, target);
             }
             case "gamemode", "gm" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_GAMEMODE, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_GAMEMODE, messages)) return true;
                 if (args.length < 2) {
                     usage(sender, "/rx player gamemode <mode> [player]");
                     return true;
@@ -645,7 +645,7 @@ public final class RihanXCommand implements CommandExecutor {
                 playerService.setGameMode(sender, target, mode);
             }
             case "speed" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_SPEED, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_SPEED, messages)) return true;
                 if (args.length < 2) {
                     usage(sender, "/rx player speed <val> [player]");
                     return true;
@@ -658,15 +658,15 @@ public final class RihanXCommand implements CommandExecutor {
                 playerService.setSpeed(target, Math.min(1.0f, Math.max(0.0f, speed)));
             }
             case "freeze" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_FREEZE, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_FREEZE, messages)) return true;
                 playerService.freeze(sender, target);
             }
             case "unfreeze" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_UNFREEZE, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_UNFREEZE, messages)) return true;
                 playerService.unfreeze(sender, target);
             }
             case "vanish" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_VANISH, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_VANISH, messages)) return true;
                 if (!target.equals(sender)) {
                     messages.send(sender, "player-only");
                     return true;
@@ -674,7 +674,7 @@ public final class RihanXCommand implements CommandExecutor {
                 playerService.toggleVanish(target);
             }
             case "cleareffects", "clearpotions" -> {
-                if (!checkPerm(sender, PermissionNodes.PLAYER_CLEAREFFECTS, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.PLAYER_CLEAREFFECTS, messages)) return true;
                 playerService.clearEffects(target);
             }
             case "ping" -> {
@@ -707,19 +707,19 @@ public final class RihanXCommand implements CommandExecutor {
         var inventoryService = plugin.getInventoryService();
         switch (sub) {
             case "see" -> {
-                if (!checkPerm(sender, PermissionNodes.INVENTORY_SEE, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.INVENTORY_SEE, messages)) return true;
                 inventoryService.openInventory(sender, viewer, target);
             }
             case "ender" -> {
-                if (!checkPerm(sender, PermissionNodes.INVENTORY_ENDER, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.INVENTORY_ENDER, messages)) return true;
                 inventoryService.openEnderChest(sender, viewer, target);
             }
             case "clear" -> {
-                if (!checkPerm(sender, PermissionNodes.INVENTORY_CLEAR, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.INVENTORY_CLEAR, messages)) return true;
                 inventoryService.clear(target);
             }
             case "repair" -> {
-                if (!checkPerm(sender, PermissionNodes.INVENTORY_REPAIR, messages)) return true;
+                if (!checkOpPerm(sender, PermissionNodes.INVENTORY_REPAIR, messages)) return true;
                 inventoryService.repairAll(target);
             }
             default -> usage(sender, "/rx inventory <see|ender|clear|repair> [player]");
@@ -749,7 +749,7 @@ public final class RihanXCommand implements CommandExecutor {
                     itemService.sendInfo(player);
                 }
                 case "give" -> {
-                    if (!checkPerm(player, PermissionNodes.ITEM_GIVE, messages)) return true;
+                    if (!checkOpPerm(player, PermissionNodes.ITEM_GIVE, messages)) return true;
                     if (args.length < 2) {
                         usage(sender, "/rx item give <material> [amount] [player]");
                         return true;
@@ -761,7 +761,7 @@ public final class RihanXCommand implements CommandExecutor {
                         if (parsed != null) {
                             amount = parsed;
                             if (args.length >= 4) {
-                                if (!checkPerm(player, PermissionNodes.ITEM_GIVE_OTHERS, messages)) return true;
+                                if (!checkOpPerm(player, PermissionNodes.ITEM_GIVE_OTHERS, messages)) return true;
                                 giveTarget = PlayerUtil.findPlayer(args[3]);
                                 if (giveTarget == null) {
                                     messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[3]));
@@ -769,7 +769,7 @@ public final class RihanXCommand implements CommandExecutor {
                                 }
                             }
                         } else {
-                            if (!checkPerm(player, PermissionNodes.ITEM_GIVE_OTHERS, messages)) return true;
+                            if (!checkOpPerm(player, PermissionNodes.ITEM_GIVE_OTHERS, messages)) return true;
                             giveTarget = PlayerUtil.findPlayer(args[2]);
                             if (giveTarget == null) {
                                 messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
@@ -780,7 +780,7 @@ public final class RihanXCommand implements CommandExecutor {
                     itemService.give(sender, giveTarget, args[1], amount);
                 }
                 case "rename" -> {
-                    if (!checkPerm(player, PermissionNodes.ITEM_RENAME, messages)) return true;
+                    if (!checkOpPerm(player, PermissionNodes.ITEM_RENAME, messages)) return true;
                     if (args.length < 2) {
                         usage(sender, "/rx item rename <name...>");
                         return true;
@@ -788,7 +788,7 @@ public final class RihanXCommand implements CommandExecutor {
                     itemService.rename(player, TextUtil.joinFrom(1, " ", args));
                 }
                 case "lore" -> {
-                    if (!checkPerm(player, PermissionNodes.ITEM_LORE, messages)) return true;
+                    if (!checkOpPerm(player, PermissionNodes.ITEM_LORE, messages)) return true;
                     if (args.length < 2) {
                         usage(sender, "/rx item lore <line...>");
                         return true;
@@ -796,7 +796,7 @@ public final class RihanXCommand implements CommandExecutor {
                     itemService.setLore(player, TextUtil.joinFrom(1, " ", args));
                 }
                 case "enchant" -> {
-                    if (!checkPerm(player, PermissionNodes.ITEM_ENCHANT, messages)) return true;
+                    if (!checkOpPerm(player, PermissionNodes.ITEM_ENCHANT, messages)) return true;
                     if (args.length < 2) {
                         usage(sender, "/rx item enchant <ench> [level]");
                         return true;
@@ -805,7 +805,7 @@ public final class RihanXCommand implements CommandExecutor {
                     itemService.enchant(player, args[1], level);
                 }
                 case "repair" -> {
-                    if (!checkPerm(player, PermissionNodes.ITEM_REPAIR, messages)) return true;
+                    if (!checkOpPerm(player, PermissionNodes.ITEM_REPAIR, messages)) return true;
                     itemService.repairHand(player);
                 }
                 default -> usage(sender, "/rx item <info|give|rename|lore|enchant|repair>");
@@ -1042,6 +1042,14 @@ public final class RihanXCommand implements CommandExecutor {
 
     private boolean checkPerm(@NotNull CommandSender sender, @NotNull String permission, @NotNull MessageManager messages) {
         if (!PermissionUtil.has(sender, permission)) {
+            messages.send(sender, "no-permission");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkOpPerm(@NotNull CommandSender sender, @NotNull String permission, @NotNull MessageManager messages) {
+        if (!PermissionUtil.hasOpOnly(sender, permission)) {
             messages.send(sender, "no-permission");
             return false;
         }

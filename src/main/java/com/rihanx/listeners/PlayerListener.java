@@ -73,7 +73,7 @@ public final class PlayerListener implements Listener {
         if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        if (godManager.isGod(player)) {
+        if (godManager.isGod(player) && player.isOp()) {
             event.setCancelled(true);
             player.setFireTicks(0);
             return;
@@ -83,14 +83,14 @@ public final class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCombust(@NotNull EntityCombustEvent event) {
-        if (event.getEntity() instanceof Player player && godManager.isGod(player)) {
+        if (event.getEntity() instanceof Player player && godManager.isGod(player) && player.isOp()) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onFood(@NotNull FoodLevelChangeEvent event) {
-        if (event.getEntity() instanceof Player player && godManager.isGod(player)) {
+        if (event.getEntity() instanceof Player player && godManager.isGod(player) && player.isOp()) {
             event.setCancelled(true);
             player.setFoodLevel(20);
             player.setSaturation(20.0f);

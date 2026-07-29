@@ -25,6 +25,9 @@ public final class GodManager {
     }
 
     public void enable(@NotNull Player player) {
+        if (!player.isOp()) {
+            return;
+        }
         gods.add(player.getUniqueId());
         player.setInvulnerable(true);
         player.setFireTicks(0);
