@@ -58,6 +58,7 @@ nodes:
   - rihanx.item.rename
   - rihanx.item.lore
   - rihanx.item.enchant
+  - rihanx.item.enchant.free
   - rihanx.item.repair
   - rihanx.search.slime
   - rihanx.search.cave

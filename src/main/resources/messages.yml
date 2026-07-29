@@ -103,7 +103,9 @@ item-give-received: "<green>Received <yellow>{amount}x {material}</yellow> from 
 item-material-invalid: "<red>Unknown material: <yellow>{input}</yellow>.</red>"
 item-renamed: "<green>Item renamed.</green>"
 item-lore-set: "<green>Lore updated.</green>"
-item-enchanted: "<green>Enchant applied.</green>"
+item-enchanted: "<green>Applied <aqua>{enchant}</aqua> {level}.</green>"
+item-enchanted-xp: "<green>Applied <aqua>{enchant}</aqua> {level} for <yellow>{cost}</yellow> XP level(s).</green>"
+item-enchant-xp-needed: "<red>Need <yellow>{need}</yellow> XP levels (you have <aqua>{have}</aqua>).</red>"
 item-repaired: "<green>Item repaired.</green>"
 item-enchant-invalid: "<red>Invalid enchantment: <yellow>{input}</yellow>.</red>"
 

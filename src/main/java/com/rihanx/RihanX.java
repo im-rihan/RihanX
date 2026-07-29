@@ -98,7 +98,7 @@ public final class RihanX extends JavaPlugin {
         this.chunkService = new ChunkService(messageManager);
         this.playerService = new PlayerService(messageManager, freezeManager, vanishManager, godManager);
         this.inventoryService = new InventoryService(messageManager);
-        this.itemService = new ItemService(messageManager);
+        this.itemService = new ItemService(this, messageManager);
         this.performanceService = new PerformanceService(messageManager, configManager);
         this.selectionManager = new SelectionManager();
         this.protectionService = new ProtectionService(this, messageManager, selectionManager);

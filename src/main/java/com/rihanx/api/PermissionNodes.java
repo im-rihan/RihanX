@@ -87,6 +87,7 @@ public final class PermissionNodes {
     public static final String ITEM_REPAIR = ITEM + ".repair";
     public static final String ITEM_GIVE = ITEM + ".give";
     public static final String ITEM_GIVE_OTHERS = ITEM_GIVE + ".others";
+    public static final String ITEM_ENCHANT_FREE = ITEM_ENCHANT + ".free";
 
     public static final String SEARCH = ROOT + ".search";
     public static final String SEARCH_ALL = SEARCH + ".*";

@@ -156,10 +156,12 @@ Supports every vanilla biome and structure (tab-complete).
 | `/item give <material> [amount] [player]` | `rihanx.item.give` | Give items |
 | `/item rename <name…>` | `rihanx.item.rename` | Rename (MiniMessage) |
 | `/item lore <text…>` | `rihanx.item.lore` | Set lore |
-| `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant |
+| `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant (**costs XP levels**; free with `rihanx.item.enchant.free`) |
 | `/item repair` | `rihanx.item.repair` | Repair held item |
 
 Examples: `/item give diamond 64` · `/rx item give netherite_sword 1 Steve`
+
+Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-enchant-level`, capped by `max-cost` (default: 1 XP level per enchant level, max 30). Example: `/item enchant sharpness 5` costs **5** levels. Set `require-xp: false` to disable, or grant `rihanx.item.enchant.free`.
 
 ### Search — `/rx search` · `/search`
 
@@ -236,7 +238,7 @@ Limits: `edit.max-blocks` (200000), `edit.max-undo` (10). Protected regions need
 
 ## Configuration
 
-- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit
+- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, **item.enchant XP**
 - `messages.yml` — every user-facing string (MiniMessage + legacy)
 - `permissions.yml` — permission node list (plugin.yml is authoritative for Bukkit)
 - `protection.yml` / `regions.yml` — created at runtime for world flags and regions

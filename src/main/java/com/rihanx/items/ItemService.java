@@ -1,8 +1,11 @@
 package com.rihanx.items;
 
+import com.rihanx.RihanX;
+import com.rihanx.api.PermissionNodes;
 import com.rihanx.managers.MessageManager;
 import com.rihanx.utils.MaterialUtil;
 import com.rihanx.utils.MessageUtil;
+import com.rihanx.utils.PermissionUtil;
 import com.rihanx.utils.PlayerUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -26,9 +29,11 @@ import java.util.Locale;
  */
 public final class ItemService {
 
+    private final @NotNull RihanX plugin;
     private final @NotNull MessageManager messages;
 
-    public ItemService(@NotNull MessageManager messages) {
+    public ItemService(@NotNull RihanX plugin, @NotNull MessageManager messages) {
+        this.plugin = plugin;
         this.messages = messages;
     }
 
@@ -122,8 +127,62 @@ public final class ItemService {
             messages.send(player, "item-enchant-invalid", MessageManager.placeholders("input", enchantName));
             return;
         }
-        item.addUnsafeEnchantment(enchantment, level);
-        messages.send(player, "item-enchanted");
+        int safeLevel = Math.max(1, level);
+        int cost = calculateEnchantCost(safeLevel);
+        boolean free = isEnchantFree(player);
+
+        if (!free && cost > 0) {
+            int levels = player.getLevel();
+            if (levels < cost) {
+                messages.send(player, "item-enchant-xp-needed", MessageManager.placeholders(
+                        "need", cost,
+                        "have", levels
+                ));
+                return;
+            }
+        }
+
+        item.addUnsafeEnchantment(enchantment, safeLevel);
+
+        if (!free && cost > 0) {
+            player.setLevel(Math.max(0, player.getLevel() - cost));
+            messages.send(player, "item-enchanted-xp", MessageManager.placeholders(
+                    "enchant", enchantKey(enchantment),
+                    "level", safeLevel,
+                    "cost", cost
+            ));
+        } else {
+            messages.send(player, "item-enchanted", MessageManager.placeholders(
+                    "enchant", enchantKey(enchantment),
+                    "level", safeLevel
+            ));
+        }
+    }
+
+    public int calculateEnchantCost(int enchantLevel) {
+        if (!plugin.getConfig().getBoolean("item.enchant.require-xp", true)) {
+            return 0;
+        }
+        int base = plugin.getConfig().getInt("item.enchant.base-cost", 0);
+        int perLevel = plugin.getConfig().getInt("item.enchant.cost-per-enchant-level", 1);
+        int maxCost = plugin.getConfig().getInt("item.enchant.max-cost", 30);
+        int cost = base + Math.max(1, enchantLevel) * Math.max(0, perLevel);
+        return Math.max(0, Math.min(maxCost, cost));
+    }
+
+    private boolean isEnchantFree(@NotNull Player player) {
+        if (!plugin.getConfig().getBoolean("item.enchant.require-xp", true)) {
+            return true;
+        }
+        if (!plugin.getConfig().getBoolean("item.enchant.allow-free-permission", true)) {
+            return false;
+        }
+        return PermissionUtil.has(player, PermissionNodes.ITEM_ENCHANT_FREE);
+    }
+
+    private @NotNull String enchantKey(@NotNull Enchantment enchantment) {
+        NamespacedKey key = Registry.ENCHANTMENT.getKey(enchantment);
+        return key != null ? key.getKey() : enchantment.getKey().getKey();
     }
 
     public void repairHand(@NotNull Player player) {

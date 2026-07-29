@@ -302,6 +302,7 @@ permissions:
       rihanx.item.rename: true
       rihanx.item.lore: true
       rihanx.item.enchant: true
+      rihanx.item.enchant.free: true
       rihanx.item.repair: true
   rihanx.item.info:
     default: op
@@ -315,6 +316,9 @@ permissions:
     default: op
   rihanx.item.enchant:
     default: op
+  rihanx.item.enchant.free:
+    description: Enchant without spending XP levels.
+    default: false
   rihanx.item.repair:
     default: op
   rihanx.search:

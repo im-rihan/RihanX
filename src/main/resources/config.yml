@@ -102,6 +102,16 @@ protection:
     pvp: allow
     entry: allow
 
+item:
+  enchant:
+    require-xp: true
+    # XP levels charged = clamp(base + enchantLevel * per-level, 1, max-cost)
+    base-cost: 0
+    cost-per-enchant-level: 1
+    max-cost: 30
+    # Players with rihanx.item.enchant.free skip the XP charge
+    allow-free-permission: true
+
 edit:
   max-blocks: 200000
   max-undo: 10
