@@ -1,0 +1,319 @@
+name: RihanX
+version: '${project.version}'
+main: com.rihanx.RihanX
+api-version: '1.21'
+description: Production-ready Paper utility suite — slime, world, find, chunk, teleport, player, inventory, items, search, and performance tools.
+author: Rihan
+website: https://github.com/im-rihan/RihanX
+folia-supported: false
+load: POSTWORLD
+
+commands:
+  rihanx:
+    description: RihanX root command. Use /rx help for modules.
+    usage: /rihanx <module> [args...]
+    permission: rihanx.use
+    aliases: [rx, rihan]
+
+permissions:
+  rihanx.*:
+    description: All RihanX permissions.
+    default: op
+    children:
+      rihanx.use: true
+      rihanx.admin: true
+      rihanx.slime.*: true
+      rihanx.world.*: true
+      rihanx.find.*: true
+      rihanx.chunk.*: true
+      rihanx.tp.*: true
+      rihanx.player.*: true
+      rihanx.inventory.*: true
+      rihanx.item.*: true
+      rihanx.search.*: true
+      rihanx.server.*: true
+      rihanx.performance.*: true
+  rihanx.use:
+    description: Access the /rihanx root command.
+    default: true
+  rihanx.admin:
+    description: Admin reload, debug, cache, and config tools.
+    default: op
+  rihanx.slime:
+    description: Base slime module.
+    default: true
+  rihanx.slime.*:
+    description: All slime subcommands.
+    default: op
+    children:
+      rihanx.slime: true
+      rihanx.slime.nearest: true
+      rihanx.slime.search: true
+      rihanx.slime.density: true
+      rihanx.slime.map: true
+      rihanx.slime.tp: true
+  rihanx.slime.nearest:
+    default: true
+  rihanx.slime.search:
+    default: true
+  rihanx.slime.density:
+    default: true
+  rihanx.slime.map:
+    default: true
+  rihanx.slime.tp:
+    default: op
+  rihanx.world:
+    default: true
+  rihanx.world.*:
+    default: op
+    children:
+      rihanx.world: true
+      rihanx.world.info: true
+      rihanx.world.seed: true
+      rihanx.world.weather: true
+      rihanx.world.difficulty: true
+      rihanx.world.time: true
+      rihanx.world.border: true
+      rihanx.world.spawn: true
+      rihanx.world.setspawn: true
+  rihanx.world.info:
+    default: true
+  rihanx.world.seed:
+    default: op
+  rihanx.world.weather:
+    default: op
+  rihanx.world.difficulty:
+    default: op
+  rihanx.world.time:
+    default: op
+  rihanx.world.border:
+    default: op
+  rihanx.world.spawn:
+    default: true
+  rihanx.world.setspawn:
+    default: op
+  rihanx.find:
+    default: true
+  rihanx.find.*:
+    default: op
+    children:
+      rihanx.find: true
+      rihanx.find.biome: true
+      rihanx.find.structure: true
+  rihanx.find.biome:
+    default: true
+  rihanx.find.structure:
+    default: true
+  rihanx.chunk:
+    default: true
+  rihanx.chunk.*:
+    default: op
+    children:
+      rihanx.chunk: true
+      rihanx.chunk.info: true
+      rihanx.chunk.load: true
+      rihanx.chunk.unload: true
+      rihanx.chunk.regenerate: true
+      rihanx.chunk.border: true
+      rihanx.chunk.entities: true
+      rihanx.chunk.tileentities: true
+  rihanx.chunk.info:
+    default: true
+  rihanx.chunk.load:
+    default: op
+  rihanx.chunk.unload:
+    default: op
+  rihanx.chunk.regenerate:
+    default: op
+  rihanx.chunk.border:
+    default: true
+  rihanx.chunk.entities:
+    default: true
+  rihanx.chunk.tileentities:
+    default: true
+  rihanx.tp:
+    default: true
+  rihanx.tp.*:
+    default: op
+    children:
+      rihanx.tp: true
+      rihanx.tp.pos: true
+      rihanx.tp.player: true
+      rihanx.tp.world: true
+      rihanx.tp.biome: true
+      rihanx.tp.structure: true
+      rihanx.tp.chunk: true
+      rihanx.tp.random: true
+      rihanx.tp.safe: true
+      rihanx.tp.back: true
+  rihanx.tp.pos:
+    default: op
+  rihanx.tp.player:
+    default: op
+  rihanx.tp.world:
+    default: op
+  rihanx.tp.biome:
+    default: op
+  rihanx.tp.structure:
+    default: op
+  rihanx.tp.chunk:
+    default: op
+  rihanx.tp.random:
+    default: true
+  rihanx.tp.safe:
+    default: true
+  rihanx.tp.back:
+    default: true
+  rihanx.player:
+    default: true
+  rihanx.player.*:
+    default: op
+    children:
+      rihanx.player: true
+      rihanx.player.info: true
+      rihanx.player.heal: true
+      rihanx.player.feed: true
+      rihanx.player.fly: true
+      rihanx.player.god: true
+      rihanx.player.gamemode: true
+      rihanx.player.speed: true
+      rihanx.player.freeze: true
+      rihanx.player.unfreeze: true
+      rihanx.player.vanish: true
+      rihanx.player.cleareffects: true
+      rihanx.player.ping: true
+  rihanx.player.info:
+    default: op
+  rihanx.player.heal:
+    default: op
+  rihanx.player.feed:
+    default: op
+  rihanx.player.fly:
+    default: op
+  rihanx.player.god:
+    default: op
+  rihanx.player.gamemode:
+    default: op
+  rihanx.player.speed:
+    default: op
+  rihanx.player.freeze:
+    default: op
+  rihanx.player.unfreeze:
+    default: op
+  rihanx.player.vanish:
+    default: op
+  rihanx.player.cleareffects:
+    default: op
+  rihanx.player.ping:
+    default: true
+  rihanx.inventory:
+    default: op
+  rihanx.inventory.*:
+    default: op
+    children:
+      rihanx.inventory: true
+      rihanx.inventory.see: true
+      rihanx.inventory.ender: true
+      rihanx.inventory.clear: true
+      rihanx.inventory.repair: true
+  rihanx.inventory.see:
+    default: op
+  rihanx.inventory.ender:
+    default: op
+  rihanx.inventory.clear:
+    default: op
+  rihanx.inventory.repair:
+    default: op
+  rihanx.item:
+    default: true
+  rihanx.item.*:
+    default: op
+    children:
+      rihanx.item: true
+      rihanx.item.info: true
+      rihanx.item.give: true
+      rihanx.item.give.others: true
+      rihanx.item.rename: true
+      rihanx.item.lore: true
+      rihanx.item.enchant: true
+      rihanx.item.repair: true
+  rihanx.item.info:
+    default: true
+  rihanx.item.give:
+    default: op
+  rihanx.item.give.others:
+    default: op
+  rihanx.item.rename:
+    default: op
+  rihanx.item.lore:
+    default: op
+  rihanx.item.enchant:
+    default: op
+  rihanx.item.repair:
+    default: op
+  rihanx.search:
+    default: true
+  rihanx.search.*:
+    default: op
+    children:
+      rihanx.search: true
+      rihanx.search.slime: true
+      rihanx.search.cave: true
+      rihanx.search.lava: true
+      rihanx.search.water: true
+      rihanx.search.spawner: true
+      rihanx.search.village: true
+  rihanx.search.slime:
+    default: true
+  rihanx.search.cave:
+    default: true
+  rihanx.search.lava:
+    default: true
+  rihanx.search.water:
+    default: true
+  rihanx.search.spawner:
+    default: true
+  rihanx.search.village:
+    default: true
+  rihanx.server:
+    default: true
+  rihanx.server.*:
+    default: op
+    children:
+      rihanx.server: true
+      rihanx.server.info: true
+      rihanx.server.tps: true
+      rihanx.server.mspt: true
+      rihanx.server.memory: true
+      rihanx.server.uptime: true
+  rihanx.server.info:
+    default: true
+  rihanx.server.tps:
+    default: true
+  rihanx.server.mspt:
+    default: true
+  rihanx.server.memory:
+    default: op
+  rihanx.server.uptime:
+    default: true
+  rihanx.performance:
+    default: op
+  rihanx.performance.*:
+    default: op
+    children:
+      rihanx.performance: true
+      rihanx.performance.chunks: true
+      rihanx.performance.entities: true
+  rihanx.performance.chunks:
+    default: op
+  rihanx.performance.entities:
+    default: op
+  rihanx.bypass.cooldown:
+    description: Bypass command cooldowns.
+    default: op
+  rihanx.bypass.teleportdelay:
+    description: Bypass teleport warmup.
+    default: op
+  rihanx.see.vanished:
+    description: See vanished players.
+    default: op

@@ -1,0 +1,82 @@
+# RihanX Configuration
+# Paper API: 26.2.build.84-stable | Java 25
+
+prefix: "<gradient:#7C4DFF:#00E5FF><bold>RihanX</bold></gradient> <dark_gray>»</dark_gray> "
+
+search:
+  default-radius: 32
+  max-radius: 128
+  max-results: 50
+  progress-interval: 64
+  timeout-seconds: 120
+  structure-radius-blocks: 6400
+  biome-step-blocks: 32
+  biome-max-radius-blocks: 6400
+  block-search-radius: 64
+  block-search-step: 4
+
+teleport:
+  delay-seconds: 3
+  cancel-on-move: true
+  cancel-on-damage: true
+  particles: true
+  sound: true
+  sound-name: ENTITY_ENDERMAN_TELEPORT
+  sound-volume: 1.0
+  sound-pitch: 1.0
+  safe-teleport: true
+  safe-teleport-max-y: 32
+  random-max-range: 2000
+
+cooldowns:
+  slime: 2
+  find: 10
+  search: 15
+  teleport: 5
+  random-tp: 30
+
+slime:
+  nearest-radius: 64
+  default-map-radius: 8
+  max-map-radius: 32
+  map-slime-char: "S"
+  map-empty-char: "."
+  map-player-char: "P"
+
+particles:
+  enabled: true
+  teleport-warmup: PORTAL
+  teleport-warmup-count: 10
+  teleport-arrive: ENDER_SIGNAL
+  teleport-arrive-count: 24
+  vanish: SMOKE
+  freeze: SNOWFLAKE
+
+database:
+  enabled: false
+  type: sqlite
+  sqlite-file: rihanx.db
+  mysql-host: localhost
+  mysql-port: 3306
+  mysql-database: rihanx
+  mysql-username: root
+  mysql-password: ""
+  pool-size: 5
+
+general:
+  debug: false
+  persistent-back: true
+  max-back-history: 10
+  unfreeze-on-quit: true
+  unvanish-on-quit: false
+  ungod-on-quit: true
+  language-file: messages.yml
+
+cache:
+  search-ttl-seconds: 300
+  location-ttl-seconds: 600
+  max-entries: 1000
+
+performance:
+  entity-report-limit: 25
+  chunk-report-radius: 8
