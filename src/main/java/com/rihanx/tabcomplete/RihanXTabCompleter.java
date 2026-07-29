@@ -7,6 +7,7 @@ import com.rihanx.utils.PermissionUtil;
 import com.rihanx.utils.PlayerUtil;
 import com.rihanx.utils.StructureUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 public final class RihanXTabCompleter implements TabCompleter {
 
     private static final List<String> MODULES = List.of(
-            "help", "slime", "world", "find", "chunk", "tp", "player", "inventory", "item", "search", "server", "performance", "admin"
+            "help", "slime", "world", "find", "chunk", "tp", "player", "inventory", "item", "search", "server", "performance", "protect", "edit", "admin"
     );
 
     private final @NotNull RihanX plugin;
@@ -62,6 +63,8 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "search" -> completeSearch(args);
             case "server" -> completeServer(args);
             case "performance", "perf" -> completePerformance(args);
+            case "protect", "guard" -> completeProtect(args);
+            case "edit", "we" -> completeEdit(args);
             case "admin" -> completeAdmin(args);
             default -> List.of();
         };
@@ -197,6 +200,77 @@ public final class RihanXTabCompleter implements TabCompleter {
     private @NotNull List<String> completePerformance(@NotNull String[] args) {
         if (args.length == 2) {
             return filter(List.of("chunks", "entities"), args[1]);
+        }
+        return List.of();
+    }
+
+    private @NotNull List<String> completeProtect(@NotNull String[] args) {
+        if (args.length == 2) {
+            return filter(List.of(
+                    "flag", "flags", "wand", "pos1", "pos2", "define", "redefine", "delete",
+                    "info", "list", "setflag", "addmember", "removemember", "bypass"
+            ), args[1]);
+        }
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("flag") || sub.equals("setflag")) {
+                return filter(Arrays.asList(com.rihanx.protection.ProtectionFlag.keys()), args[2]);
+            }
+            if (List.of("delete", "info", "redefine", "setflag", "addmember", "removemember").contains(sub)) {
+                return filter(regionNames(), args[2]);
+            }
+            if (sub.equals("flags") || sub.equals("list")) {
+                return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[2]);
+            }
+        }
+        if (args.length == 4) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("flag") || sub.equals("setflag")) {
+                return filter(List.of("allow", "deny", "unset", "true", "false"), args[3]);
+            }
+            if (sub.equals("addmember") || sub.equals("removemember")) {
+                return filter(PlayerUtil.onlineNames(args[3]), args[3]);
+            }
+            if (sub.equals("delete")) {
+                return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[3]);
+            }
+        }
+        if (args.length == 5 && args[1].equalsIgnoreCase("flag")) {
+            return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[4]);
+        }
+        return List.of();
+    }
+
+    private @NotNull List<String> regionNames() {
+        List<String> names = new ArrayList<>();
+        for (World world : Bukkit.getWorlds()) {
+            plugin.getProtectionService().getRegions().getRegions(world.getName())
+                    .forEach(region -> names.add(region.getName()));
+        }
+        return names;
+    }
+
+    private @NotNull List<String> completeEdit(@NotNull String[] args) {
+        if (args.length == 2) {
+            return filter(List.of(
+                    "wand", "pos1", "pos2", "size", "count", "set", "replace", "walls", "outline",
+                    "hollow", "clear", "copy", "paste", "rotate", "undo", "redo"
+            ), args[1]);
+        }
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (List.of("set", "walls", "outline", "hollow", "count").contains(sub)) {
+                return filter(com.rihanx.utils.MaterialUtil.suggestions(args[2]), args[2]);
+            }
+            if (sub.equals("replace")) {
+                return filter(com.rihanx.utils.MaterialUtil.suggestions(args[2]), args[2]);
+            }
+            if (sub.equals("rotate")) {
+                return filter(List.of("90", "180", "270"), args[2]);
+            }
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("replace")) {
+            return filter(com.rihanx.utils.MaterialUtil.suggestions(args[3]), args[3]);
         }
         return List.of();
     }

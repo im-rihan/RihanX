@@ -173,6 +173,44 @@ Examples: `/rx item give diamond 64` · `/rx item give netherite_sword 1 Steve`
 | `/rx performance chunks` | `rihanx.performance.chunks` | Nearby loaded chunks |
 | `/rx performance entities` | `rihanx.performance.entities` | Entity breakdown |
 
+### Protect (WorldGuard-lite)
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/rx protect flag <flag> <allow\|deny\|unset> [world]` | `rihanx.protect.flag` | Set per-world flag |
+| `/rx protect flags [world]` | `rihanx.protect.flag` | List world flags |
+| `/rx protect wand` | `rihanx.protect.wand` | Wooden axe selection wand |
+| `/rx protect pos1` / `pos2` | `rihanx.protect.wand` | Set corners |
+| `/rx protect define <name>` | `rihanx.protect.region` | Create region |
+| `/rx protect redefine <name>` | `rihanx.protect.region` | Resize region |
+| `/rx protect delete <name>` | `rihanx.protect.region` | Delete region |
+| `/rx protect info [name]` | `rihanx.protect.region` | Region info |
+| `/rx protect list` | `rihanx.protect.region` | List regions |
+| `/rx protect setflag <name> <flag> <value>` | `rihanx.protect.region` | Per-region flag |
+| `/rx protect addmember \| removemember <name> <player>` | `rihanx.protect.region` | Members |
+| `/rx protect bypass` | `rihanx.protect.bypass` | Toggle personal bypass |
+
+Flags: `tnt`, `creeper-explosion`, `other-explosion`, `fire-spread`, `fire-destroy`, `lava-fire`, `build`, `break`, `place`, `pvp`, `mob-grief`, `enderman-grief`, `leaf-decay`, `ice-melt`, `crop-trample`, `entry`.
+
+Default world flags deny TNT/creeper/other explosions, fire spread, and mob grief. Data: `plugins/RihanX/protection.yml` + `regions.yml`.
+
+### Edit (WorldEdit-lite)
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/rx edit wand` | `rihanx.edit.wand` | Golden axe selection wand |
+| `/rx edit pos1` / `pos2` | `rihanx.edit.wand` | Set corners |
+| `/rx edit size` | `rihanx.edit` | Selection size |
+| `/rx edit count [material]` | `rihanx.edit` | Count blocks |
+| `/rx edit set <material>` | `rihanx.edit` | Fill selection |
+| `/rx edit replace <from> <to>` | `rihanx.edit` | Replace blocks |
+| `/rx edit walls \| outline \| hollow <material>` | `rihanx.edit` | Shell fills |
+| `/rx edit clear` | `rihanx.edit` | Set to air |
+| `/rx edit copy` / `paste` / `rotate <deg>` | `rihanx.edit.clipboard` | Clipboard |
+| `/rx edit undo` / `redo` | `rihanx.edit.history` | History |
+
+Limits: `edit.max-blocks` (default 200000), `edit.max-undo` (10). Editing inside protected regions requires membership or `/rx protect bypass`.
+
 ### Admin
 
 | Command | Permission | Description |
@@ -187,9 +225,10 @@ Examples: `/rx item give diamond 64` · `/rx item give netherite_sword 1 Steve`
 
 ## Configuration
 
-- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance
+- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, **protection**, **edit**
 - `messages.yml` — every user-facing string (MiniMessage + legacy)
 - `permissions.yml` — permission node list (plugin.yml is authoritative for Bukkit)
+- `protection.yml` / `regions.yml` — created at runtime for world flags and regions
 
 Optional SQLite back-location storage: set `database.enabled: true`.
 
@@ -203,6 +242,8 @@ com.rihanx
 ├── commands       /rx router
 ├── tabcomplete    Tab completion
 ├── managers       Config, messages, cooldowns, freeze, vanish, god, back, commands
+├── protection     WorldGuard-lite (flags, regions, listeners)
+├── edit           WorldEdit-lite (selection, clipboard, history)
 ├── slime / world / chunk / teleport / player / inventory / items
 ├── search         Biome/structure + block searches
 ├── performance    TPS / memory / entity reports

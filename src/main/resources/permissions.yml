@@ -72,6 +72,16 @@ nodes:
   - rihanx.server.uptime
   - rihanx.performance.chunks
   - rihanx.performance.entities
+  - rihanx.protect
+  - rihanx.protect.bypass
+  - rihanx.protect.admin
+  - rihanx.protect.wand
+  - rihanx.protect.flag
+  - rihanx.protect.region
+  - rihanx.edit
+  - rihanx.edit.wand
+  - rihanx.edit.clipboard
+  - rihanx.edit.history
   - rihanx.bypass.cooldown
   - rihanx.bypass.teleportdelay
   - rihanx.see.vanished

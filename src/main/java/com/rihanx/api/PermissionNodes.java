@@ -110,6 +110,20 @@ public final class PermissionNodes {
     public static final String PERFORMANCE_CHUNKS = PERFORMANCE + ".chunks";
     public static final String PERFORMANCE_ENTITIES = PERFORMANCE + ".entities";
 
+    public static final String PROTECT = ROOT + ".protect";
+    public static final String PROTECT_ALL = PROTECT + ".*";
+    public static final String PROTECT_BYPASS = PROTECT + ".bypass";
+    public static final String PROTECT_ADMIN = PROTECT + ".admin";
+    public static final String PROTECT_WAND = PROTECT + ".wand";
+    public static final String PROTECT_FLAG = PROTECT + ".flag";
+    public static final String PROTECT_REGION = PROTECT + ".region";
+
+    public static final String EDIT = ROOT + ".edit";
+    public static final String EDIT_ALL = EDIT + ".*";
+    public static final String EDIT_WAND = EDIT + ".wand";
+    public static final String EDIT_CLIPBOARD = EDIT + ".clipboard";
+    public static final String EDIT_HISTORY = EDIT + ".history";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

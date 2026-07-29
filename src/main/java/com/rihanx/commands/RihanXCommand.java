@@ -66,6 +66,8 @@ public final class RihanXCommand implements CommandExecutor {
             case "search" -> handleSearch(sender, subArgs, messages, cooldowns);
             case "server" -> handleServer(sender, subArgs, messages);
             case "performance", "perf" -> handlePerformance(sender, subArgs, messages);
+            case "protect", "guard" -> handleProtect(sender, subArgs, messages);
+            case "edit", "we" -> handleEdit(sender, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -92,6 +94,8 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, label, "search", "Block and structure search");
         sendHelpLine(messages, sender, label, "server", "Server info");
         sendHelpLine(messages, sender, label, "performance", "Performance reports");
+        sendHelpLine(messages, sender, label, "protect", "World/region protection");
+        sendHelpLine(messages, sender, label, "edit", "WorldEdit-lite tools");
         sendHelpLine(messages, sender, label, "admin", "Admin tools");
     }
 
@@ -1002,6 +1006,292 @@ public final class RihanXCommand implements CommandExecutor {
                 }
             }
             default -> usage(sender, "/rx admin <reload|debug|cache|config|cancel>");
+        }
+        return true;
+    }
+
+    private boolean handleProtect(@NotNull CommandSender sender, @NotNull String[] args, @NotNull MessageManager messages) {
+        if (!PermissionUtil.hasOpOnly(sender, PermissionNodes.PROTECT)) {
+            messages.send(sender, "no-permission");
+            return true;
+        }
+        if (args.length == 0) {
+            usage(sender, "/rx protect <flag|flags|wand|pos1|pos2|define|redefine|delete|info|list|setflag|addmember|removemember|bypass>");
+            return true;
+        }
+        var protection = plugin.getProtectionService();
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "flag" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_FLAG, messages)) return true;
+                if (args.length < 3) {
+                    usage(sender, "/rx protect flag <flag> <allow|deny|unset> [world]");
+                    return true;
+                }
+                com.rihanx.protection.ProtectionFlag flag = com.rihanx.protection.ProtectionFlag.fromKey(args[1]);
+                com.rihanx.protection.FlagValue value = com.rihanx.protection.FlagValue.parse(args[2]);
+                if (flag == null || value == null) {
+                    messages.send(sender, "invalid-argument", MessageManager.placeholders("input", args[1] + "/" + args[2]));
+                    return true;
+                }
+                World world;
+                if (args.length >= 4) {
+                    world = Bukkit.getWorld(args[3]);
+                    if (world == null) {
+                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[3]));
+                        return true;
+                    }
+                } else if (sender instanceof Player player) {
+                    world = player.getWorld();
+                } else {
+                    messages.send(sender, "player-only");
+                    return true;
+                }
+                protection.setWorldFlag(sender, world, flag, value);
+            }
+            case "flags" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_FLAG, messages)) return true;
+                World world;
+                if (args.length >= 2) {
+                    world = Bukkit.getWorld(args[1]);
+                    if (world == null) {
+                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[1]));
+                        return true;
+                    }
+                } else if (sender instanceof Player player) {
+                    world = player.getWorld();
+                } else {
+                    messages.send(sender, "player-only");
+                    return true;
+                }
+                protection.listWorldFlags(sender, world);
+            }
+            case "wand" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_WAND, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                protection.giveWand(player);
+            }
+            case "pos1", "pos2" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_WAND, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                protection.setPos(player, sub.equals("pos1") ? 1 : 2, player.getLocation());
+            }
+            case "define" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                if (args.length < 2) {
+                    usage(sender, "/rx protect define <name>");
+                    return true;
+                }
+                protection.define(player, args[1]);
+            }
+            case "redefine" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                if (args.length < 2) {
+                    usage(sender, "/rx protect redefine <name>");
+                    return true;
+                }
+                protection.redefine(player, args[1]);
+            }
+            case "delete" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                if (args.length < 2) {
+                    usage(sender, "/rx protect delete <name> [world]");
+                    return true;
+                }
+                World world;
+                if (args.length >= 3) {
+                    world = Bukkit.getWorld(args[2]);
+                    if (world == null) {
+                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[2]));
+                        return true;
+                    }
+                } else if (sender instanceof Player player) {
+                    world = player.getWorld();
+                } else {
+                    messages.send(sender, "player-only");
+                    return true;
+                }
+                protection.delete(sender, world, args[1]);
+            }
+            case "info" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                protection.sendInfo(sender, player, args.length >= 2 ? args[1] : null);
+            }
+            case "list" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                World world;
+                if (args.length >= 2) {
+                    world = Bukkit.getWorld(args[1]);
+                    if (world == null) {
+                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[1]));
+                        return true;
+                    }
+                } else if (sender instanceof Player player) {
+                    world = player.getWorld();
+                } else {
+                    messages.send(sender, "player-only");
+                    return true;
+                }
+                protection.listRegions(sender, world);
+            }
+            case "setflag" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                if (args.length < 4) {
+                    usage(sender, "/rx protect setflag <name> <flag> <allow|deny|unset>");
+                    return true;
+                }
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                com.rihanx.protection.ProtectionFlag flag = com.rihanx.protection.ProtectionFlag.fromKey(args[2]);
+                com.rihanx.protection.FlagValue value = com.rihanx.protection.FlagValue.parse(args[3]);
+                if (flag == null || value == null) {
+                    messages.send(sender, "invalid-argument", MessageManager.placeholders("input", args[2] + "/" + args[3]));
+                    return true;
+                }
+                protection.setRegionFlag(sender, player.getWorld(), args[1], flag, value);
+            }
+            case "addmember", "removemember" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
+                if (args.length < 3) {
+                    usage(sender, "/rx protect " + sub + " <name> <player>");
+                    return true;
+                }
+                Player actor = requirePlayer(sender, messages);
+                if (actor == null) return true;
+                Player target = PlayerUtil.findPlayer(args[2]);
+                java.util.UUID targetId;
+                String targetName;
+                if (target != null) {
+                    targetId = target.getUniqueId();
+                    targetName = target.getName();
+                } else {
+                    @SuppressWarnings("deprecation")
+                    org.bukkit.OfflinePlayer offline = Bukkit.getOfflinePlayer(args[2]);
+                    if (offline.getUniqueId() == null) {
+                        messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
+                        return true;
+                    }
+                    targetId = offline.getUniqueId();
+                    targetName = offline.getName() == null ? args[2] : offline.getName();
+                }
+                if (sub.equals("addmember")) {
+                    protection.addMember(sender, actor.getWorld(), args[1], targetId, targetName);
+                } else {
+                    protection.removeMember(sender, actor.getWorld(), args[1], targetId, targetName);
+                }
+            }
+            case "bypass" -> {
+                if (!checkOpPerm(sender, PermissionNodes.PROTECT_BYPASS, messages)) return true;
+                Player player = requirePlayer(sender, messages);
+                if (player == null) return true;
+                boolean enabled = protection.toggleBypass(player);
+                messages.send(player, enabled ? "protect-bypass-on" : "protect-bypass-off");
+            }
+            default -> usage(sender, "/rx protect <flag|flags|wand|pos1|pos2|define|redefine|delete|info|list|setflag|addmember|removemember|bypass>");
+        }
+        return true;
+    }
+
+    private boolean handleEdit(@NotNull CommandSender sender, @NotNull String[] args, @NotNull MessageManager messages) {
+        if (!PermissionUtil.hasOpOnly(sender, PermissionNodes.EDIT)) {
+            messages.send(sender, "no-permission");
+            return true;
+        }
+        Player player = requirePlayer(sender, messages);
+        if (player == null) {
+            return true;
+        }
+        if (args.length == 0) {
+            usage(sender, "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|undo|redo>");
+            return true;
+        }
+        var edit = plugin.getEditService();
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "wand" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_WAND, messages)) return true;
+                edit.giveWand(player);
+            }
+            case "pos1", "pos2" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_WAND, messages)) return true;
+                edit.setPos(player, sub.equals("pos1") ? 1 : 2, player.getLocation());
+            }
+            case "size" -> edit.sendSize(player);
+            case "count" -> edit.count(player, args.length >= 2 ? args[1] : null);
+            case "set" -> {
+                if (args.length < 2) {
+                    usage(sender, "/rx edit set <material>");
+                    return true;
+                }
+                edit.set(player, args[1]);
+            }
+            case "replace" -> {
+                if (args.length < 3) {
+                    usage(sender, "/rx edit replace <from> <to>");
+                    return true;
+                }
+                edit.replace(player, args[1], args[2]);
+            }
+            case "walls" -> {
+                if (args.length < 2) {
+                    usage(sender, "/rx edit walls <material>");
+                    return true;
+                }
+                edit.walls(player, args[1]);
+            }
+            case "outline" -> {
+                if (args.length < 2) {
+                    usage(sender, "/rx edit outline <material>");
+                    return true;
+                }
+                edit.outline(player, args[1]);
+            }
+            case "hollow" -> {
+                if (args.length < 2) {
+                    usage(sender, "/rx edit hollow <material>");
+                    return true;
+                }
+                edit.hollow(player, args[1]);
+            }
+            case "clear" -> edit.clear(player);
+            case "copy" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
+                edit.copy(player);
+            }
+            case "paste" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
+                edit.paste(player);
+            }
+            case "rotate" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
+                if (args.length < 2) {
+                    usage(sender, "/rx edit rotate <90|180|270>");
+                    return true;
+                }
+                Integer degrees = NumberUtil.parseInt(args[1]);
+                if (degrees == null) {
+                    invalidNumber(sender, messages, args[1]);
+                    return true;
+                }
+                edit.rotate(player, degrees);
+            }
+            case "undo" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_HISTORY, messages)) return true;
+                edit.undo(player);
+            }
+            case "redo" -> {
+                if (!checkOpPerm(player, PermissionNodes.EDIT_HISTORY, messages)) return true;
+                edit.redo(player);
+            }
+            default -> usage(sender, "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|undo|redo>");
         }
         return true;
     }

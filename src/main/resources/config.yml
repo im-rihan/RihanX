@@ -80,3 +80,29 @@ cache:
 performance:
   entity-report-limit: 25
   chunk-report-radius: 8
+
+protection:
+  enabled: true
+  max-regions-per-world: 200
+  default-world-flags:
+    tnt: deny
+    creeper-explosion: deny
+    other-explosion: deny
+    fire-spread: deny
+    fire-destroy: deny
+    lava-fire: deny
+    mob-grief: deny
+    enderman-grief: deny
+    leaf-decay: allow
+    ice-melt: allow
+    crop-trample: deny
+    build: allow
+    break: allow
+    place: allow
+    pvp: allow
+    entry: allow
+
+edit:
+  max-blocks: 200000
+  max-undo: 10
+  physics: false

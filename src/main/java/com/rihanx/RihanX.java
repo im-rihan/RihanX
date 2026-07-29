@@ -4,12 +4,15 @@ import com.rihanx.api.RihanXAPI;
 import com.rihanx.cache.SearchCache;
 import com.rihanx.chunk.ChunkService;
 import com.rihanx.database.DatabaseManager;
+import com.rihanx.edit.EditService;
+import com.rihanx.edit.SelectionManager;
 import com.rihanx.gui.GuiManager;
 import com.rihanx.inventory.InventoryService;
 import com.rihanx.items.ItemService;
 import com.rihanx.listeners.FreezeListener;
 import com.rihanx.listeners.PlayerListener;
 import com.rihanx.listeners.TeleportListener;
+import com.rihanx.listeners.WandListener;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.CommandManager;
 import com.rihanx.managers.ConfigManager;
@@ -20,6 +23,8 @@ import com.rihanx.managers.MessageManager;
 import com.rihanx.managers.VanishManager;
 import com.rihanx.performance.PerformanceService;
 import com.rihanx.player.PlayerService;
+import com.rihanx.protection.ProtectionListener;
+import com.rihanx.protection.ProtectionService;
 import com.rihanx.scheduler.AsyncTaskTracker;
 import com.rihanx.scheduler.SchedulerUtil;
 import com.rihanx.search.BlockSearchService;
@@ -58,6 +63,9 @@ public final class RihanX extends JavaPlugin {
     private InventoryService inventoryService;
     private ItemService itemService;
     private PerformanceService performanceService;
+    private SelectionManager selectionManager;
+    private ProtectionService protectionService;
+    private EditService editService;
     private GuiManager guiManager;
     private CommandManager commandManager;
     private RihanXAPI api;
@@ -92,6 +100,9 @@ public final class RihanX extends JavaPlugin {
         this.inventoryService = new InventoryService(messageManager);
         this.itemService = new ItemService(messageManager);
         this.performanceService = new PerformanceService(messageManager, configManager);
+        this.selectionManager = new SelectionManager();
+        this.protectionService = new ProtectionService(this, messageManager, selectionManager);
+        this.editService = new EditService(this, messageManager, selectionManager, protectionService);
         this.guiManager = new GuiManager(this);
 
         this.api = new RihanXAPI(
@@ -126,6 +137,8 @@ public final class RihanX extends JavaPlugin {
         );
         getServer().getPluginManager().registerEvents(new FreezeListener(freezeManager, messageManager), this);
         getServer().getPluginManager().registerEvents(new TeleportListener(teleportManager, messageManager, configManager), this);
+        getServer().getPluginManager().registerEvents(new ProtectionListener(protectionService), this);
+        getServer().getPluginManager().registerEvents(new WandListener(protectionService, editService), this);
 
         getLogger().info("RihanX v" + getPluginMeta().getVersion() + " enabled (Paper 26.2).");
     }
@@ -149,6 +162,9 @@ public final class RihanX extends JavaPlugin {
                 }
             }
         }
+        if (protectionService != null) {
+            protectionService.save();
+        }
         if (backLocationManager != null) {
             backLocationManager.save();
         }
@@ -170,6 +186,9 @@ public final class RihanX extends JavaPlugin {
     public void reloadPlugin() {
         configManager.reload();
         messageManager.reload();
+        if (protectionService != null) {
+            protectionService.reload();
+        }
         getLogger().info("RihanX configuration reloaded.");
     }
 
@@ -263,6 +282,18 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull PerformanceService getPerformanceService() {
         return performanceService;
+    }
+
+    public @NotNull ProtectionService getProtectionService() {
+        return protectionService;
+    }
+
+    public @NotNull EditService getEditService() {
+        return editService;
+    }
+
+    public @NotNull SelectionManager getSelectionManager() {
+        return selectionManager;
     }
 
     public @NotNull GuiManager getGuiManager() {

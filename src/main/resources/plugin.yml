@@ -33,6 +33,8 @@ permissions:
       rihanx.search.*: true
       rihanx.server.*: true
       rihanx.performance.*: true
+      rihanx.protect.*: true
+      rihanx.edit.*: true
   rihanx.use:
     description: Access the /rihanx root command.
     default: op
@@ -307,6 +309,44 @@ permissions:
   rihanx.performance.chunks:
     default: op
   rihanx.performance.entities:
+    default: op
+  rihanx.protect:
+    description: Base protection module.
+    default: op
+  rihanx.protect.*:
+    default: op
+    children:
+      rihanx.protect: true
+      rihanx.protect.bypass: true
+      rihanx.protect.admin: true
+      rihanx.protect.wand: true
+      rihanx.protect.flag: true
+      rihanx.protect.region: true
+  rihanx.protect.bypass:
+    default: op
+  rihanx.protect.admin:
+    default: op
+  rihanx.protect.wand:
+    default: op
+  rihanx.protect.flag:
+    default: op
+  rihanx.protect.region:
+    default: op
+  rihanx.edit:
+    description: Base WorldEdit-lite module.
+    default: op
+  rihanx.edit.*:
+    default: op
+    children:
+      rihanx.edit: true
+      rihanx.edit.wand: true
+      rihanx.edit.clipboard: true
+      rihanx.edit.history: true
+  rihanx.edit.wand:
+    default: op
+  rihanx.edit.clipboard:
+    default: op
+  rihanx.edit.history:
     default: op
   rihanx.bypass.cooldown:
     description: Bypass command cooldowns.
