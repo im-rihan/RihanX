@@ -7,7 +7,7 @@ import org.bukkit.command.PluginCommand;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Registers plugin commands.
+ * Registers plugin commands (root /rx and standalone module commands).
  */
 public final class CommandManager {
 
@@ -20,9 +20,21 @@ public final class CommandManager {
     public void register() {
         RihanXCommand executor = new RihanXCommand(plugin);
         RihanXTabCompleter tabCompleter = new RihanXTabCompleter(plugin);
-        PluginCommand command = plugin.getCommand("rihanx");
+
+        bind("rihanx", executor, tabCompleter);
+        for (String name : RihanXCommand.MODULE_COMMANDS) {
+            bind(name, executor, tabCompleter);
+        }
+    }
+
+    private void bind(
+            @NotNull String name,
+            @NotNull RihanXCommand executor,
+            @NotNull RihanXTabCompleter tabCompleter
+    ) {
+        PluginCommand command = plugin.getCommand(name);
         if (command == null) {
-            plugin.getLogger().severe("Command 'rihanx' not defined in plugin.yml");
+            plugin.getLogger().severe("Command '" + name + "' not defined in plugin.yml");
             return;
         }
         command.setExecutor(executor);

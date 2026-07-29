@@ -14,6 +14,70 @@ commands:
     usage: /rihanx <module> [args...]
     permission: rihanx.use
     aliases: [rx, rihan]
+  slime:
+    description: Slime chunk tools (also /rx slime).
+    usage: /slime [nearest|search|density|map|tp] [args...]
+    permission: rihanx.slime
+  world:
+    description: World info and control (also /rx world).
+    usage: /world <info|seed|weather|difficulty|time|border|spawn|setspawn> [args...]
+    permission: rihanx.world
+  find:
+    description: Locate biomes and structures (also /rx find).
+    usage: /find <biome|structure> <name>
+    permission: rihanx.find
+  chunk:
+    description: Chunk tools (also /rx chunk).
+    usage: /chunk <info|load|unload|regenerate|border|entities|tileentities>
+    permission: rihanx.chunk
+  rxtp:
+    description: Teleport utilities (also /rx tp). Named /rxtp so vanilla /tp still works.
+    usage: /rxtp <pos|player|world|biome|structure|chunk|random|safe|back> [args...]
+    permission: rihanx.tp
+  back:
+    description: Return to previous location (also /rx tp back / /rx back).
+    usage: /back
+    permission: rihanx.tp.back
+  player:
+    description: Player utilities (also /rx player).
+    usage: /player <info|heal|feed|fly|god|gamemode|speed|freeze|unfreeze|vanish|cleareffects|ping> [args...]
+    permission: rihanx.player
+  inventory:
+    description: Inventory tools (also /rx inventory).
+    usage: /inventory <see|ender|clear|repair> [player]
+    permission: rihanx.inventory
+    aliases: [inv]
+  item:
+    description: Item tools (also /rx item).
+    usage: /item <info|give|rename|lore|enchant|repair> [args...]
+    permission: rihanx.item
+  search:
+    description: Block and structure search (also /rx search).
+    usage: /search <slime|cave|lava|water|spawner|village> [radius]
+    permission: rihanx.search
+  server:
+    description: Server info (also /rx server).
+    usage: /server <info|tps|mspt|memory|uptime>
+    permission: rihanx.server
+  performance:
+    description: Performance reports (also /rx performance).
+    usage: /performance <chunks|entities>
+    permission: rihanx.performance
+    aliases: [perf]
+  protect:
+    description: World/region protection (also /rx protect).
+    usage: /protect <flag|flags|wand|pos1|pos2|define|...> [args...]
+    permission: rihanx.protect
+    aliases: [guard]
+  edit:
+    description: WorldEdit-lite tools (also /rx edit).
+    usage: /edit <wand|pos1|pos2|set|replace|copy|paste|undo|...> [args...]
+    permission: rihanx.edit
+    aliases: [we]
+  admin:
+    description: Admin tools (also /rx admin).
+    usage: /admin <reload|debug|cache|config|cancel>
+    permission: rihanx.admin
 
 permissions:
   rihanx.*:

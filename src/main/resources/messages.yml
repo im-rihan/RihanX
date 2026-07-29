@@ -14,7 +14,8 @@ reloaded: "<green>RihanX reloaded.</green>"
 feature-disabled: "<red>That feature is disabled.</red>"
 
 help-header: "<green>── RihanX Help ──</green>"
-help-line: "<gray>/rx {module} <dark_gray>— {desc}</dark_gray></gray>"
+help-line: "<gray>/rx {module} <dark_gray>or</dark_gray> /{module} <dark_gray>— {desc}</dark_gray></gray>"
+help-dual: "<dark_gray>Tip: every module works with or without /rx (e.g. /rx slime = /slime).</dark_gray>"
 
 search-started: "<gray>Searching... <dark_gray>(radius {radius})</dark_gray></gray>"
 search-progress: "<gray>Progress: <yellow>{progress}%</yellow></gray>"

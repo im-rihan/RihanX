@@ -2,6 +2,7 @@ package com.rihanx.tabcomplete;
 
 import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
+import com.rihanx.commands.RihanXCommand;
 import com.rihanx.utils.BiomeUtil;
 import com.rihanx.utils.PermissionUtil;
 import com.rihanx.utils.PlayerUtil;
@@ -17,18 +18,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
- * Tab completion for /rx command tree.
+ * Tab completion for /rx and standalone module commands.
  */
 public final class RihanXTabCompleter implements TabCompleter {
 
     private static final List<String> MODULES = List.of(
-            "help", "slime", "world", "find", "chunk", "tp", "player", "inventory", "item", "search", "server", "performance", "protect", "edit", "admin"
+            "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
+            "search", "server", "performance", "protect", "edit", "admin"
     );
 
     private final @NotNull RihanX plugin;
@@ -47,25 +48,44 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (!PermissionUtil.has(sender, PermissionNodes.USE)) {
             return List.of();
         }
-        if (args.length == 1) {
-            return filter(MODULES, args[0]);
+
+        String commandName = command.getName().toLowerCase(Locale.ROOT);
+        boolean root = RihanXCommand.ROOT_NAMES.contains(commandName);
+
+        final String module;
+        final String[] prefixed;
+
+        if (root) {
+            if (args.length == 1) {
+                return filter(MODULES, args[0]);
+            }
+            module = RihanXCommand.normalizeModule(args[0]);
+            prefixed = args;
+        } else {
+            module = RihanXCommand.normalizeModule(commandName);
+            if (module.equals("back")) {
+                return List.of();
+            }
+            prefixed = new String[args.length + 1];
+            prefixed[0] = module;
+            System.arraycopy(args, 0, prefixed, 1, args.length);
         }
-        String module = args[0].toLowerCase(Locale.ROOT);
+
         return switch (module) {
-            case "slime" -> completeSlime(args);
-            case "world" -> completeWorld(args);
-            case "find" -> completeFind(args);
-            case "chunk" -> completeChunk(args);
-            case "tp" -> completeTp(args);
-            case "player" -> completePlayer(args);
-            case "inventory", "inv" -> completeInventory(args);
-            case "item" -> completeItem(args);
-            case "search" -> completeSearch(args);
-            case "server" -> completeServer(args);
-            case "performance", "perf" -> completePerformance(args);
-            case "protect", "guard" -> completeProtect(args);
-            case "edit", "we" -> completeEdit(args);
-            case "admin" -> completeAdmin(args);
+            case "slime" -> completeSlime(prefixed);
+            case "world" -> completeWorld(prefixed);
+            case "find" -> completeFind(prefixed);
+            case "chunk" -> completeChunk(prefixed);
+            case "tp" -> completeTp(prefixed);
+            case "player" -> completePlayer(prefixed);
+            case "inventory", "inv" -> completeInventory(prefixed);
+            case "item" -> completeItem(prefixed);
+            case "search" -> completeSearch(prefixed);
+            case "server" -> completeServer(prefixed);
+            case "performance", "perf" -> completePerformance(prefixed);
+            case "protect", "guard" -> completeProtect(prefixed);
+            case "edit", "we" -> completeEdit(prefixed);
+            case "admin" -> completeAdmin(prefixed);
             default -> List.of();
         };
     }
@@ -84,13 +104,14 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             return filter(List.of("info", "seed", "weather", "difficulty", "time", "border", "spawn", "setspawn"), args[1]);
         }
-        if (args.length == 3) {
-            return switch (args[1].toLowerCase(Locale.ROOT)) {
-                case "weather" -> filter(List.of("clear", "rain", "thunder"), args[2]);
-                case "difficulty" -> filter(List.of("peaceful", "easy", "normal", "hard"), args[2]);
-                case "time" -> filter(List.of("day", "night", "noon", "midnight"), args[2]);
-                default -> List.of();
-            };
+        if (args.length == 3 && args[1].equalsIgnoreCase("weather")) {
+            return filter(List.of("clear", "rain", "thunder"), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("difficulty")) {
+            return filter(List.of("peaceful", "easy", "normal", "hard"), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("time")) {
+            return filter(List.of("day", "noon", "night", "midnight", "0", "6000", "13000", "18000"), args[2]);
         }
         return List.of();
     }
@@ -99,13 +120,11 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             return filter(List.of("biome", "structure"), args[1]);
         }
-        if (args.length == 3) {
-            if (args[1].equalsIgnoreCase("biome")) {
-                return filter(BiomeUtil.suggestions(args[2]), args[2]);
-            }
-            if (args[1].equalsIgnoreCase("structure")) {
-                return filter(StructureUtil.suggestions(args[2]), args[2]);
-            }
+        if (args.length == 3 && args[1].equalsIgnoreCase("biome")) {
+            return filter(BiomeUtil.suggestions(args[2]), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("structure")) {
+            return filter(StructureUtil.suggestions(args[2]), args[2]);
         }
         return List.of();
     }
@@ -121,14 +140,17 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             return filter(List.of("pos", "player", "world", "biome", "structure", "chunk", "random", "safe", "back"), args[1]);
         }
-        if (args.length == 3) {
-            return switch (args[1].toLowerCase(Locale.ROOT)) {
-                case "player" -> filter(PlayerUtil.onlineNames(args[2]), args[2]);
-                case "world" -> filter(Bukkit.getWorlds().stream().map(w -> w.getName()).collect(Collectors.toList()), args[2]);
-                case "biome" -> filter(BiomeUtil.suggestions(args[2]), args[2]);
-                case "structure" -> filter(StructureUtil.suggestions(args[2]), args[2]);
-                default -> List.of();
-            };
+        if (args.length == 3 && args[1].equalsIgnoreCase("player")) {
+            return filter(PlayerUtil.onlineNames(args[2]), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("world")) {
+            return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("biome")) {
+            return filter(BiomeUtil.suggestions(args[2]), args[2]);
+        }
+        if (args.length == 3 && args[1].equalsIgnoreCase("structure")) {
+            return filter(StructureUtil.suggestions(args[2]), args[2]);
         }
         return List.of();
     }

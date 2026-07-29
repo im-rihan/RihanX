@@ -24,11 +24,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.Set;
 
 /**
- * Root /rx command router.
+ * Root /rx command router and standalone module commands (/slime, /protect, …).
  */
 public final class RihanXCommand implements CommandExecutor {
+
+    public static final Set<String> ROOT_NAMES = Set.of("rihanx", "rx", "rihan");
+    public static final Set<String> MODULE_COMMANDS = Set.of(
+            "slime", "world", "find", "chunk", "rxtp", "player", "inventory", "item",
+            "search", "server", "performance", "protect", "edit", "admin", "back"
+    );
 
     private final @NotNull RihanX plugin;
 
@@ -46,20 +53,42 @@ public final class RihanXCommand implements CommandExecutor {
         MessageManager messages = plugin.getMessageManager();
         CooldownManager cooldowns = plugin.getCooldownManager();
 
-        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
-            sendHelp(sender, label);
-            return true;
+        String commandName = command.getName().toLowerCase(Locale.ROOT);
+        boolean root = ROOT_NAMES.contains(commandName);
+
+        final String module;
+        final String[] subArgs;
+
+        if (root) {
+            if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+                sendHelp(sender, label);
+                return true;
+            }
+            module = normalizeModule(args[0]);
+            subArgs = shift(args);
+        } else {
+            module = normalizeModule(commandName);
+            subArgs = args;
         }
 
-        String module = args[0].toLowerCase(Locale.ROOT);
-        String[] subArgs = shift(args);
+        return dispatch(sender, module, subArgs, messages, cooldowns, label);
+    }
 
+    private boolean dispatch(
+            @NotNull CommandSender sender,
+            @NotNull String module,
+            @NotNull String[] subArgs,
+            @NotNull MessageManager messages,
+            @NotNull CooldownManager cooldowns,
+            @NotNull String label
+    ) {
         return switch (module) {
             case "slime" -> handleSlime(sender, subArgs, messages, cooldowns);
             case "world" -> handleWorld(sender, subArgs, messages);
             case "find" -> handleFind(sender, subArgs, messages, cooldowns);
             case "chunk" -> handleChunk(sender, subArgs, messages);
             case "tp" -> handleTp(sender, subArgs, messages, cooldowns);
+            case "back" -> handleTp(sender, new String[]{"back"}, messages, cooldowns);
             case "player" -> handlePlayer(sender, subArgs, messages);
             case "inventory", "inv" -> handleInventory(sender, subArgs, messages);
             case "item" -> handleItem(sender, subArgs, messages);
@@ -76,6 +105,18 @@ public final class RihanXCommand implements CommandExecutor {
         };
     }
 
+    public static @NotNull String normalizeModule(@NotNull String input) {
+        String module = input.toLowerCase(Locale.ROOT);
+        return switch (module) {
+            case "guard" -> "protect";
+            case "we" -> "edit";
+            case "inv" -> "inventory";
+            case "perf" -> "performance";
+            case "rxtp" -> "tp";
+            default -> module;
+        };
+    }
+
     private void sendHelp(@NotNull CommandSender sender, @NotNull String label) {
         if (!PermissionUtil.has(sender, PermissionNodes.USE)) {
             plugin.getMessageManager().send(sender, "no-permission");
@@ -83,26 +124,26 @@ public final class RihanXCommand implements CommandExecutor {
         }
         MessageManager messages = plugin.getMessageManager();
         messages.send(sender, "help-header");
-        sendHelpLine(messages, sender, label, "slime", "Slime chunk tools");
-        sendHelpLine(messages, sender, label, "world", "World info and control");
-        sendHelpLine(messages, sender, label, "find", "Locate biomes and structures");
-        sendHelpLine(messages, sender, label, "chunk", "Chunk tools");
-        sendHelpLine(messages, sender, label, "tp", "Teleport utilities");
-        sendHelpLine(messages, sender, label, "player", "Player utilities");
-        sendHelpLine(messages, sender, label, "inventory", "Inventory tools");
-        sendHelpLine(messages, sender, label, "item", "Item tools");
-        sendHelpLine(messages, sender, label, "search", "Block and structure search");
-        sendHelpLine(messages, sender, label, "server", "Server info");
-        sendHelpLine(messages, sender, label, "performance", "Performance reports");
-        sendHelpLine(messages, sender, label, "protect", "World/region protection");
-        sendHelpLine(messages, sender, label, "edit", "WorldEdit-lite tools");
-        sendHelpLine(messages, sender, label, "admin", "Admin tools");
+        sendHelpLine(messages, sender, "slime", "Slime chunk tools");
+        sendHelpLine(messages, sender, "world", "World info and control");
+        sendHelpLine(messages, sender, "find", "Locate biomes and structures");
+        sendHelpLine(messages, sender, "chunk", "Chunk tools");
+        sendHelpLine(messages, sender, "tp", "Teleport utilities");
+        sendHelpLine(messages, sender, "player", "Player utilities");
+        sendHelpLine(messages, sender, "inventory", "Inventory tools");
+        sendHelpLine(messages, sender, "item", "Item tools");
+        sendHelpLine(messages, sender, "search", "Block and structure search");
+        sendHelpLine(messages, sender, "server", "Server info");
+        sendHelpLine(messages, sender, "performance", "Performance reports");
+        sendHelpLine(messages, sender, "protect", "World/region protection");
+        sendHelpLine(messages, sender, "edit", "WorldEdit-lite tools");
+        sendHelpLine(messages, sender, "admin", "Admin tools");
+        messages.send(sender, "help-dual");
     }
 
     private void sendHelpLine(
             @NotNull MessageManager messages,
             @NotNull CommandSender sender,
-            @NotNull String label,
             @NotNull String module,
             @NotNull String desc
     ) {
