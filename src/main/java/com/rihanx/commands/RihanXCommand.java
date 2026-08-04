@@ -504,7 +504,7 @@ public final class RihanXCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            usage(sender, "/rx tp <pos|player|world|biome|structure|chunk|random|safe|back> ...");
+            usage(sender, "/rx tp <pos|player|here|home|world|biome|structure|chunk|random|safe|back> ...");
             return true;
         }
         var tp = plugin.getTeleportService();
@@ -537,15 +537,63 @@ public final class RihanXCommand implements CommandExecutor {
                 if (!checkPerm(player, PermissionNodes.TP_PLAYER, messages)) return true;
                 if (checkCooldown(player, cooldowns, "teleport", messages)) return true;
                 if (args.length < 2) {
-                    usage(sender, "/rx tp player <name>");
+                    usage(sender, "/rxtp player <name> [destinationPlayer]");
                     return true;
                 }
-                Player target = PlayerUtil.findPlayer(args[1]);
-                if (target == null) {
+                Player first = PlayerUtil.findPlayer(args[1]);
+                if (first == null) {
                     messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[1]));
                     return true;
                 }
-                tp.teleportToPlayer(player, target);
+                if (args.length >= 3) {
+                    // Teleport first player TO second player
+                    Player destination = PlayerUtil.findPlayer(args[2]);
+                    if (destination == null) {
+                        messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
+                        return true;
+                    }
+                    tp.teleportPlayerToPlayer(first, destination);
+                    messages.send(sender, "teleport-player-other", MessageManager.placeholders(
+                            "player", first.getName(),
+                            "target", destination.getName()
+                    ));
+                } else {
+                    // Teleport self TO named player
+                    tp.teleportToPlayer(player, first);
+                }
+                cooldowns.setCooldown(player, "teleport");
+            }
+            case "here" -> {
+                if (!checkPerm(player, PermissionNodes.TP_HERE, messages)) return true;
+                if (checkCooldown(player, cooldowns, "teleport", messages)) return true;
+                if (args.length < 2) {
+                    usage(sender, "/rxtp here <player>");
+                    return true;
+                }
+                Player victim = PlayerUtil.findPlayer(args[1]);
+                if (victim == null) {
+                    messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[1]));
+                    return true;
+                }
+                tp.teleportHere(player, victim);
+                messages.send(sender, "teleport-here", MessageManager.placeholders("player", victim.getName()));
+                cooldowns.setCooldown(player, "teleport");
+            }
+            case "home" -> {
+                if (!checkPerm(player, PermissionNodes.TP_HOME, messages)) return true;
+                if (checkCooldown(player, cooldowns, "teleport", messages)) return true;
+                Player homeTarget = player;
+                if (args.length >= 2) {
+                    homeTarget = PlayerUtil.findPlayer(args[1]);
+                    if (homeTarget == null) {
+                        messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[1]));
+                        return true;
+                    }
+                }
+                tp.teleportHome(homeTarget);
+                if (!homeTarget.equals(player)) {
+                    messages.send(sender, "teleport-home-other", MessageManager.placeholders("player", homeTarget.getName()));
+                }
                 cooldowns.setCooldown(player, "teleport");
             }
             case "world" -> {
@@ -662,15 +710,15 @@ public final class RihanXCommand implements CommandExecutor {
             }
             case "heal" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_HEAL, messages)) return true;
-                playerService.heal(target);
+                playerService.heal(sender, target);
             }
             case "feed" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_FEED, messages)) return true;
-                playerService.feed(target);
+                playerService.feed(sender, target);
             }
             case "fly" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_FLY, messages)) return true;
-                playerService.toggleFly(target);
+                playerService.toggleFly(sender, target);
             }
             case "god" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_GOD, messages)) return true;
@@ -720,7 +768,7 @@ public final class RihanXCommand implements CommandExecutor {
             }
             case "cleareffects", "clearpotions" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_CLEAREFFECTS, messages)) return true;
-                playerService.clearEffects(target);
+                playerService.clearEffects(sender, target);
             }
             case "ping" -> {
                 if (!checkPerm(sender, PermissionNodes.PLAYER_PING, messages)) return true;

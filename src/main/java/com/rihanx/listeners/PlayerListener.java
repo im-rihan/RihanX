@@ -3,6 +3,7 @@ package com.rihanx.listeners;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.ConfigManager;
 import com.rihanx.managers.CooldownManager;
+import com.rihanx.managers.FlyManager;
 import com.rihanx.managers.FreezeManager;
 import com.rihanx.managers.GodManager;
 import com.rihanx.managers.VanishManager;
@@ -22,13 +23,14 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handles freeze, god mode, teleport cancellation, and cleanup on quit.
+ * Handles freeze, god mode, fly restore, teleport cancellation, and cleanup on quit.
  */
 public final class PlayerListener implements Listener {
 
     private final @NotNull FreezeManager freezeManager;
     private final @NotNull VanishManager vanishManager;
     private final @NotNull GodManager godManager;
+    private final @NotNull FlyManager flyManager;
     private final @NotNull TeleportManager teleportManager;
     private final @NotNull ConfigManager configManager;
     private final @NotNull CooldownManager cooldownManager;
@@ -39,6 +41,7 @@ public final class PlayerListener implements Listener {
             @NotNull FreezeManager freezeManager,
             @NotNull VanishManager vanishManager,
             @NotNull GodManager godManager,
+            @NotNull FlyManager flyManager,
             @NotNull TeleportManager teleportManager,
             @NotNull ConfigManager configManager,
             @NotNull CooldownManager cooldownManager,
@@ -48,6 +51,7 @@ public final class PlayerListener implements Listener {
         this.freezeManager = freezeManager;
         this.vanishManager = vanishManager;
         this.godManager = godManager;
+        this.flyManager = flyManager;
         this.teleportManager = teleportManager;
         this.configManager = configManager;
         this.cooldownManager = cooldownManager;
@@ -59,6 +63,9 @@ public final class PlayerListener implements Listener {
     public void onMove(@NotNull PlayerMoveEvent event) {
         Player player = event.getPlayer();
         if (!freezeManager.isFrozen(player)) {
+            return;
+        }
+        if (event.getTo() == null) {
             return;
         }
         if (event.getFrom().getX() != event.getTo().getX()
@@ -73,7 +80,8 @@ public final class PlayerListener implements Listener {
         if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        if (godManager.isGod(player) && player.isOp()) {
+        // Strict per-UUID god check — never protects other players
+        if (godManager.isGod(player.getUniqueId())) {
             event.setCancelled(true);
             player.setFireTicks(0);
             return;
@@ -83,14 +91,14 @@ public final class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCombust(@NotNull EntityCombustEvent event) {
-        if (event.getEntity() instanceof Player player && godManager.isGod(player) && player.isOp()) {
+        if (event.getEntity() instanceof Player player && godManager.isGod(player.getUniqueId())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onFood(@NotNull FoodLevelChangeEvent event) {
-        if (event.getEntity() instanceof Player player && godManager.isGod(player) && player.isOp()) {
+        if (event.getEntity() instanceof Player player && godManager.isGod(player.getUniqueId())) {
             event.setCancelled(true);
             player.setFoodLevel(20);
             player.setSaturation(20.0f);
@@ -116,6 +124,7 @@ public final class PlayerListener implements Listener {
         freezeManager.handleQuit(player, configManager.unfreezeOnQuit());
         vanishManager.handleQuit(player, configManager.unvanishOnQuit());
         godManager.handleQuit(player, configManager.raw().getBoolean("general.ungod-on-quit", true));
+        flyManager.handleQuit(player, configManager.raw().getBoolean("general.unfly-on-quit", true));
         teleportManager.cancel(player.getUniqueId(), false);
         cooldownManager.clear(player.getUniqueId());
         taskTracker.cancel(player.getUniqueId());
@@ -128,8 +137,7 @@ public final class PlayerListener implements Listener {
         if (freezeManager.isFrozen(player)) {
             freezeManager.freeze(player);
         }
-        if (godManager.isGod(player)) {
-            godManager.enable(player);
-        }
+        godManager.handleJoin(player);
+        flyManager.handleJoin(player);
     }
 }

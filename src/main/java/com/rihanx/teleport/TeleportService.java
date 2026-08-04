@@ -65,6 +65,25 @@ public final class TeleportService {
         teleport(player, target.getLocation(), "player");
     }
 
+    /**
+     * Teleport {@code victim} to {@code destination} (admin: move one player to another).
+     */
+    public void teleportPlayerToPlayer(@NotNull Player victim, @NotNull Player destination) {
+        teleport(victim, destination.getLocation(), "player-other");
+    }
+
+    public void teleportHere(@NotNull Player admin, @NotNull Player victim) {
+        teleport(victim, admin.getLocation(), "here");
+    }
+
+    public void teleportHome(@NotNull Player player) {
+        Location home = player.getRespawnLocation();
+        if (home == null || home.getWorld() == null) {
+            home = player.getWorld().getSpawnLocation();
+        }
+        teleport(player, home, "home");
+    }
+
     public void teleportToWorldSpawn(@NotNull Player player, @NotNull World world) {
         teleport(player, world.getSpawnLocation(), "world-spawn");
     }

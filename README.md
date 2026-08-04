@@ -113,7 +113,10 @@ Supports every vanilla biome and structure (tab-complete).
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/rxtp pos <x> <y> <z> [world]` | `rihanx.tp.pos` | Coordinate teleport |
-| `/rxtp player <name>` | `rihanx.tp.player` | Teleport to player |
+| `/rxtp player <name>` | `rihanx.tp.player` | Teleport **you** to that player (tab-completes names) |
+| `/rxtp player <who> <to>` | `rihanx.tp.player` | Teleport player **who** to player **to** |
+| `/rxtp here <player>` | `rihanx.tp.here` | Pull a player to you |
+| `/rxtp home [player]` | `rihanx.tp.home` | Bed/respawn home (or world spawn if none) |
 | `/rxtp world <name>` | `rihanx.tp.world` | Teleport to world spawn |
 | `/rxtp biome <biome>` | `rihanx.tp.biome` | Find + teleport to biome |
 | `/rxtp structure <name>` | `rihanx.tp.structure` | Find + teleport to structure |
@@ -122,6 +125,8 @@ Supports every vanilla biome and structure (tab-complete).
 | `/rxtp safe` | `rihanx.tp.safe` | Safe spot near you |
 | `/rxtp back` · `/rx tp back` · `/rx back` · `/back` | `rihanx.tp.back` | Previous location |
 
+Player names support partial match + tab completion (e.g. `/rxtp player Ste` → Steve).
+
 ### Player — `/rx player` · `/player`
 
 | Command | Permission | Description |
@@ -129,8 +134,8 @@ Supports every vanilla biome and structure (tab-complete).
 | `/player info [player]` | `rihanx.player.info` | Player details |
 | `/player heal [player]` | `rihanx.player.heal` | Heal |
 | `/player feed [player]` | `rihanx.player.feed` | Feed |
-| `/player fly [player]` | `rihanx.player.fly` | Toggle flight |
-| `/player god [player]` | `rihanx.player.god` | Toggle god mode |
+| `/player fly [player]` | `rihanx.player.fly` | Toggle flight (**only that player**) |
+| `/player god [player]` | `rihanx.player.god` | Toggle god mode (**only that player**) |
 | `/player gamemode <mode> [player]` | `rihanx.player.gamemode` | Set gamemode (`gm` alias) |
 | `/player speed <value> [player]` | `rihanx.player.speed` | Walk/fly speed |
 | `/player freeze <player>` | `rihanx.player.freeze` | Freeze |

@@ -45,7 +45,7 @@ public final class RihanXTabCompleter implements TabCompleter {
             @NotNull String alias,
             @NotNull String[] args
     ) {
-        if (!PermissionUtil.has(sender, PermissionNodes.USE)) {
+        if (!PermissionUtil.has(sender, PermissionNodes.USE) && !sender.isOp()) {
             return List.of();
         }
 
@@ -138,19 +138,28 @@ public final class RihanXTabCompleter implements TabCompleter {
 
     private @NotNull List<String> completeTp(@NotNull String[] args) {
         if (args.length == 2) {
-            return filter(List.of("pos", "player", "world", "biome", "structure", "chunk", "random", "safe", "back"), args[1]);
+            return filter(List.of("pos", "player", "here", "home", "world", "biome", "structure", "chunk", "random", "safe", "back"), args[1]);
         }
-        if (args.length == 3 && args[1].equalsIgnoreCase("player")) {
-            return filter(PlayerUtil.onlineNames(args[2]), args[2]);
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("player") || sub.equals("here") || sub.equals("home")) {
+                return PlayerUtil.onlineNames(args[2]);
+            }
+            if (sub.equals("world")) {
+                return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[2]);
+            }
+            if (sub.equals("biome")) {
+                return filter(BiomeUtil.suggestions(args[2]), args[2]);
+            }
+            if (sub.equals("structure")) {
+                return filter(StructureUtil.suggestions(args[2]), args[2]);
+            }
         }
-        if (args.length == 3 && args[1].equalsIgnoreCase("world")) {
-            return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[2]);
+        if (args.length == 4 && args[1].equalsIgnoreCase("player")) {
+            return PlayerUtil.onlineNames(args[3]);
         }
-        if (args.length == 3 && args[1].equalsIgnoreCase("biome")) {
-            return filter(BiomeUtil.suggestions(args[2]), args[2]);
-        }
-        if (args.length == 3 && args[1].equalsIgnoreCase("structure")) {
-            return filter(StructureUtil.suggestions(args[2]), args[2]);
+        if (args.length == 5 && args[1].equalsIgnoreCase("pos")) {
+            return filter(Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList()), args[4]);
         }
         return List.of();
     }
@@ -166,10 +175,10 @@ public final class RihanXTabCompleter implements TabCompleter {
             if (args[1].equalsIgnoreCase("gamemode") || args[1].equalsIgnoreCase("gm")) {
                 return filter(List.of("survival", "creative", "adventure", "spectator"), args[2]);
             }
-            return filter(PlayerUtil.onlineNames(args[2]), args[2]);
+            return PlayerUtil.onlineNames(args[2]);
         }
         if (args.length == 4 && (args[1].equalsIgnoreCase("speed") || args[1].equalsIgnoreCase("gamemode") || args[1].equalsIgnoreCase("gm"))) {
-            return filter(PlayerUtil.onlineNames(args[3]), args[3]);
+            return PlayerUtil.onlineNames(args[3]);
         }
         return List.of();
     }
@@ -179,7 +188,7 @@ public final class RihanXTabCompleter implements TabCompleter {
             return filter(List.of("see", "ender", "clear", "repair"), args[1]);
         }
         if (args.length == 3) {
-            return filter(PlayerUtil.onlineNames(args[2]), args[2]);
+            return PlayerUtil.onlineNames(args[2]);
         }
         return List.of();
     }

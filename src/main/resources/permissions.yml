@@ -29,6 +29,8 @@ nodes:
   - rihanx.chunk.tileentities
   - rihanx.tp.pos
   - rihanx.tp.player
+  - rihanx.tp.here
+  - rihanx.tp.home
   - rihanx.tp.world
   - rihanx.tp.biome
   - rihanx.tp.structure

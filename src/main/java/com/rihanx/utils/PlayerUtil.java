@@ -28,7 +28,23 @@ public final class PlayerUtil {
     }
 
     public static @Nullable Player findPlayer(@NotNull String name) {
-        return Bukkit.getPlayerExact(name);
+        Player exact = Bukkit.getPlayerExact(name);
+        if (exact != null) {
+            return exact;
+        }
+        // Partial / case-insensitive match (unique prefix)
+        String needle = name.toLowerCase(Locale.ROOT);
+        Player match = null;
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            String onlineName = online.getName().toLowerCase(Locale.ROOT);
+            if (onlineName.equals(needle) || onlineName.startsWith(needle)) {
+                if (match != null) {
+                    return null; // ambiguous
+                }
+                match = online;
+            }
+        }
+        return match;
     }
 
     public static @Nullable Player findPlayer(@NotNull UUID uuid) {

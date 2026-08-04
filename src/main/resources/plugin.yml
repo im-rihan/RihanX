@@ -205,6 +205,8 @@ permissions:
       rihanx.tp: true
       rihanx.tp.pos: true
       rihanx.tp.player: true
+      rihanx.tp.here: true
+      rihanx.tp.home: true
       rihanx.tp.world: true
       rihanx.tp.biome: true
       rihanx.tp.structure: true
@@ -215,6 +217,10 @@ permissions:
   rihanx.tp.pos:
     default: op
   rihanx.tp.player:
+    default: op
+  rihanx.tp.here:
+    default: op
+  rihanx.tp.home:
     default: op
   rihanx.tp.world:
     default: op

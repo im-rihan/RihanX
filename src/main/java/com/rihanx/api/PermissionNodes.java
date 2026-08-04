@@ -55,6 +55,8 @@ public final class PermissionNodes {
     public static final String TP_RANDOM = TP + ".random";
     public static final String TP_SAFE = TP + ".safe";
     public static final String TP_BACK = TP + ".back";
+    public static final String TP_HOME = TP + ".home";
+    public static final String TP_HERE = TP + ".here";
 
     public static final String PLAYER = ROOT + ".player";
     public static final String PLAYER_ALL = PLAYER + ".*";

@@ -17,6 +17,7 @@ import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.CommandManager;
 import com.rihanx.managers.ConfigManager;
 import com.rihanx.managers.CooldownManager;
+import com.rihanx.managers.FlyManager;
 import com.rihanx.managers.FreezeManager;
 import com.rihanx.managers.GodManager;
 import com.rihanx.managers.MessageManager;
@@ -47,6 +48,7 @@ public final class RihanX extends JavaPlugin {
     private FreezeManager freezeManager;
     private VanishManager vanishManager;
     private GodManager godManager;
+    private FlyManager flyManager;
     private DatabaseManager databaseManager;
     private BackLocationManager backLocationManager;
     private SchedulerUtil schedulerUtil;
@@ -83,6 +85,7 @@ public final class RihanX extends JavaPlugin {
         this.freezeManager = new FreezeManager();
         this.vanishManager = new VanishManager(this);
         this.godManager = new GodManager();
+        this.flyManager = new FlyManager();
         this.databaseManager = new DatabaseManager(this, configManager);
         this.databaseManager.init();
         this.backLocationManager = new BackLocationManager(this, configManager, databaseManager);
@@ -96,7 +99,7 @@ public final class RihanX extends JavaPlugin {
         this.slimeService = new SlimeService(configManager, messageManager, schedulerUtil, asyncTaskTracker, searchCache);
         this.worldService = new WorldService(messageManager);
         this.chunkService = new ChunkService(messageManager);
-        this.playerService = new PlayerService(messageManager, freezeManager, vanishManager, godManager);
+        this.playerService = new PlayerService(messageManager, freezeManager, vanishManager, godManager, flyManager);
         this.inventoryService = new InventoryService(messageManager);
         this.itemService = new ItemService(this, messageManager);
         this.performanceService = new PerformanceService(messageManager, configManager);
@@ -132,7 +135,7 @@ public final class RihanX extends JavaPlugin {
         this.commandManager.register();
 
         getServer().getPluginManager().registerEvents(
-                new PlayerListener(freezeManager, vanishManager, godManager, teleportManager, configManager, cooldownManager, asyncTaskTracker, backLocationManager),
+                new PlayerListener(freezeManager, vanishManager, godManager, flyManager, teleportManager, configManager, cooldownManager, asyncTaskTracker, backLocationManager),
                 this
         );
         getServer().getPluginManager().registerEvents(new FreezeListener(freezeManager, messageManager), this);
@@ -155,12 +158,10 @@ public final class RihanX extends JavaPlugin {
             vanishManager.unvanishAll();
         }
         if (godManager != null) {
-            for (java.util.UUID uuid : java.util.Set.copyOf(godManager.getGods())) {
-                org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
-                if (player != null) {
-                    godManager.disable(player);
-                }
-            }
+            godManager.disableAllOnline();
+        }
+        if (flyManager != null) {
+            flyManager.clearAll();
         }
         if (protectionService != null) {
             protectionService.save();
@@ -218,6 +219,10 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull GodManager getGodManager() {
         return godManager;
+    }
+
+    public @NotNull FlyManager getFlyManager() {
+        return flyManager;
     }
 
     public @NotNull BackLocationManager getBackLocationManager() {

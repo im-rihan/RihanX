@@ -9,14 +9,14 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Tracks players in god mode (invulnerable).
+ * Tracks players in god mode by UUID only (never applies to other players).
  */
 public final class GodManager {
 
     private final Set<UUID> gods = ConcurrentHashMap.newKeySet();
 
     public boolean toggle(@NotNull Player player) {
-        if (gods.contains(player.getUniqueId())) {
+        if (isGod(player)) {
             disable(player);
             return false;
         }
@@ -25,16 +25,15 @@ public final class GodManager {
     }
 
     public void enable(@NotNull Player player) {
-        if (!player.isOp()) {
-            return;
-        }
         gods.add(player.getUniqueId());
         player.setInvulnerable(true);
         player.setFireTicks(0);
     }
 
     public void disable(@NotNull Player player) {
-        gods.remove(player.getUniqueId());
+        if (!gods.remove(player.getUniqueId())) {
+            return;
+        }
         player.setInvulnerable(false);
     }
 
@@ -53,6 +52,33 @@ public final class GodManager {
     public void handleQuit(@NotNull Player player, boolean disableOnQuit) {
         if (disableOnQuit) {
             disable(player);
+        } else {
+            // Keep UUID marked but clear invulnerability flag on the leaving entity
+            player.setInvulnerable(false);
+        }
+    }
+
+    public void handleJoin(@NotNull Player player) {
+        if (isGod(player)) {
+            player.setInvulnerable(true);
+            player.setFireTicks(0);
+        } else {
+            // Ensure leftover invulnerability from other plugins/sessions does not stick
+            // only clear if we are not tracking them as god
+            if (player.isInvulnerable() && !player.isOp()) {
+                // leave ops alone if another plugin set invulnerable
+            }
+        }
+    }
+
+    public void disableAllOnline() {
+        for (UUID uuid : Set.copyOf(gods)) {
+            org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(uuid);
+            if (player != null) {
+                disable(player);
+            } else {
+                gods.remove(uuid);
+            }
         }
     }
 }

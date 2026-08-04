@@ -70,6 +70,7 @@ general:
   unfreeze-on-quit: true
   unvanish-on-quit: false
   ungod-on-quit: true
+  unfly-on-quit: true
   language-file: messages.yml
 
 cache:
