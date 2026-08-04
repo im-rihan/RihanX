@@ -66,6 +66,9 @@ public final class RihanXTabCompleter implements TabCompleter {
             if (module.equals("back")) {
                 return List.of();
             }
+            if (RihanXCommand.SELF_ACTION_COMMANDS.contains(module)) {
+                return completeSelfAction(module, args);
+            }
             prefixed = new String[args.length + 1];
             prefixed[0] = module;
             System.arraycopy(args, 0, prefixed, 1, args.length);
@@ -88,6 +91,26 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "admin" -> completeAdmin(prefixed);
             default -> List.of();
         };
+    }
+
+    private @NotNull List<String> completeSelfAction(@NotNull String action, @NotNull String[] args) {
+        if (action.equals("gm")) {
+            if (args.length == 1) {
+                return filter(List.of("survival", "creative", "adventure", "spectator"), args[0]);
+            }
+            if (args.length == 2) {
+                return PlayerUtil.onlineNames(args[1]);
+            }
+            return List.of();
+        }
+        if (action.equals("vanish")) {
+            return List.of();
+        }
+        // /fly [player], /god [player], ...
+        if (args.length == 1) {
+            return PlayerUtil.onlineNames(args[0]);
+        }
+        return List.of();
     }
 
     private @NotNull List<String> completeSlime(@NotNull String[] args) {

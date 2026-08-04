@@ -78,6 +78,30 @@ commands:
     description: Admin tools (also /rx admin).
     usage: /admin <reload|debug|cache|config|cancel>
     permission: rihanx.admin
+  fly:
+    description: Toggle your flight (optional player). Only affects the chosen player.
+    usage: /fly [player]
+    permission: rihanx.player.fly
+  god:
+    description: Toggle your god mode (optional player). Only affects the chosen player.
+    usage: /god [player]
+    permission: rihanx.player.god
+  heal:
+    description: Heal yourself (optional player).
+    usage: /heal [player]
+    permission: rihanx.player.heal
+  feed:
+    description: Feed yourself (optional player).
+    usage: /feed [player]
+    permission: rihanx.player.feed
+  vanish:
+    description: Toggle your vanish (self only).
+    usage: /vanish
+    permission: rihanx.player.vanish
+  gm:
+    description: Set your gamemode (optional player).
+    usage: /gm <survival|creative|adventure|spectator> [player]
+    permission: rihanx.player.gamemode
 
 permissions:
   rihanx.*:

@@ -25,16 +25,26 @@ public final class GodManager {
     }
 
     public void enable(@NotNull Player player) {
-        gods.add(player.getUniqueId());
-        player.setInvulnerable(true);
-        player.setFireTicks(0);
+        UUID id = player.getUniqueId();
+        gods.add(id);
+        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (online == null) {
+            online = player;
+        }
+        online.setInvulnerable(true);
+        online.setFireTicks(0);
     }
 
     public void disable(@NotNull Player player) {
-        if (!gods.remove(player.getUniqueId())) {
+        UUID id = player.getUniqueId();
+        if (!gods.remove(id)) {
             return;
         }
-        player.setInvulnerable(false);
+        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (online == null) {
+            online = player;
+        }
+        online.setInvulnerable(false);
     }
 
     public boolean isGod(@NotNull Player player) {

@@ -23,6 +23,7 @@ import org.bukkit.generator.structure.Structure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -34,7 +35,13 @@ public final class RihanXCommand implements CommandExecutor {
     public static final Set<String> ROOT_NAMES = Set.of("rihanx", "rx", "rihan");
     public static final Set<String> MODULE_COMMANDS = Set.of(
             "slime", "world", "find", "chunk", "rxtp", "player", "inventory", "item",
-            "search", "server", "performance", "protect", "edit", "admin", "back"
+            "search", "server", "performance", "protect", "edit", "admin", "back",
+            "fly", "god", "heal", "feed", "vanish", "gm"
+    );
+
+    /** Shortcuts that map to /player <action> and default to the sender only. */
+    public static final Set<String> SELF_ACTION_COMMANDS = Set.of(
+            "fly", "god", "heal", "feed", "vanish", "gm"
     );
 
     private final @NotNull RihanX plugin;
@@ -90,6 +97,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "tp" -> handleTp(sender, subArgs, messages, cooldowns);
             case "back" -> handleTp(sender, new String[]{"back"}, messages, cooldowns);
             case "player" -> handlePlayer(sender, subArgs, messages);
+            case "fly", "god", "heal", "feed", "vanish", "gm" -> handleSelfAction(sender, module, subArgs, messages);
             case "inventory", "inv" -> handleInventory(sender, subArgs, messages);
             case "item" -> handleItem(sender, subArgs, messages);
             case "search" -> handleSearch(sender, subArgs, messages, cooldowns);
@@ -103,6 +111,34 @@ public final class RihanXCommand implements CommandExecutor {
                 yield true;
             }
         };
+    }
+
+    /**
+     * Standalone /fly /god /heal /feed /vanish /gm — always affects the sender
+     * unless an explicit non-blank player name is provided.
+     */
+    private boolean handleSelfAction(
+            @NotNull CommandSender sender,
+            @NotNull String action,
+            @NotNull String[] args,
+            @NotNull MessageManager messages
+    ) {
+        if (action.equals("gm")) {
+            // /gm <mode> [player]
+            String[] playerArgs = new String[args.length + 1];
+            playerArgs[0] = "gamemode";
+            System.arraycopy(args, 0, playerArgs, 1, args.length);
+            return handlePlayer(sender, playerArgs, messages);
+        }
+        String[] playerArgs;
+        if (args.length == 0) {
+            playerArgs = new String[]{action};
+        } else {
+            playerArgs = new String[args.length + 1];
+            playerArgs[0] = action;
+            System.arraycopy(args, 0, playerArgs, 1, args.length);
+        }
+        return handlePlayer(sender, playerArgs, messages);
     }
 
     public static @NotNull String normalizeModule(@NotNull String input) {
@@ -669,39 +705,60 @@ public final class RihanXCommand implements CommandExecutor {
     }
 
     private boolean handlePlayer(@NotNull CommandSender sender, @NotNull String[] args, @NotNull MessageManager messages) {
-        if (!PermissionUtil.has(sender, PermissionNodes.PLAYER)) {
+        if (!PermissionUtil.has(sender, PermissionNodes.PLAYER) && !sender.isOp()) {
             messages.send(sender, "no-permission");
             return true;
         }
         if (args.length == 0) {
-            usage(sender, "/rx player <info|heal|feed|fly|god|gamemode|speed|freeze|unfreeze|vanish|cleareffects|ping> [player]");
+            usage(sender, "/player <info|heal|feed|fly|god|gamemode|speed|freeze|unfreeze|vanish|cleareffects|ping> [player]");
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         Player target;
-        if (sub.equals("speed") && args.length >= 3) {
-            target = PlayerUtil.findPlayer(args[2]);
+
+        // Self-by-default actions: no name → YOU only. Explicit name → that one player only.
+        if (List.of("heal", "feed", "fly", "god", "info", "ping", "cleareffects", "clearpotions", "vanish").contains(sub)) {
+            target = resolveSelfOrNamed(sender, args, 1, messages);
             if (target == null) {
-                messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
                 return true;
             }
-        } else if ((sub.equals("gamemode") || sub.equals("gm")) && args.length >= 3) {
-            target = PlayerUtil.findPlayer(args[2]);
+        } else if (sub.equals("speed")) {
+            // /player speed <val> [player]
+            if (args.length >= 3) {
+                target = resolveNamedPlayer(sender, args[2], messages);
+            } else {
+                target = requirePlayer(sender, messages);
+            }
             if (target == null) {
-                messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
                 return true;
             }
-        } else if (sub.equals("speed") || sub.equals("gamemode") || sub.equals("gm")) {
-            target = requirePlayer(sender, messages);
+        } else if (sub.equals("gamemode") || sub.equals("gm")) {
+            // /player gamemode <mode> [player]
+            if (args.length >= 3) {
+                target = resolveNamedPlayer(sender, args[2], messages);
+            } else {
+                target = requirePlayer(sender, messages);
+            }
+            if (target == null) {
+                return true;
+            }
+        } else if (sub.equals("freeze") || sub.equals("unfreeze")) {
+            // freeze always needs an explicit target (never "everyone")
+            if (args.length < 2) {
+                usage(sender, "/player " + sub + " <player>");
+                return true;
+            }
+            target = resolveNamedPlayer(sender, args[1], messages);
             if (target == null) {
                 return true;
             }
         } else {
-            target = resolveTarget(sender, args, 1);
+            target = resolveSelfOrNamed(sender, args, 1, messages);
             if (target == null) {
                 return true;
             }
         }
+
         var playerService = plugin.getPlayerService();
         switch (sub) {
             case "info" -> {
@@ -727,7 +784,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "gamemode", "gm" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_GAMEMODE, messages)) return true;
                 if (args.length < 2) {
-                    usage(sender, "/rx player gamemode <mode> [player]");
+                    usage(sender, "/gm <mode> [player]  or  /player gamemode <mode> [player]");
                     return true;
                 }
                 org.bukkit.GameMode mode = PlayerUtil.parseGameMode(args[1]);
@@ -740,7 +797,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "speed" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_SPEED, messages)) return true;
                 if (args.length < 2) {
-                    usage(sender, "/rx player speed <val> [player]");
+                    usage(sender, "/player speed <val> [player]");
                     return true;
                 }
                 Float speed = NumberUtil.parseFloat(args[1]);
@@ -760,11 +817,12 @@ public final class RihanXCommand implements CommandExecutor {
             }
             case "vanish" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_VANISH, messages)) return true;
-                if (!target.equals(sender)) {
-                    messages.send(sender, "player-only");
+                Player self = requirePlayer(sender, messages);
+                if (self == null) {
                     return true;
                 }
-                playerService.toggleVanish(target);
+                // Vanish is always self-only
+                playerService.toggleVanish(self);
             }
             case "cleareffects", "clearpotions" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_CLEAREFFECTS, messages)) return true;
@@ -774,7 +832,7 @@ public final class RihanXCommand implements CommandExecutor {
                 if (!checkPerm(sender, PermissionNodes.PLAYER_PING, messages)) return true;
                 playerService.sendPing(sender, target);
             }
-            default -> usage(sender, "/rx player <info|heal|feed|fly|god|gamemode|speed|freeze|unfreeze|vanish|cleareffects|ping> [player]");
+            default -> usage(sender, "/player <info|heal|feed|fly|god|gamemode|speed|freeze|unfreeze|vanish|cleareffects|ping> [player]");
         }
         return true;
     }
@@ -1403,20 +1461,43 @@ public final class RihanXCommand implements CommandExecutor {
     }
 
     private @Nullable Player resolveTarget(@NotNull CommandSender sender, @NotNull String[] args, int nameIndex) {
-        MessageManager messages = plugin.getMessageManager();
+        return resolveSelfOrNamed(sender, args, nameIndex, plugin.getMessageManager());
+    }
+
+    /**
+     * No / blank name → sender only. Explicit name → that one player only. Never all players.
+     */
+    private @Nullable Player resolveSelfOrNamed(
+            @NotNull CommandSender sender,
+            @NotNull String[] args,
+            int nameIndex,
+            @NotNull MessageManager messages
+    ) {
         if (args.length > nameIndex) {
-            Player target = PlayerUtil.findPlayer(args[nameIndex]);
-            if (target == null) {
-                messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[nameIndex]));
-                return null;
+            String raw = args[nameIndex] == null ? "" : args[nameIndex].trim();
+            if (!raw.isEmpty()) {
+                return resolveNamedPlayer(sender, raw, messages);
             }
-            return target;
         }
-        if (sender instanceof Player player) {
-            return player;
+        return requirePlayer(sender, messages);
+    }
+
+    private @Nullable Player resolveNamedPlayer(
+            @NotNull CommandSender sender,
+            @NotNull String name,
+            @NotNull MessageManager messages
+    ) {
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) {
+            messages.send(sender, "player-not-found", MessageManager.placeholders("player", name));
+            return null;
         }
-        messages.send(sender, "player-only");
-        return null;
+        Player target = PlayerUtil.findPlayer(trimmed);
+        if (target == null) {
+            messages.send(sender, "player-not-found", MessageManager.placeholders("player", trimmed));
+            return null;
+        }
+        return target;
     }
 
     private boolean checkPerm(@NotNull CommandSender sender, @NotNull String permission, @NotNull MessageManager messages) {

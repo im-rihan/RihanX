@@ -26,21 +26,31 @@ public final class FlyManager {
     }
 
     public void enable(@NotNull Player player) {
-        flying.add(player.getUniqueId());
-        player.setAllowFlight(true);
-        if (player.getGameMode() != GameMode.SPECTATOR) {
-            player.setFlying(true);
+        UUID id = player.getUniqueId();
+        flying.add(id);
+        // Only mutate THIS player instance
+        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (online == null || !online.equals(player)) {
+            online = player;
+        }
+        online.setAllowFlight(true);
+        if (online.getGameMode() != GameMode.SPECTATOR) {
+            online.setFlying(true);
         }
     }
 
     public void disable(@NotNull Player player) {
-        flying.remove(player.getUniqueId());
-        // Do not strip creative/spectator flight
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+        UUID id = player.getUniqueId();
+        flying.remove(id);
+        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (online == null) {
+            online = player;
+        }
+        if (online.getGameMode() == GameMode.CREATIVE || online.getGameMode() == GameMode.SPECTATOR) {
             return;
         }
-        player.setFlying(false);
-        player.setAllowFlight(false);
+        online.setFlying(false);
+        online.setAllowFlight(false);
     }
 
     public boolean isFlying(@NotNull Player player) {

@@ -127,6 +127,8 @@ Supports every vanilla biome and structure (tab-complete).
 
 Player names support partial match + tab completion (e.g. `/rxtp player Ste` → Steve).
 
+**Self vs other:** `/fly`, `/god`, `/heal`, `/feed`, `/gm` with no name always affect **only you**. Naming a player affects **only that one player** — never everyone online.
+
 ### Player — `/rx player` · `/player`
 
 | Command | Permission | Description |
@@ -134,8 +136,14 @@ Player names support partial match + tab completion (e.g. `/rxtp player Ste` →
 | `/player info [player]` | `rihanx.player.info` | Player details |
 | `/player heal [player]` | `rihanx.player.heal` | Heal |
 | `/player feed [player]` | `rihanx.player.feed` | Feed |
-| `/player fly [player]` | `rihanx.player.fly` | Toggle flight (**only that player**) |
-| `/player god [player]` | `rihanx.player.god` | Toggle god mode (**only that player**) |
+| `/player fly [player]` | `rihanx.player.fly` | Toggle flight (**you** by default; only that player if named) |
+| `/player god [player]` | `rihanx.player.god` | Toggle god mode (**you** by default; only that player if named) |
+| `/fly [player]` | `rihanx.player.fly` | Shortcut — same as `/player fly` (self unless you name someone) |
+| `/god [player]` | `rihanx.player.god` | Shortcut — same as `/player god` |
+| `/heal [player]` · `/feed [player]` | heal/feed perms | Shortcuts — self by default |
+| `/vanish` | `rihanx.player.vanish` | Shortcut — **always you only** |
+| `/gm <mode> [player]` | `rihanx.player.gamemode` | Shortcut — self by default |
+
 | `/player gamemode <mode> [player]` | `rihanx.player.gamemode` | Set gamemode (`gm` alias) |
 | `/player speed <value> [player]` | `rihanx.player.speed` | Walk/fly speed |
 | `/player freeze <player>` | `rihanx.player.freeze` | Freeze |

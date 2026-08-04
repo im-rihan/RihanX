@@ -28,12 +28,16 @@ public final class PlayerUtil {
     }
 
     public static @Nullable Player findPlayer(@NotNull String name) {
-        Player exact = Bukkit.getPlayerExact(name);
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        Player exact = Bukkit.getPlayerExact(trimmed);
         if (exact != null) {
             return exact;
         }
-        // Partial / case-insensitive match (unique prefix)
-        String needle = name.toLowerCase(Locale.ROOT);
+        // Partial / case-insensitive match — only if exactly one player matches
+        String needle = trimmed.toLowerCase(Locale.ROOT);
         Player match = null;
         for (Player online : Bukkit.getOnlinePlayers()) {
             String onlineName = online.getName().toLowerCase(Locale.ROOT);
