@@ -226,15 +226,24 @@ public final class KitService {
                 continue;
             }
             target.setType(Material.CHEST, false);
-            if (target.getState() instanceof Chest chest) {
-                Inventory inv = chest.getBlockInventory();
-                inv.clear();
-                for (ItemStack stack : pages.get(i)) {
-                    inv.addItem(stack.clone());
-                }
-                chest.update(true, false);
-                placed++;
+            if (!(target.getState() instanceof Chest chest)) {
+                continue;
             }
+            String title = capitalize(kit.name()) + " Kit"
+                    + (pages.size() > 1 ? " (" + (i + 1) + "/" + pages.size() + ")" : "");
+            chest.customName(MessageUtil.parse("<gold>" + title + "</gold>"));
+            // Fill SNAPSHOT then update once — filling live inventory then update() wipes items on Paper
+            Inventory inv = chest.getSnapshotInventory();
+            inv.clear();
+            int slot = 0;
+            for (ItemStack stack : pages.get(i)) {
+                if (slot >= inv.getSize()) {
+                    break;
+                }
+                inv.setItem(slot++, stack.clone());
+            }
+            chest.update(true, false);
+            placed++;
         }
         return placed;
     }
@@ -330,10 +339,15 @@ public final class KitService {
                 MessageUtil.parse("<dark_gray>RihanX /kit " + kitName + "</dark_gray>")
         ));
         if (meta.getBlockState() instanceof ShulkerBox shulker) {
-            Inventory inv = shulker.getInventory();
+            // Snapshot inventory for unplaced shulker item — must setBlockState after fill
+            Inventory inv = shulker.getSnapshotInventory();
             inv.clear();
+            int slot = 0;
             for (ItemStack stack : contents) {
-                inv.addItem(stack.clone());
+                if (slot >= inv.getSize()) {
+                    break;
+                }
+                inv.setItem(slot++, stack.clone());
             }
             meta.setBlockState(shulker);
         }
