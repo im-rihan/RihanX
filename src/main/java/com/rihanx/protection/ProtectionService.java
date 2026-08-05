@@ -19,6 +19,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +28,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  * World and region protection facade.
@@ -51,6 +56,7 @@ public final class ProtectionService {
         this.selections = selections;
         this.worldFlags = new WorldFlagStore(plugin);
         this.regions = new RegionStore(plugin);
+        loadBypass();
     }
 
     public boolean isEnabled() {
@@ -64,11 +70,13 @@ public final class ProtectionService {
     public void reload() {
         worldFlags.reload();
         regions.load();
+        loadBypass();
     }
 
     public void save() {
         worldFlags.save();
         regions.save();
+        saveBypass();
     }
 
     public @NotNull MessageManager getPluginMessages() {
@@ -89,16 +97,53 @@ public final class ProtectionService {
 
     public boolean toggleBypass(@NotNull Player player) {
         UUID id = player.getUniqueId();
+        boolean enabled;
         if (bypass.contains(id)) {
             bypass.remove(id);
-            return false;
+            enabled = false;
+        } else {
+            bypass.add(id);
+            enabled = true;
         }
-        bypass.add(id);
-        return true;
+        saveBypass();
+        return enabled;
     }
 
     public boolean hasBypass(@Nullable Player player) {
         return player != null && bypass.contains(player.getUniqueId());
+    }
+
+    private void loadBypass() {
+        bypass.clear();
+        File file = new File(plugin.getDataFolder(), "bypass.yml");
+        if (!file.exists()) {
+            return;
+        }
+        FileConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        for (String raw : yaml.getStringList("players")) {
+            try {
+                bypass.add(UUID.fromString(raw));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+    }
+
+    private void saveBypass() {
+        File file = new File(plugin.getDataFolder(), "bypass.yml");
+        FileConfiguration yaml = new YamlConfiguration();
+        List<String> ids = new ArrayList<>();
+        for (UUID id : bypass) {
+            ids.add(id.toString());
+        }
+        yaml.set("players", ids);
+        try {
+            if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
+                plugin.getLogger().warning("Could not create data folder for bypass.yml");
+            }
+            yaml.save(file);
+        } catch (IOException ex) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save bypass.yml", ex);
+        }
     }
 
     /**
@@ -351,6 +396,10 @@ public final class ProtectionService {
         ));
         messages.send(sender, "protect-region-info-line", MessageManager.placeholders("key", "Volume", "value", region.volume()));
         messages.send(sender, "protect-region-info-line", MessageManager.placeholders(
+                "key", "Priority",
+                "value", region.getPriority()
+        ));
+        messages.send(sender, "protect-region-info-line", MessageManager.placeholders(
                 "key", "Owners",
                 "value", formatUuids(region.getOwners())
         ));
@@ -426,6 +475,68 @@ public final class ProtectionService {
         messages.send(sender, "protect-member-removed", MessageManager.placeholders(
                 "player", targetName,
                 "name", region.getName()
+        ));
+        return true;
+    }
+
+    public boolean addOwner(
+            @NotNull CommandSender sender,
+            @NotNull World world,
+            @NotNull String name,
+            @NotNull UUID target,
+            @NotNull String targetName
+    ) {
+        Region region = regions.get(world.getName(), name);
+        if (region == null) {
+            messages.send(sender, "protect-region-missing", MessageManager.placeholders("name", name.toLowerCase(Locale.ROOT)));
+            return false;
+        }
+        region.addOwner(target);
+        regions.put(region);
+        messages.send(sender, "protect-owner-added", MessageManager.placeholders(
+                "player", targetName,
+                "name", region.getName()
+        ));
+        return true;
+    }
+
+    public boolean removeOwner(
+            @NotNull CommandSender sender,
+            @NotNull World world,
+            @NotNull String name,
+            @NotNull UUID target,
+            @NotNull String targetName
+    ) {
+        Region region = regions.get(world.getName(), name);
+        if (region == null) {
+            messages.send(sender, "protect-region-missing", MessageManager.placeholders("name", name.toLowerCase(Locale.ROOT)));
+            return false;
+        }
+        region.removeOwner(target);
+        regions.put(region);
+        messages.send(sender, "protect-owner-removed", MessageManager.placeholders(
+                "player", targetName,
+                "name", region.getName()
+        ));
+        return true;
+    }
+
+    public boolean setPriority(
+            @NotNull CommandSender sender,
+            @NotNull World world,
+            @NotNull String name,
+            int priority
+    ) {
+        Region region = regions.get(world.getName(), name);
+        if (region == null) {
+            messages.send(sender, "protect-region-missing", MessageManager.placeholders("name", name.toLowerCase(Locale.ROOT)));
+            return false;
+        }
+        region.setPriority(priority);
+        regions.put(region);
+        messages.send(sender, "protect-priority-set", MessageManager.placeholders(
+                "name", region.getName(),
+                "priority", priority
         ));
         return true;
     }

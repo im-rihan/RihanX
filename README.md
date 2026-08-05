@@ -125,7 +125,7 @@ Supports every vanilla biome and structure (tab-complete).
 | `/rxtp safe` | `rihanx.tp.safe` | Safe spot near you |
 | `/rxtp back` · `/rx tp back` · `/rx back` · `/back` | `rihanx.tp.back` | Previous location |
 
-Player names support partial match + tab completion (e.g. `/rxtp player Ste` → Steve).
+Player names support partial match + tab completion (e.g. `/rxtp player Ste` → Steve). Tab also suggests online names for `/fly`, `/god`, `/heal`, `/feed`, `/gm`, `/player …`, `/inv see`, `/rxtp here`, etc.
 
 **Self vs other:** `/fly`, `/god`, `/heal`, `/feed`, `/gm` with no name always affect **only you**. Naming a player affects **only that one player** — never everyone online.
 
@@ -330,6 +330,71 @@ Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-e
 | `/perf chunks` | `rihanx.performance.chunks` | Nearby loaded chunks |
 | `/perf entities` | `rihanx.performance.entities` | Entity breakdown |
 
+### Homes — `/home` · `/sethome` · `/delhome` · `/homes`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/home [name]` | `rihanx.home` | Teleport to a home (default name `home`) |
+| `/sethome [name]` | `rihanx.home.set` | Set home at your location |
+| `/delhome [name]` | `rihanx.home.delete` | Delete a home |
+| `/homes` | `rihanx.home.list` | List homes |
+
+Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`. Also `/rx home …`.
+
+### Warps — `/warp` · `/setwarp` · `/delwarp` · `/warps`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/warp <name>` | `rihanx.warp` | Teleport to a server warp |
+| `/setwarp <name>` | `rihanx.warp.set` | Create/update warp |
+| `/delwarp <name>` | `rihanx.warp.delete` | Delete warp |
+| `/warps` | `rihanx.warp.list` | List warps |
+
+### TPA — `/tpa` · `/tpahere` · `/tpaccept` · `/tpdeny` · `/tpcancel`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/tpa <player>` | `rihanx.tpa` | Request to teleport to them |
+| `/tpahere <player>` | `rihanx.tpa.here` | Request they teleport to you |
+| `/tpaccept` | `rihanx.tpa.accept` | Accept pending request |
+| `/tpdeny` | `rihanx.tpa.deny` | Deny pending request |
+| `/tpcancel` | `rihanx.tpa.cancel` | Cancel your outgoing request |
+
+Config: `tpa.timeout-seconds` (60), `tpa.cooldown-seconds` (5). Vanished targets are hidden unless `rihanx.see.vanished`.
+
+### Kits — `/kit` · `/kits`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/kit <name>` | `rihanx.kit` | Claim a kit |
+| `/kits` | `rihanx.kit.list` | List kits |
+
+Definitions in `kits.yml`. Bundled kits (synced on reload when `kits.sync-bundled: true`):
+
+| Kit | Contents (summary) | Cooldown |
+|-----|--------------------|----------|
+| `starter` | Leather armor, wood tools, food, torches, bed, shield | 1h |
+| `survival` | **Elytra** + fireworks, iron gear/tools, food, building, totem, pearls | 24h |
+| `pro` | **Netherite** set + elytra, shulkers, totems×3, god apples, ores, base gear | 48h |
+
+Examples: `/kit survival` · `/kit pro`
+
+**Delivery:** You do **not** craft or place a chest first. `/kit …` **auto-creates** filled chest(s) next to you. Config `kits.delivery`: `auto` (default) · `shulker` (portable kit chest item) · `inventory` (loose items).
+
+### Do you still need EssentialsX?
+
+For most Minehut survival servers using RihanX: **no — you can remove EssentialsX** if you only used it for homes, warps, TPA, kits, heal/fly/god, back, and spawn-ish teleports. RihanX covers those.
+
+**Keep EssentialsX** only if you still need features RihanX does not have, for example:
+
+- Economy (`/pay`, `/balance`, shops, worth)
+- Chat (`/msg`, `/nick`, mail)
+- Punishment suite (`/mute`, `/ban`, `/jail`, `/kick` as Essentials commands)
+- AFK / vanish beyond RihanX vanish
+- `/spawn` as a dedicated player spawn warp (you can set a `/setwarp spawn` instead)
+
+If you remove EssentialsX: delete its jar, restart, and grant players `rihanx.home` / `rihanx.warp` / `rihanx.tpa` / `rihanx.kit` (or keep default op). That also removes the “out of date” EssentialsX chat spam.
+
 ### Protect — `/rx protect` · `/protect` · `/guard`
 
 | Command | Permission | Description |
@@ -340,14 +405,16 @@ Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-e
 | `/protect pos1` / `pos2` | `rihanx.protect.wand` | Set corners |
 | `/protect define <name>` | `rihanx.protect.region` | Create region |
 | `/protect redefine <name>` | `rihanx.protect.region` | Resize region |
-| `/protect delete <name>` | `rihanx.protect.region` | Delete region |
+| `/protect delete <name>` | `rihanx.protect.region` | Delete region (confirm GUI) |
 | `/protect info [name]` | `rihanx.protect.region` | Region info |
 | `/protect list` | `rihanx.protect.region` | List regions |
 | `/protect setflag <name> <flag> <value>` | `rihanx.protect.region` | Per-region flag |
 | `/protect addmember \| removemember <name> <player>` | `rihanx.protect.region` | Members |
+| `/protect addowner \| removeowner <name> <player>` | `rihanx.protect.region` | Owners |
+| `/protect priority <name> <n>` | `rihanx.protect.region` | Region priority |
 | `/protect bypass` | `rihanx.protect.bypass` | Toggle personal bypass |
 
-Flags: `tnt`, `creeper-explosion`, `other-explosion`, `fire-spread`, `fire-destroy`, `lava-fire`, `build`, `break`, `place`, `pvp`, `mob-grief`, `enderman-grief`, `leaf-decay`, `ice-melt`, `crop-trample`, `entry`.
+Flags: `tnt`, `creeper-explosion`, `other-explosion`, `fire-spread`, `fire-destroy`, `lava-fire`, `build`, `break`, `place`, `pvp`, `mob-grief`, `enderman-grief`, `leaf-decay`, `ice-melt`, `crop-trample`, `entry`, `chest-access`, `use`, `vehicle`, `item-drop`.
 
 Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 
@@ -363,10 +430,11 @@ Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 | `/edit replace <from> <to>` | `rihanx.edit` | Replace blocks |
 | `/edit walls \| outline \| hollow <material>` | `rihanx.edit` | Shell fills |
 | `/edit clear` | `rihanx.edit` | Set to air |
+| `/edit expand \| contract <n> [dir]` | `rihanx.edit` | Grow/shrink selection |
 | `/edit copy` / `paste` / `rotate <deg>` | `rihanx.edit.clipboard` | Clipboard |
 | `/edit undo` / `redo` | `rihanx.edit.history` | History |
 
-Limits: `edit.max-blocks` (200000), `edit.max-undo` (10). Protected regions need membership or `/protect bypass`.
+Limits: `edit.max-blocks` (200000), `edit.max-undo` (10), `edit.confirm-above` (50000 — GUI confirm for large set/clear/replace). Protected regions need membership or `/protect bypass`.
 
 ### Admin — `/rx admin` · `/admin`
 
@@ -380,12 +448,57 @@ Limits: `edit.max-blocks` (200000), `edit.max-undo` (10). Protected regions need
 
 ---
 
+## Sleep / night skip
+
+By default Minecraft can skip night when only some players sleep. RihanX forces sunrise **only when every required online player is in a bed**:
+
+- Sets `playersSleepingPercentage` to **100** on overworlds
+- Cancels `TimeSkipEvent` (NIGHT_SKIP) if anyone required is still awake
+- Shows who is still awake in chat
+
+Config (`config.yml` → `sleep`):
+
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `enabled` | `true` | Master switch |
+| `players-sleeping-percentage` | `100` | Vanilla gamerule |
+| `same-world-only` | `true` | Only players in that overworld must sleep |
+| `ignore-other-dimensions` | `true` | Nether/End players do not block sunrise |
+| `ignore-spectators` / `ignore-vanished` | `true` | Those players do not need to sleep |
+
+After changing config: `/admin reload`. Missing keys are merged from the jar defaults via `ConfigMerger`.
+
+## Timezone
+
+`/server info` clock is always **IST (`Asia/Kolkata`)**. RihanX forces this on reload.
+
+### EssentialsX “out of date” chat message
+
+That red line (`You're N EssentialsX dev build(s) out of date!`) comes from **EssentialsX**, not RihanX. To hide it, in `plugins/Essentials/config.yml` set:
+
+```yaml
+update-check: false
+```
+
+Then restart or `/ess reload`. Or update EssentialsX from https://essentialsx.net/downloads.html.
+
+## PlaceholderAPI (optional)
+
+Soft-depend. When PlaceholderAPI is installed:
+
+| Placeholder | Value |
+|-------------|--------|
+| `%rihanx_homes_count%` | Player home count |
+| `%rihanx_homes%` | Comma-separated home names |
+| `%rihanx_warps_count%` | Server warp count |
+
 ## Configuration
 
-- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, **item.enchant XP**
+- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, sleep, homes, tpa, kits, **timezone (`general.timezone`)**, **item.enchant XP**
 - `messages.yml` — every user-facing string (MiniMessage + legacy)
+- `kits.yml` — kit definitions
 - `permissions.yml` — permission node list (plugin.yml is authoritative for Bukkit)
-- `protection.yml` / `regions.yml` — created at runtime for world flags and regions
+- `protection.yml` / `regions.yml` / `homes.yml` / `warps.yml` — created at runtime
 
 Optional SQLite back-location storage: set `database.enabled: true`.
 
@@ -397,14 +510,17 @@ Optional SQLite back-location storage: set `database.enabled: true`.
 com.rihanx
 ├── api            Public facade + permission constants
 ├── commands       /rx + standalone module router
+│   └── modules    Home, Warp, Tpa, Kit, Protect, Edit handlers
 ├── tabcomplete    Tab completion (both styles)
 ├── managers       Config, messages, cooldowns, freeze, vanish, god, back, commands
-├── protection     WorldGuard-lite (flags, regions, listeners)
-├── edit           WorldEdit-lite (selection, clipboard, history)
-├── slime / world / chunk / teleport / player / inventory / items
+├── home / warp / kits / teleport (incl. TPA)
+├── protection     WorldGuard-lite (flags, regions, owners, priority)
+├── edit           WorldEdit-lite (selection, clipboard, history, expand)
+├── placeholders   Soft-depend PlaceholderAPI
+├── slime / world / chunk / player / inventory / items
 ├── search         Biome/structure + block searches
 ├── performance    TPS / memory / entity reports
-├── gui            Simple GUI helpers
+├── gui            Confirm + info GUIs
 ├── cache / scheduler / database / models / listeners / utils
 └── RihanX.java    Main plugin
 ```

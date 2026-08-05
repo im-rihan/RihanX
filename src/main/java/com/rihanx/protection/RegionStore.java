@@ -64,6 +64,7 @@ public final class RegionStore {
                         section.getInt("maxY"),
                         section.getInt("maxZ")
                 );
+                region.setPriority(section.getInt("priority", 0));
                 for (String owner : section.getStringList("owners")) {
                     try {
                         region.addOwner(UUID.fromString(owner));
@@ -104,6 +105,7 @@ public final class RegionStore {
                 yaml.set(path + ".maxX", region.getMaxX());
                 yaml.set(path + ".maxY", region.getMaxY());
                 yaml.set(path + ".maxZ", region.getMaxZ());
+                yaml.set(path + ".priority", region.getPriority());
                 List<String> owners = new ArrayList<>();
                 region.getOwners().forEach(uuid -> owners.add(uuid.toString()));
                 yaml.set(path + ".owners", owners);
@@ -173,7 +175,14 @@ public final class RegionStore {
                 result.add(region);
             }
         }
-        result.sort((a, b) -> Long.compare(a.volume(), b.volume()));
+        // Highest priority first, then smallest volume
+        result.sort((a, b) -> {
+            int byPriority = Integer.compare(b.getPriority(), a.getPriority());
+            if (byPriority != 0) {
+                return byPriority;
+            }
+            return Long.compare(a.volume(), b.volume());
+        });
         return result;
     }
 }

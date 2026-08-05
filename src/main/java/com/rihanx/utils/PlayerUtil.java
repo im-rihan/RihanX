@@ -1,9 +1,11 @@
 package com.rihanx.utils;
 
+import com.rihanx.managers.MessageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Player state helpers for heal, feed, fly, repair, and lookups.
@@ -37,18 +40,72 @@ public final class PlayerUtil {
             return exact;
         }
         // Partial / case-insensitive match — only if exactly one player matches
+        List<Player> matches = findMatches(trimmed);
+        return matches.size() == 1 ? matches.getFirst() : null;
+    }
+
+    /**
+     * Online players whose names equal or start with {@code prefix} (case-insensitive).
+     */
+    public static @NotNull List<Player> findMatches(@NotNull String prefix) {
+        String trimmed = prefix.trim();
+        if (trimmed.isEmpty()) {
+            return List.of();
+        }
         String needle = trimmed.toLowerCase(Locale.ROOT);
-        Player match = null;
+        List<Player> matches = new ArrayList<>();
         for (Player online : Bukkit.getOnlinePlayers()) {
             String onlineName = online.getName().toLowerCase(Locale.ROOT);
             if (onlineName.equals(needle) || onlineName.startsWith(needle)) {
-                if (match != null) {
-                    return null; // ambiguous
-                }
-                match = online;
+                matches.add(online);
             }
         }
-        return match;
+        return matches;
+    }
+
+    /**
+     * Resolve an online player by exact or unique prefix match.
+     * On failure, sends {@code player-not-found} or {@code player-ambiguous} with {@code {players}}.
+     */
+    public static @Nullable Player findPlayerOrHint(
+            @NotNull CommandSender sender,
+            @NotNull String name,
+            @NotNull MessageManager messages
+    ) {
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) {
+            messages.send(sender, "player-not-found", MessageManager.placeholders(
+                    "player", name,
+                    "players", ""
+            ));
+            return null;
+        }
+
+        Player exact = Bukkit.getPlayerExact(trimmed);
+        if (exact != null) {
+            return exact;
+        }
+
+        List<Player> matches = findMatches(trimmed);
+        if (matches.isEmpty()) {
+            messages.send(sender, "player-not-found", MessageManager.placeholders(
+                    "player", trimmed,
+                    "players", ""
+            ));
+            return null;
+        }
+        if (matches.size() == 1) {
+            return matches.getFirst();
+        }
+
+        String players = matches.stream()
+                .map(Player::getName)
+                .collect(Collectors.joining(", "));
+        messages.send(sender, "player-ambiguous", MessageManager.placeholders(
+                "player", trimmed,
+                "players", players
+        ));
+        return null;
     }
 
     public static @Nullable Player findPlayer(@NotNull UUID uuid) {

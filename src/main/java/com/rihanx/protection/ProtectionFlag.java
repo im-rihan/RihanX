@@ -24,7 +24,11 @@ public enum ProtectionFlag {
     LEAF_DECAY("leaf-decay"),
     ICE_MELT("ice-melt"),
     CROP_TRAMPLE("crop-trample"),
-    ENTRY("entry");
+    ENTRY("entry"),
+    CHEST_ACCESS("chest-access"),
+    USE("use"),
+    VEHICLE("vehicle"),
+    ITEM_DROP("item-drop");
 
     private final @NotNull String key;
 

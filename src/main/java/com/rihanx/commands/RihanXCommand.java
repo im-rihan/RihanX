@@ -2,6 +2,12 @@ package com.rihanx.commands;
 
 import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
+import com.rihanx.commands.modules.EditModule;
+import com.rihanx.commands.modules.HomeModule;
+import com.rihanx.commands.modules.KitModule;
+import com.rihanx.commands.modules.ProtectModule;
+import com.rihanx.commands.modules.TpaModule;
+import com.rihanx.commands.modules.WarpModule;
 import com.rihanx.managers.CooldownManager;
 import com.rihanx.managers.MessageManager;
 import com.rihanx.models.ChunkCoord;
@@ -36,7 +42,11 @@ public final class RihanXCommand implements CommandExecutor {
     public static final Set<String> MODULE_COMMANDS = Set.of(
             "slime", "world", "find", "chunk", "rxtp", "player", "inventory", "item",
             "search", "server", "performance", "protect", "edit", "admin", "back",
-            "fly", "god", "heal", "feed", "vanish", "gm"
+            "fly", "god", "heal", "feed", "vanish", "gm",
+            "home", "sethome", "delhome", "homes",
+            "warp", "setwarp", "delwarp", "warps",
+            "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
+            "kit", "kits"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -45,9 +55,21 @@ public final class RihanXCommand implements CommandExecutor {
     );
 
     private final @NotNull RihanX plugin;
+    private final @NotNull HomeModule homeModule;
+    private final @NotNull WarpModule warpModule;
+    private final @NotNull TpaModule tpaModule;
+    private final @NotNull KitModule kitModule;
+    private final @NotNull ProtectModule protectModule;
+    private final @NotNull EditModule editModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
+        this.homeModule = new HomeModule(plugin);
+        this.warpModule = new WarpModule(plugin);
+        this.tpaModule = new TpaModule(plugin);
+        this.kitModule = new KitModule(plugin);
+        this.protectModule = new ProtectModule(plugin);
+        this.editModule = new EditModule(plugin);
     }
 
     @Override
@@ -103,8 +125,12 @@ public final class RihanXCommand implements CommandExecutor {
             case "search" -> handleSearch(sender, subArgs, messages, cooldowns);
             case "server" -> handleServer(sender, subArgs, messages);
             case "performance", "perf" -> handlePerformance(sender, subArgs, messages);
-            case "protect", "guard" -> handleProtect(sender, subArgs, messages);
-            case "edit", "we" -> handleEdit(sender, subArgs, messages);
+            case "protect", "guard" -> protectModule.handle(sender, subArgs, messages);
+            case "edit", "we" -> editModule.handle(sender, subArgs, messages);
+            case "home", "sethome", "delhome", "homes" -> homeModule.handle(sender, module, subArgs, messages);
+            case "warp", "setwarp", "delwarp", "warps" -> warpModule.handle(sender, module, subArgs, messages);
+            case "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel" -> tpaModule.handle(sender, module, subArgs, messages);
+            case "kit", "kits" -> kitModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -114,8 +140,8 @@ public final class RihanXCommand implements CommandExecutor {
     }
 
     /**
-     * Standalone /fly /god /heal /feed /vanish /gm — always affects the sender
-     * unless an explicit non-blank player name is provided.
+     * Standalone /fly /god /heal /feed /vanish /gm.
+     * /vanish is always self-only; other shortcuts accept an optional player name.
      */
     private boolean handleSelfAction(
             @NotNull CommandSender sender,
@@ -123,6 +149,9 @@ public final class RihanXCommand implements CommandExecutor {
             @NotNull String[] args,
             @NotNull MessageManager messages
     ) {
+        if (action.equals("vanish")) {
+            return handlePlayer(sender, new String[]{"vanish"}, messages);
+        }
         if (action.equals("gm")) {
             // /gm <mode> [player]
             String[] playerArgs = new String[args.length + 1];
@@ -149,6 +178,10 @@ public final class RihanXCommand implements CommandExecutor {
             case "inv" -> "inventory";
             case "perf" -> "performance";
             case "rxtp" -> "tp";
+            case "sethome", "delhome", "homes" -> module;
+            case "setwarp", "delwarp", "warps" -> module;
+            case "tpahere", "tpaccept", "tpdeny", "tpcancel" -> module;
+            case "kits" -> module;
             default -> module;
         };
     }
@@ -173,6 +206,10 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "performance", "Performance reports");
         sendHelpLine(messages, sender, "protect", "World/region protection");
         sendHelpLine(messages, sender, "edit", "WorldEdit-lite tools");
+        sendHelpLine(messages, sender, "home", "Homes");
+        sendHelpLine(messages, sender, "warp", "Warps");
+        sendHelpLine(messages, sender, "tpa", "Teleport requests");
+        sendHelpLine(messages, sender, "kit", "Kits");
         sendHelpLine(messages, sender, "admin", "Admin tools");
         messages.send(sender, "help-dual");
     }
@@ -817,12 +854,8 @@ public final class RihanXCommand implements CommandExecutor {
             }
             case "vanish" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_VANISH, messages)) return true;
-                Player self = requirePlayer(sender, messages);
-                if (self == null) {
-                    return true;
-                }
-                // Vanish is always self-only
-                playerService.toggleVanish(self);
+                // /player vanish [name] can target another player; /vanish is self-only via handleSelfAction
+                playerService.toggleVanish(target);
             }
             case "cleareffects", "clearpotions" -> {
                 if (!checkOpPerm(sender, PermissionNodes.PLAYER_CLEAREFFECTS, messages)) return true;
@@ -1157,292 +1190,6 @@ public final class RihanXCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleProtect(@NotNull CommandSender sender, @NotNull String[] args, @NotNull MessageManager messages) {
-        if (!PermissionUtil.hasOpOnly(sender, PermissionNodes.PROTECT)) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        if (args.length == 0) {
-            usage(sender, "/rx protect <flag|flags|wand|pos1|pos2|define|redefine|delete|info|list|setflag|addmember|removemember|bypass>");
-            return true;
-        }
-        var protection = plugin.getProtectionService();
-        String sub = args[0].toLowerCase(Locale.ROOT);
-        switch (sub) {
-            case "flag" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_FLAG, messages)) return true;
-                if (args.length < 3) {
-                    usage(sender, "/rx protect flag <flag> <allow|deny|unset> [world]");
-                    return true;
-                }
-                com.rihanx.protection.ProtectionFlag flag = com.rihanx.protection.ProtectionFlag.fromKey(args[1]);
-                com.rihanx.protection.FlagValue value = com.rihanx.protection.FlagValue.parse(args[2]);
-                if (flag == null || value == null) {
-                    messages.send(sender, "invalid-argument", MessageManager.placeholders("input", args[1] + "/" + args[2]));
-                    return true;
-                }
-                World world;
-                if (args.length >= 4) {
-                    world = Bukkit.getWorld(args[3]);
-                    if (world == null) {
-                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[3]));
-                        return true;
-                    }
-                } else if (sender instanceof Player player) {
-                    world = player.getWorld();
-                } else {
-                    messages.send(sender, "player-only");
-                    return true;
-                }
-                protection.setWorldFlag(sender, world, flag, value);
-            }
-            case "flags" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_FLAG, messages)) return true;
-                World world;
-                if (args.length >= 2) {
-                    world = Bukkit.getWorld(args[1]);
-                    if (world == null) {
-                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[1]));
-                        return true;
-                    }
-                } else if (sender instanceof Player player) {
-                    world = player.getWorld();
-                } else {
-                    messages.send(sender, "player-only");
-                    return true;
-                }
-                protection.listWorldFlags(sender, world);
-            }
-            case "wand" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_WAND, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                protection.giveWand(player);
-            }
-            case "pos1", "pos2" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_WAND, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                protection.setPos(player, sub.equals("pos1") ? 1 : 2, player.getLocation());
-            }
-            case "define" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                if (args.length < 2) {
-                    usage(sender, "/rx protect define <name>");
-                    return true;
-                }
-                protection.define(player, args[1]);
-            }
-            case "redefine" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                if (args.length < 2) {
-                    usage(sender, "/rx protect redefine <name>");
-                    return true;
-                }
-                protection.redefine(player, args[1]);
-            }
-            case "delete" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                if (args.length < 2) {
-                    usage(sender, "/rx protect delete <name> [world]");
-                    return true;
-                }
-                World world;
-                if (args.length >= 3) {
-                    world = Bukkit.getWorld(args[2]);
-                    if (world == null) {
-                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[2]));
-                        return true;
-                    }
-                } else if (sender instanceof Player player) {
-                    world = player.getWorld();
-                } else {
-                    messages.send(sender, "player-only");
-                    return true;
-                }
-                protection.delete(sender, world, args[1]);
-            }
-            case "info" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                protection.sendInfo(sender, player, args.length >= 2 ? args[1] : null);
-            }
-            case "list" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                World world;
-                if (args.length >= 2) {
-                    world = Bukkit.getWorld(args[1]);
-                    if (world == null) {
-                        messages.send(sender, "world-not-found", MessageManager.placeholders("world", args[1]));
-                        return true;
-                    }
-                } else if (sender instanceof Player player) {
-                    world = player.getWorld();
-                } else {
-                    messages.send(sender, "player-only");
-                    return true;
-                }
-                protection.listRegions(sender, world);
-            }
-            case "setflag" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                if (args.length < 4) {
-                    usage(sender, "/rx protect setflag <name> <flag> <allow|deny|unset>");
-                    return true;
-                }
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                com.rihanx.protection.ProtectionFlag flag = com.rihanx.protection.ProtectionFlag.fromKey(args[2]);
-                com.rihanx.protection.FlagValue value = com.rihanx.protection.FlagValue.parse(args[3]);
-                if (flag == null || value == null) {
-                    messages.send(sender, "invalid-argument", MessageManager.placeholders("input", args[2] + "/" + args[3]));
-                    return true;
-                }
-                protection.setRegionFlag(sender, player.getWorld(), args[1], flag, value);
-            }
-            case "addmember", "removemember" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_REGION, messages)) return true;
-                if (args.length < 3) {
-                    usage(sender, "/rx protect " + sub + " <name> <player>");
-                    return true;
-                }
-                Player actor = requirePlayer(sender, messages);
-                if (actor == null) return true;
-                Player target = PlayerUtil.findPlayer(args[2]);
-                java.util.UUID targetId;
-                String targetName;
-                if (target != null) {
-                    targetId = target.getUniqueId();
-                    targetName = target.getName();
-                } else {
-                    @SuppressWarnings("deprecation")
-                    org.bukkit.OfflinePlayer offline = Bukkit.getOfflinePlayer(args[2]);
-                    if (offline.getUniqueId() == null) {
-                        messages.send(sender, "player-not-found", MessageManager.placeholders("player", args[2]));
-                        return true;
-                    }
-                    targetId = offline.getUniqueId();
-                    targetName = offline.getName() == null ? args[2] : offline.getName();
-                }
-                if (sub.equals("addmember")) {
-                    protection.addMember(sender, actor.getWorld(), args[1], targetId, targetName);
-                } else {
-                    protection.removeMember(sender, actor.getWorld(), args[1], targetId, targetName);
-                }
-            }
-            case "bypass" -> {
-                if (!checkOpPerm(sender, PermissionNodes.PROTECT_BYPASS, messages)) return true;
-                Player player = requirePlayer(sender, messages);
-                if (player == null) return true;
-                boolean enabled = protection.toggleBypass(player);
-                messages.send(player, enabled ? "protect-bypass-on" : "protect-bypass-off");
-            }
-            default -> usage(sender, "/rx protect <flag|flags|wand|pos1|pos2|define|redefine|delete|info|list|setflag|addmember|removemember|bypass>");
-        }
-        return true;
-    }
-
-    private boolean handleEdit(@NotNull CommandSender sender, @NotNull String[] args, @NotNull MessageManager messages) {
-        if (!PermissionUtil.hasOpOnly(sender, PermissionNodes.EDIT)) {
-            messages.send(sender, "no-permission");
-            return true;
-        }
-        Player player = requirePlayer(sender, messages);
-        if (player == null) {
-            return true;
-        }
-        if (args.length == 0) {
-            usage(sender, "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|undo|redo>");
-            return true;
-        }
-        var edit = plugin.getEditService();
-        String sub = args[0].toLowerCase(Locale.ROOT);
-        switch (sub) {
-            case "wand" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_WAND, messages)) return true;
-                edit.giveWand(player);
-            }
-            case "pos1", "pos2" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_WAND, messages)) return true;
-                edit.setPos(player, sub.equals("pos1") ? 1 : 2, player.getLocation());
-            }
-            case "size" -> edit.sendSize(player);
-            case "count" -> edit.count(player, args.length >= 2 ? args[1] : null);
-            case "set" -> {
-                if (args.length < 2) {
-                    usage(sender, "/rx edit set <material>");
-                    return true;
-                }
-                edit.set(player, args[1]);
-            }
-            case "replace" -> {
-                if (args.length < 3) {
-                    usage(sender, "/rx edit replace <from> <to>");
-                    return true;
-                }
-                edit.replace(player, args[1], args[2]);
-            }
-            case "walls" -> {
-                if (args.length < 2) {
-                    usage(sender, "/rx edit walls <material>");
-                    return true;
-                }
-                edit.walls(player, args[1]);
-            }
-            case "outline" -> {
-                if (args.length < 2) {
-                    usage(sender, "/rx edit outline <material>");
-                    return true;
-                }
-                edit.outline(player, args[1]);
-            }
-            case "hollow" -> {
-                if (args.length < 2) {
-                    usage(sender, "/rx edit hollow <material>");
-                    return true;
-                }
-                edit.hollow(player, args[1]);
-            }
-            case "clear" -> edit.clear(player);
-            case "copy" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
-                edit.copy(player);
-            }
-            case "paste" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
-                edit.paste(player);
-            }
-            case "rotate" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
-                if (args.length < 2) {
-                    usage(sender, "/rx edit rotate <90|180|270>");
-                    return true;
-                }
-                Integer degrees = NumberUtil.parseInt(args[1]);
-                if (degrees == null) {
-                    invalidNumber(sender, messages, args[1]);
-                    return true;
-                }
-                edit.rotate(player, degrees);
-            }
-            case "undo" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_HISTORY, messages)) return true;
-                edit.undo(player);
-            }
-            case "redo" -> {
-                if (!checkOpPerm(player, PermissionNodes.EDIT_HISTORY, messages)) return true;
-                edit.redo(player);
-            }
-            default -> usage(sender, "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|undo|redo>");
-        }
-        return true;
-    }
-
     private @NotNull String[] shift(@NotNull String[] args) {
         if (args.length <= 1) {
             return new String[0];
@@ -1453,33 +1200,20 @@ public final class RihanXCommand implements CommandExecutor {
     }
 
     private @Nullable Player requirePlayer(@NotNull CommandSender sender, @NotNull MessageManager messages) {
-        if (!(sender instanceof Player player)) {
-            messages.send(sender, "player-only");
-            return null;
-        }
-        return player;
+        return CommandSupport.requirePlayer(sender, messages);
     }
 
     private @Nullable Player resolveTarget(@NotNull CommandSender sender, @NotNull String[] args, int nameIndex) {
-        return resolveSelfOrNamed(sender, args, nameIndex, plugin.getMessageManager());
+        return CommandSupport.resolveSelfOrNamed(sender, args, nameIndex, plugin.getMessageManager());
     }
 
-    /**
-     * No / blank name → sender only. Explicit name → that one player only. Never all players.
-     */
     private @Nullable Player resolveSelfOrNamed(
             @NotNull CommandSender sender,
             @NotNull String[] args,
             int nameIndex,
             @NotNull MessageManager messages
     ) {
-        if (args.length > nameIndex) {
-            String raw = args[nameIndex] == null ? "" : args[nameIndex].trim();
-            if (!raw.isEmpty()) {
-                return resolveNamedPlayer(sender, raw, messages);
-            }
-        }
-        return requirePlayer(sender, messages);
+        return CommandSupport.resolveSelfOrNamed(sender, args, nameIndex, messages);
     }
 
     private @Nullable Player resolveNamedPlayer(
@@ -1487,33 +1221,15 @@ public final class RihanXCommand implements CommandExecutor {
             @NotNull String name,
             @NotNull MessageManager messages
     ) {
-        String trimmed = name.trim();
-        if (trimmed.isEmpty()) {
-            messages.send(sender, "player-not-found", MessageManager.placeholders("player", name));
-            return null;
-        }
-        Player target = PlayerUtil.findPlayer(trimmed);
-        if (target == null) {
-            messages.send(sender, "player-not-found", MessageManager.placeholders("player", trimmed));
-            return null;
-        }
-        return target;
+        return CommandSupport.resolveNamedPlayer(sender, name, messages);
     }
 
     private boolean checkPerm(@NotNull CommandSender sender, @NotNull String permission, @NotNull MessageManager messages) {
-        if (!PermissionUtil.has(sender, permission)) {
-            messages.send(sender, "no-permission");
-            return false;
-        }
-        return true;
+        return CommandSupport.checkPerm(sender, permission, messages);
     }
 
     private boolean checkOpPerm(@NotNull CommandSender sender, @NotNull String permission, @NotNull MessageManager messages) {
-        if (!PermissionUtil.hasOpOnly(sender, permission)) {
-            messages.send(sender, "no-permission");
-            return false;
-        }
-        return true;
+        return CommandSupport.checkOpPerm(sender, permission, messages);
     }
 
     private boolean checkCooldown(
@@ -1532,11 +1248,11 @@ public final class RihanXCommand implements CommandExecutor {
     }
 
     private void usage(@NotNull CommandSender sender, @NotNull String usage) {
-        plugin.getMessageManager().send(sender, "invalid-usage", MessageManager.placeholders("usage", usage));
+        CommandSupport.usage(plugin.getMessageManager(), sender, usage);
     }
 
     private void invalidNumber(@NotNull CommandSender sender, @NotNull MessageManager messages, @NotNull String input) {
-        messages.send(sender, "invalid-number", MessageManager.placeholders("input", input));
+        CommandSupport.invalidNumber(sender, messages, input);
     }
 
     private @Nullable BlockSearchService.SearchType mapBlockSearchType(@NotNull String typeName) {

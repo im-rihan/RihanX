@@ -1,0 +1,178 @@
+# RihanX kits
+# Format: MATERIAL:amount  (vanilla item ids)
+# Claim with /kit <name> or /kits
+
+kits:
+  # Light join kit
+  starter:
+    cooldown-seconds: 3600
+    items:
+      - WOODEN_SWORD:1
+      - WOODEN_PICKAXE:1
+      - WOODEN_AXE:1
+      - WOODEN_SHOVEL:1
+      - LEATHER_HELMET:1
+      - LEATHER_CHESTPLATE:1
+      - LEATHER_LEGGINGS:1
+      - LEATHER_BOOTS:1
+      - BREAD:32
+      - APPLE:16
+      - TORCH:64
+      - OAK_LOG:16
+      - CRAFTING_TABLE:1
+      - FURNACE:1
+      - CHEST:2
+      - WATER_BUCKET:1
+      - WHITE_BED:1
+      - SHIELD:1
+
+  # Full survival kit (elytra + tools + gear)
+  survival:
+    cooldown-seconds: 86400
+    items:
+      # Flight
+      - ELYTRA:1
+      - FIREWORK_ROCKET:64
+      - FIREWORK_ROCKET:64
+      # Armor
+      - IRON_HELMET:1
+      - IRON_CHESTPLATE:1
+      - IRON_LEGGINGS:1
+      - IRON_BOOTS:1
+      - SHIELD:1
+      # Tools / weapons
+      - IRON_SWORD:1
+      - IRON_PICKAXE:1
+      - IRON_AXE:1
+      - IRON_SHOVEL:1
+      - IRON_HOE:1
+      - BOW:1
+      - ARROW:64
+      # Food / farming
+      - COOKED_BEEF:32
+      - BREAD:32
+      - GOLDEN_APPLE:4
+      - GOLDEN_CARROT:16
+      - WHEAT_SEEDS:16
+      - BONE_MEAL:16
+      # Building / light
+      - TORCH:64
+      - TORCH:64
+      - OAK_LOG:64
+      - COBBLESTONE:64
+      - GLASS:32
+      - CRAFTING_TABLE:1
+      - FURNACE:1
+      - BLAST_FURNACE:1
+      - SMOKER:1
+      - CHEST:4
+      - ENDER_CHEST:1
+      - ANVIL:1
+      - ENCHANTING_TABLE:1
+      - BOOKSHELF:8
+      - BREWING_STAND:1
+      # Buckets / utility
+      - WATER_BUCKET:2
+      - LAVA_BUCKET:1
+      - BUCKET:2
+      - WHITE_BED:1
+      - COMPASS:1
+      - CLOCK:1
+      - MAP:1
+      - SPYGLASS:1
+      - FLINT_AND_STEEL:1
+      - SHEARS:1
+      - FISHING_ROD:1
+      # Combat / travel extras
+      - TOTEM_OF_UNDYING:1
+      - ENDER_PEARL:8
+      - EXPERIENCE_BOTTLE:16
+      - OAK_BOAT:1
+      - SADDLE:1
+      - IRON_HORSE_ARMOR:1
+
+  # Pro / VIP kit — netherite + heavy supplies
+  pro:
+    cooldown-seconds: 172800
+    items:
+      # Flight
+      - ELYTRA:1
+      - FIREWORK_ROCKET:64
+      - FIREWORK_ROCKET:64
+      - FIREWORK_ROCKET:64
+      # Netherite armor
+      - NETHERITE_HELMET:1
+      - NETHERITE_CHESTPLATE:1
+      - NETHERITE_LEGGINGS:1
+      - NETHERITE_BOOTS:1
+      - SHIELD:1
+      # Netherite tools / weapons
+      - NETHERITE_SWORD:1
+      - NETHERITE_PICKAXE:1
+      - NETHERITE_AXE:1
+      - NETHERITE_SHOVEL:1
+      - NETHERITE_HOE:1
+      - TRIDENT:1
+      - CROSSBOW:1
+      - ARROW:64
+      - SPECTRAL_ARROW:32
+      # Food / potions
+      - GOLDEN_APPLE:16
+      - ENCHANTED_GOLDEN_APPLE:2
+      - GOLDEN_CARROT:32
+      - COOKED_BEEF:64
+      - COOKED_BEEF:64
+      - TOTEM_OF_UNDYING:3
+      - EXPERIENCE_BOTTLE:64
+      # Blocks / base
+      - SHULKER_BOX:4
+      - ENDER_CHEST:1
+      - CHEST:8
+      - BARREL:4
+      - TORCH:64
+      - TORCH:64
+      - SEA_LANTERN:16
+      - OBSIDIAN:32
+      - CRYING_OBSIDIAN:16
+      - RESPAWN_ANCHOR:1
+      - GLOWSTONE:32
+      - OAK_LOG:64
+      - STONE:64
+      - GLASS:64
+      - CRAFTING_TABLE:1
+      - FURNACE:1
+      - BLAST_FURNACE:1
+      - SMOKER:1
+      - ANVIL:1
+      - SMITHING_TABLE:1
+      - GRINDSTONE:1
+      - ENCHANTING_TABLE:1
+      - BOOKSHELF:15
+      - BREWING_STAND:1
+      - CAULDRON:1
+      # Utility
+      - WATER_BUCKET:2
+      - LAVA_BUCKET:2
+      - POWDER_SNOW_BUCKET:1
+      - WHITE_BED:1
+      - COMPASS:1
+      - RECOVERY_COMPASS:1
+      - CLOCK:1
+      - MAP:1
+      - SPYGLASS:1
+      - FLINT_AND_STEEL:1
+      - SHEARS:1
+      - FISHING_ROD:1
+      - BRUSH:1
+      - ENDER_PEARL:16
+      - CHORUS_FRUIT:16
+      - OAK_BOAT:1
+      - SADDLE:1
+      - DIAMOND_HORSE_ARMOR:1
+      - NAME_TAG:4
+      - LEAD:4
+      - NETHERITE_INGOT:8
+      - DIAMOND:32
+      - EMERALD:32
+      - GOLD_INGOT:32
+      - IRON_INGOT:64

@@ -127,6 +127,31 @@ public final class PermissionNodes {
     public static final String EDIT_CLIPBOARD = EDIT + ".clipboard";
     public static final String EDIT_HISTORY = EDIT + ".history";
 
+    public static final String HOME = ROOT + ".home";
+    public static final String HOME_ALL = HOME + ".*";
+    public static final String HOME_SET = HOME + ".set";
+    public static final String HOME_DELETE = HOME + ".delete";
+    public static final String HOME_LIST = HOME + ".list";
+    public static final String HOME_TP = HOME + ".tp";
+
+    public static final String WARP = ROOT + ".warp";
+    public static final String WARP_ALL = WARP + ".*";
+    public static final String WARP_SET = WARP + ".set";
+    public static final String WARP_DELETE = WARP + ".delete";
+    public static final String WARP_LIST = WARP + ".list";
+    public static final String WARP_TP = WARP + ".tp";
+
+    public static final String TPA = ROOT + ".tpa";
+    public static final String TPA_ALL = TPA + ".*";
+    public static final String TPA_HERE = TPA + ".here";
+    public static final String TPA_ACCEPT = TPA + ".accept";
+    public static final String TPA_DENY = TPA + ".deny";
+    public static final String TPA_CANCEL = TPA + ".cancel";
+
+    public static final String KIT = ROOT + ".kit";
+    public static final String KIT_ALL = KIT + ".*";
+    public static final String KIT_LIST = KIT + ".list";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

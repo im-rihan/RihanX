@@ -20,10 +20,13 @@ import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.projectiles.ProjectileSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,6 +211,48 @@ public final class ProtectionListener implements Listener {
                 || !protection.isAllowed(victim, victim.getLocation(), ProtectionFlag.PVP)) {
             event.setCancelled(true);
             protection.getPluginMessages().send(attacker, "protect-denied-pvp");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onUseOrChest(@NotNull PlayerInteractEvent event) {
+        if (event.getClickedBlock() == null) {
+            return;
+        }
+        Player player = event.getPlayer();
+        org.bukkit.block.Block block = event.getClickedBlock();
+        if (block.getState() instanceof InventoryHolder) {
+            if (!protection.isAllowed(player, block.getLocation(), ProtectionFlag.CHEST_ACCESS)) {
+                event.setCancelled(true);
+                protection.getPluginMessages().send(player, "protect-denied-chest");
+                return;
+            }
+        }
+        Material type = block.getType();
+        if (type.isInteractable() && !protection.isAllowed(player, block.getLocation(), ProtectionFlag.USE)) {
+            event.setCancelled(true);
+            protection.getPluginMessages().send(player, "protect-denied-use");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onDrop(@NotNull PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        if (!protection.isAllowed(player, player.getLocation(), ProtectionFlag.ITEM_DROP)) {
+            event.setCancelled(true);
+            protection.getPluginMessages().send(player, "protect-denied-drop");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onVehiclePlace(@NotNull EntityPlaceEvent event) {
+        Player player = event.getPlayer();
+        if (player == null) {
+            return;
+        }
+        if (!protection.isAllowed(player, event.getBlock().getLocation(), ProtectionFlag.VEHICLE)) {
+            event.setCancelled(true);
+            protection.getPluginMessages().send(player, "protect-denied-vehicle");
         }
     }
 

@@ -10,6 +10,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.management.ManagementFactory;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +41,11 @@ public final class PerformanceService {
         sendLine(sender, "Players", Bukkit.getOnlinePlayers().size() + "/" + Bukkit.getMaxPlayers());
         sendLine(sender, "Worlds", String.valueOf(Bukkit.getWorlds().size()));
         sendLine(sender, "Java", System.getProperty("java.version"));
+        ZoneId zone = config.getTimezone();
+        ZonedDateTime now = ZonedDateTime.now(zone);
+        String zoneLabel = zone.getId().equals("Asia/Kolkata") ? "Asia/Kolkata (IST)" : zone.getId();
+        sendLine(sender, "Timezone", zoneLabel);
+        sendLine(sender, "Local time", DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm:ss a", Locale.ENGLISH).format(now));
     }
 
     public void sendTps(@NotNull CommandSender sender) {
@@ -67,6 +76,12 @@ public final class PerformanceService {
         long minutes = TimeUnit.MILLISECONDS.toMinutes(uptimeMs) % 60;
         String formatted = days + "d " + hours + "h " + minutes + "m";
         messages.send(sender, "server-uptime", MessageManager.placeholders("uptime", formatted));
+
+        long startMs = ManagementFactory.getRuntimeMXBean().getStartTime();
+        ZoneId zone = config.getTimezone();
+        String started = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm:ss a z", Locale.ENGLISH)
+                .format(Instant.ofEpochMilli(startMs).atZone(zone));
+        sendLine(sender, "Started", started);
     }
 
     public void sendNearbyChunks(@NotNull Player player) {

@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
- * WorldEdit-lite cuboid editing.
+ * WorldEdit-lite cuboid editing with full protect checks and chunked applies.
  */
 public final class EditService {
 
@@ -42,6 +43,7 @@ public final class EditService {
     private final @NotNull ProtectionService protection;
     private final @NotNull EditHistory history;
     private final @NotNull Map<UUID, Clipboard> clipboards = new ConcurrentHashMap<>();
+    private final @NotNull Map<UUID, BukkitTask> activeEdits = new ConcurrentHashMap<>();
 
     public EditService(
             @NotNull RihanX plugin,
@@ -58,6 +60,14 @@ public final class EditService {
 
     public int getMaxBlocks() {
         return plugin.getConfig().getInt("edit.max-blocks", 200_000);
+    }
+
+    public int getBlocksPerTick() {
+        return plugin.getConfig().getInt("edit.blocks-per-tick", 4000);
+    }
+
+    public long getConfirmAbove() {
+        return plugin.getConfig().getLong("edit.confirm-above", 50_000L);
     }
 
     public boolean usePhysics() {
@@ -194,13 +204,7 @@ public final class EditService {
         if (!canEditRegion(player, cuboid)) {
             return;
         }
-        BlockData data = material.createBlockData();
-        EditHistory.EditSession session = BlockApplier.fill(cuboid, data, block -> true, usePhysics());
-        history.push(player.getUniqueId(), session);
-        messages.send(player, "edit-set-done", MessageManager.placeholders(
-                "count", session.after().size(),
-                "material", MaterialUtil.key(material)
-        ));
+        runFill(player, cuboid, material.createBlockData(), block -> true, "set", MaterialUtil.key(material), null);
     }
 
     public void clear(@NotNull Player player) {
@@ -223,18 +227,8 @@ public final class EditService {
         if (!canEditRegion(player, cuboid)) {
             return;
         }
-        EditHistory.EditSession session = BlockApplier.replace(
-                cuboid,
-                block -> block.getType() == from,
-                to.createBlockData(),
-                usePhysics()
-        );
-        history.push(player.getUniqueId(), session);
-        messages.send(player, "edit-replace-done", MessageManager.placeholders(
-                "count", session.after().size(),
-                "from", MaterialUtil.key(from),
-                "to", MaterialUtil.key(to)
-        ));
+        runFill(player, cuboid, to.createBlockData(), block -> block.getType() == from, "replace",
+                MaterialUtil.key(from) + " → " + MaterialUtil.key(to), null);
     }
 
     public void walls(@NotNull Player player, @NotNull String materialName) {
@@ -279,19 +273,65 @@ public final class EditService {
         if (!canEditRegion(player, cuboid)) {
             return;
         }
-        BlockData data = material.createBlockData();
-        EditHistory.EditSession session = BlockApplier.fill(
+        runFill(
+                player,
+                cuboid,
+                material.createBlockData(),
+                block -> predicate.test(cuboid, block.getX(), block.getY(), block.getZ()),
+                kind,
+                MaterialUtil.key(material),
+                kind
+        );
+    }
+
+    private void runFill(
+            @NotNull Player player,
+            @NotNull Cuboid cuboid,
+            @NotNull BlockData data,
+            @NotNull Predicate<Block> filter,
+            @NotNull String mode,
+            @NotNull String materialLabel,
+            @Nullable String shapeKind
+    ) {
+        if (!beginEdit(player)) {
+            return;
+        }
+        Predicate<Block> gated = block -> filter.test(block) && canEditBlock(player, block);
+        messages.send(player, "edit-working", MessageManager.placeholders("volume", cuboid.volume()));
+        BukkitTask task = BlockApplier.fillChunked(
+                plugin,
                 cuboid,
                 data,
-                block -> predicate.test(cuboid, block.getX(), block.getY(), block.getZ()),
-                usePhysics()
+                gated,
+                usePhysics(),
+                getBlocksPerTick(),
+                session -> {
+                    activeEdits.remove(player.getUniqueId());
+                    history.push(player.getUniqueId(), session);
+                    if (shapeKind != null) {
+                        messages.send(player, "edit-shape-done", MessageManager.placeholders(
+                                "kind", shapeKind,
+                                "count", session.after().size(),
+                                "material", materialLabel
+                        ));
+                    } else if ("replace".equals(mode)) {
+                        messages.send(player, "edit-replace-done", MessageManager.placeholders(
+                                "count", session.after().size(),
+                                "from", materialLabel.contains("→") ? materialLabel.split("→")[0].trim() : materialLabel,
+                                "to", materialLabel.contains("→") ? materialLabel.split("→")[1].trim() : materialLabel
+                        ));
+                    } else {
+                        messages.send(player, "edit-set-done", MessageManager.placeholders(
+                                "count", session.after().size(),
+                                "material", materialLabel
+                        ));
+                    }
+                },
+                scanned -> { /* progress optional */ }
         );
-        history.push(player.getUniqueId(), session);
-        messages.send(player, "edit-shape-done", MessageManager.placeholders(
-                "kind", kind,
-                "count", session.after().size(),
-                "material", MaterialUtil.key(material)
-        ));
+        if (task != null) {
+            activeEdits.put(player.getUniqueId(), task);
+        }
     }
 
     public void copy(@NotNull Player player) {
@@ -350,32 +390,32 @@ public final class EditService {
         if (world == null) {
             return;
         }
+        if (!beginEdit(player)) {
+            return;
+        }
         int baseX = loc.getBlockX();
         int baseY = loc.getBlockY();
         int baseZ = loc.getBlockZ();
-        Cuboid bounds = new Cuboid(
-                world,
-                baseX,
-                baseY,
-                baseZ,
-                baseX + clipboard.getWidth() - 1,
-                baseY + clipboard.getHeight() - 1,
-                baseZ + clipboard.getLength() - 1
-        );
-        if (!canEditRegion(player, bounds)) {
-            return;
-        }
-        EditHistory.EditSession session = BlockApplier.paste(
+        messages.send(player, "edit-working", MessageManager.placeholders("volume", clipboard.size()));
+        BukkitTask task = BlockApplier.pasteChunked(
+                plugin,
                 world,
                 baseX,
                 baseY,
                 baseZ,
                 clipboard,
                 usePhysics(),
-                (block, data) -> canEditBlock(player, block)
+                (block, data) -> canEditBlock(player, block),
+                getBlocksPerTick(),
+                session -> {
+                    activeEdits.remove(player.getUniqueId());
+                    history.push(player.getUniqueId(), session);
+                    messages.send(player, "edit-paste-done", MessageManager.placeholders("count", session.after().size()));
+                }
         );
-        history.push(player.getUniqueId(), session);
-        messages.send(player, "edit-paste-done", MessageManager.placeholders("count", session.after().size()));
+        if (task != null) {
+            activeEdits.put(player.getUniqueId(), task);
+        }
     }
 
     public void rotate(@NotNull Player player, int degrees) {
@@ -398,9 +438,25 @@ public final class EditService {
             messages.send(player, "edit-undo-none");
             return;
         }
+        if (!beginEdit(player)) {
+            history.push(player.getUniqueId(), session);
+            return;
+        }
         World world = player.getWorld();
-        BlockApplier.applySnapshots(world, session.before(), usePhysics());
-        messages.send(player, "edit-undo-done", MessageManager.placeholders("count", session.before().size()));
+        BukkitTask task = BlockApplier.applySnapshotsChunked(
+                plugin,
+                world,
+                session.before(),
+                usePhysics(),
+                getBlocksPerTick(),
+                () -> {
+                    activeEdits.remove(player.getUniqueId());
+                    messages.send(player, "edit-undo-done", MessageManager.placeholders("count", session.before().size()));
+                }
+        );
+        if (task != null) {
+            activeEdits.put(player.getUniqueId(), task);
+        }
     }
 
     public void redo(@NotNull Player player) {
@@ -409,30 +465,109 @@ public final class EditService {
             messages.send(player, "edit-redo-none");
             return;
         }
+        if (!beginEdit(player)) {
+            return;
+        }
         World world = player.getWorld();
-        BlockApplier.applySnapshots(world, session.after(), usePhysics());
-        messages.send(player, "edit-redo-done", MessageManager.placeholders("count", session.after().size()));
+        BukkitTask task = BlockApplier.applySnapshotsChunked(
+                plugin,
+                world,
+                session.after(),
+                usePhysics(),
+                getBlocksPerTick(),
+                () -> {
+                    activeEdits.remove(player.getUniqueId());
+                    messages.send(player, "edit-redo-done", MessageManager.placeholders("count", session.after().size()));
+                }
+        );
+        if (task != null) {
+            activeEdits.put(player.getUniqueId(), task);
+        }
+    }
+
+    public void expand(@NotNull Player player, int amount, @NotNull String direction) {
+        Cuboid cuboid = requireSelection(player);
+        if (cuboid == null) {
+            return;
+        }
+        int minX = cuboid.getMinX();
+        int minY = cuboid.getMinY();
+        int minZ = cuboid.getMinZ();
+        int maxX = cuboid.getMaxX();
+        int maxY = cuboid.getMaxY();
+        int maxZ = cuboid.getMaxZ();
+        String dir = direction.toLowerCase(java.util.Locale.ROOT);
+        switch (dir) {
+            case "up", "u" -> maxY += amount;
+            case "down", "d" -> minY -= amount;
+            case "north", "n" -> minZ -= amount;
+            case "south", "s" -> maxZ += amount;
+            case "east", "e" -> maxX += amount;
+            case "west", "w" -> minX -= amount;
+            case "vert", "vertical" -> {
+                minY -= amount;
+                maxY += amount;
+            }
+            case "all" -> {
+                minX -= amount;
+                maxX += amount;
+                minY -= amount;
+                maxY += amount;
+                minZ -= amount;
+                maxZ += amount;
+            }
+            default -> {
+                messages.send(player, "invalid-argument", MessageManager.placeholders("input", direction));
+                return;
+            }
+        }
+        selections.setPos1(player, SelectionManager.Channel.EDIT,
+                new Location(cuboid.getWorld(), minX, minY, minZ));
+        selections.setPos2(player, SelectionManager.Channel.EDIT,
+                new Location(cuboid.getWorld(), maxX, maxY, maxZ));
+        Cuboid next = selections.getCuboid(player, SelectionManager.Channel.EDIT);
+        messages.send(player, "edit-expand-done", MessageManager.placeholders(
+                "amount", amount,
+                "direction", dir,
+                "volume", next == null ? 0 : next.volume()
+        ));
+    }
+
+    public void contract(@NotNull Player player, int amount, @NotNull String direction) {
+        expand(player, -Math.abs(amount), direction);
     }
 
     public void clearPlayer(@NotNull Player player) {
+        cancelActive(player.getUniqueId());
         selections.clear(player, SelectionManager.Channel.EDIT);
         clipboards.remove(player.getUniqueId());
         history.clear(player.getUniqueId());
     }
 
+    private boolean beginEdit(@NotNull Player player) {
+        if (activeEdits.containsKey(player.getUniqueId())) {
+            messages.send(player, "edit-busy");
+            return false;
+        }
+        return true;
+    }
+
+    private void cancelActive(@NotNull UUID id) {
+        BukkitTask task = activeEdits.remove(id);
+        if (task != null) {
+            task.cancel();
+        }
+    }
+
+    /**
+     * Full-volume protect check — every block in the cuboid must be editable.
+     */
     private boolean canEditRegion(@NotNull Player player, @NotNull Cuboid cuboid) {
         if (protection.hasBypass(player) || PermissionUtil.hasOpOnly(player, PermissionNodes.PROTECT_BYPASS)) {
             return true;
         }
-        // Sample corners + center; deny if any protected without membership
-        Location[] samples = {
-                new Location(cuboid.getWorld(), cuboid.getMinX(), cuboid.getMinY(), cuboid.getMinZ()),
-                new Location(cuboid.getWorld(), cuboid.getMaxX(), cuboid.getMaxY(), cuboid.getMaxZ()),
-                cuboid.getCenter()
-        };
-        for (Location sample : samples) {
-            if (!protection.isAllowed(player, sample, ProtectionFlag.BUILD)
-                    || !protection.isAllowed(player, sample, ProtectionFlag.PLACE)) {
+        for (Block block : cuboid) {
+            if (!canEditBlock(player, block)) {
                 messages.send(player, "edit-protected-deny");
                 return false;
             }
@@ -441,7 +576,7 @@ public final class EditService {
     }
 
     private boolean canEditBlock(@NotNull Player player, @NotNull Block block) {
-        if (protection.hasBypass(player)) {
+        if (protection.hasBypass(player) || PermissionUtil.hasOpOnly(player, PermissionNodes.PROTECT_BYPASS)) {
             return true;
         }
         return protection.isAllowed(player, block.getLocation(), ProtectionFlag.BUILD)

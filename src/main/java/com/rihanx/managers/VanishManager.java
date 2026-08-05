@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * Tracks vanished players and hides them from others.
@@ -18,9 +19,14 @@ public final class VanishManager {
 
     private final @NotNull Plugin plugin;
     private final Set<UUID> vanished = ConcurrentHashMap.newKeySet();
+    private @NotNull Consumer<Player> stateListener = player -> { };
 
     public VanishManager(@NotNull Plugin plugin) {
         this.plugin = plugin;
+    }
+
+    public void setStateListener(@NotNull Consumer<Player> stateListener) {
+        this.stateListener = stateListener;
     }
 
     public boolean vanish(@NotNull Player player) {
@@ -28,6 +34,7 @@ public final class VanishManager {
             return false;
         }
         applyVanish(player);
+        stateListener.accept(player);
         return true;
     }
 
@@ -36,6 +43,7 @@ public final class VanishManager {
             return false;
         }
         reveal(player);
+        stateListener.accept(player);
         return true;
     }
 

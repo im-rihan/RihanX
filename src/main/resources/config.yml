@@ -65,6 +65,8 @@ database:
 
 general:
   debug: false
+  # Forced to Asia/Kolkata (IST) — RihanX always uses India time for /server info
+  timezone: Asia/Kolkata
   persistent-back: true
   max-back-history: 10
   unfreeze-on-quit: true
@@ -117,3 +119,38 @@ edit:
   max-blocks: 200000
   max-undo: 10
   physics: false
+  # Blocks changed per tick for large edits (prevents TPS stalls)
+  blocks-per-tick: 4000
+  # Ask for GUI confirm when selection volume exceeds this
+  confirm-above: 50000
+
+# Night only becomes day when every required online player is sleeping
+sleep:
+  enabled: true
+  players-sleeping-percentage: 100
+  # true  = only players in the same overworld must sleep (recommended)
+  # false = every overworld player on the server must sleep
+  same-world-only: true
+  # Nether/End players never block overworld sunrise (beds explode there)
+  ignore-other-dimensions: true
+  ignore-spectators: true
+  ignore-vanished: true
+  ignore-creative: false
+
+homes:
+  max-default: 3
+  max-op: 20
+warps: {}
+tpa:
+  timeout-seconds: 60
+  cooldown-seconds: 5
+kits:
+  # definitions live in kits.yml
+  persist-cooldowns: true
+  # Keep starter + survival + pro kits updated from the plugin jar on reload
+  sync-bundled: true
+  # How kits are delivered (you never need to craft/place a chest first):
+  #   auto       = plugin auto-creates filled chests near you (default)
+  #   shulker    = gives portable filled kit-chest item(s) in inventory
+  #   inventory  = dump loose items into your inventory
+  delivery: auto

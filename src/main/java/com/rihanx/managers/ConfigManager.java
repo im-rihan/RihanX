@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.logging.Level;
 
@@ -27,6 +28,11 @@ public final class ConfigManager {
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         this.config = plugin.getConfig();
+        // Always keep server clock on IST
+        if (!"Asia/Kolkata".equals(config.getString("general.timezone"))) {
+            config.set("general.timezone", "Asia/Kolkata");
+            plugin.saveConfig();
+        }
     }
 
     public @NotNull FileConfiguration raw() {
@@ -122,7 +128,13 @@ public final class ConfigManager {
     }
 
     public int getCooldown(@NotNull String key) {
-        return config.getInt("cooldowns." + key, 0);
+        if (config.contains("cooldowns." + key)) {
+            return config.getInt("cooldowns." + key, 0);
+        }
+        if ("tpa".equals(key)) {
+            return config.getInt("tpa.cooldown-seconds", 5);
+        }
+        return 0;
     }
 
     public int getSlimeNearestRadius() {
@@ -202,6 +214,19 @@ public final class ConfigManager {
 
     public boolean isDebug() {
         return config.getBoolean("general.debug", false);
+    }
+
+    /**
+     * Server display timezone — always India Standard Time (Asia/Kolkata).
+     * Config key is kept for readability but is forced to IST on reload.
+     */
+    public @NotNull ZoneId getTimezone() {
+        return ZoneId.of("Asia/Kolkata");
+    }
+
+    public void forceIstTimezone() {
+        config.set("general.timezone", "Asia/Kolkata");
+        plugin.saveConfig();
     }
 
     public boolean persistentBack() {

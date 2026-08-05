@@ -31,6 +31,7 @@ public final class Region {
     private final @NotNull Set<UUID> owners = new HashSet<>();
     private final @NotNull Set<UUID> members = new HashSet<>();
     private final @NotNull Map<ProtectionFlag, FlagValue> flags = new EnumMap<>(ProtectionFlag.class);
+    private int priority = 0;
 
     public Region(
             @NotNull String name,
@@ -170,5 +171,13 @@ public final class Region {
 
     public long volume() {
         return (long) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 }

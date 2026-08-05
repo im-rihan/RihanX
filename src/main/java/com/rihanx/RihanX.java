@@ -7,10 +7,13 @@ import com.rihanx.database.DatabaseManager;
 import com.rihanx.edit.EditService;
 import com.rihanx.edit.SelectionManager;
 import com.rihanx.gui.GuiManager;
+import com.rihanx.home.HomeService;
 import com.rihanx.inventory.InventoryService;
 import com.rihanx.items.ItemService;
+import com.rihanx.kits.KitService;
 import com.rihanx.listeners.FreezeListener;
 import com.rihanx.listeners.PlayerListener;
+import com.rihanx.listeners.SleepListener;
 import com.rihanx.listeners.TeleportListener;
 import com.rihanx.listeners.WandListener;
 import com.rihanx.managers.BackLocationManager;
@@ -23,6 +26,7 @@ import com.rihanx.managers.GodManager;
 import com.rihanx.managers.MessageManager;
 import com.rihanx.managers.VanishManager;
 import com.rihanx.performance.PerformanceService;
+import com.rihanx.placeholders.RihanXPlaceholders;
 import com.rihanx.player.PlayerService;
 import com.rihanx.protection.ProtectionListener;
 import com.rihanx.protection.ProtectionService;
@@ -33,6 +37,9 @@ import com.rihanx.search.FindService;
 import com.rihanx.slime.SlimeService;
 import com.rihanx.teleport.TeleportManager;
 import com.rihanx.teleport.TeleportService;
+import com.rihanx.teleport.TpaService;
+import com.rihanx.utils.ConfigMerger;
+import com.rihanx.warp.WarpService;
 import com.rihanx.world.WorldService;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +63,10 @@ public final class RihanX extends JavaPlugin {
     private SearchCache searchCache;
     private TeleportManager teleportManager;
     private TeleportService teleportService;
+    private TpaService tpaService;
+    private HomeService homeService;
+    private WarpService warpService;
+    private KitService kitService;
     private SlimeService slimeService;
     private WorldService worldService;
     private FindService findService;
@@ -70,11 +81,13 @@ public final class RihanX extends JavaPlugin {
     private EditService editService;
     private GuiManager guiManager;
     private CommandManager commandManager;
+    private SleepListener sleepListener;
     private RihanXAPI api;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        ConfigMerger.mergeMissingDefaults(this);
         if (!getDataFolder().exists() && !getDataFolder().mkdirs()) {
             getLogger().warning("Failed to create plugin data folder");
         }
@@ -96,6 +109,10 @@ public final class RihanX extends JavaPlugin {
         this.findService = new FindService(configManager, messageManager, schedulerUtil, asyncTaskTracker, searchCache);
         this.blockSearchService = new BlockSearchService(configManager, messageManager, schedulerUtil, asyncTaskTracker, searchCache, findService);
         this.teleportService = new TeleportService(teleportManager, configManager, messageManager, backLocationManager, findService, searchCache);
+        this.tpaService = new TpaService(this, messageManager, teleportManager, cooldownManager, vanishManager, schedulerUtil);
+        this.homeService = new HomeService(this, messageManager, teleportManager);
+        this.warpService = new WarpService(this, messageManager, teleportManager);
+        this.kitService = new KitService(this, messageManager);
         this.slimeService = new SlimeService(configManager, messageManager, schedulerUtil, asyncTaskTracker, searchCache);
         this.worldService = new WorldService(messageManager);
         this.chunkService = new ChunkService(messageManager);
@@ -128,7 +145,13 @@ public final class RihanX extends JavaPlugin {
                 playerService,
                 inventoryService,
                 itemService,
-                performanceService
+                performanceService,
+                protectionService,
+                editService,
+                homeService,
+                warpService,
+                tpaService,
+                kitService
         );
 
         this.commandManager = new CommandManager(this);
@@ -142,12 +165,20 @@ public final class RihanX extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new TeleportListener(teleportManager, messageManager, configManager), this);
         getServer().getPluginManager().registerEvents(new ProtectionListener(protectionService), this);
         getServer().getPluginManager().registerEvents(new WandListener(protectionService, editService), this);
+        this.sleepListener = new SleepListener(this, messageManager, vanishManager);
+        vanishManager.setStateListener(sleepListener::syncSleepingIgnored);
+        getServer().getPluginManager().registerEvents(sleepListener, this);
+
+        RihanXPlaceholders.tryRegister(this);
 
         getLogger().info("RihanX v" + getPluginMeta().getVersion() + " enabled (Paper 26.2).");
     }
 
     @Override
     public void onDisable() {
+        if (tpaService != null) {
+            tpaService.clearAll();
+        }
         if (teleportManager != null) {
             teleportManager.clear();
         }
@@ -185,10 +216,24 @@ public final class RihanX extends JavaPlugin {
     }
 
     public void reloadPlugin() {
+        reloadConfig();
+        ConfigMerger.mergeMissingDefaults(this);
         configManager.reload();
         messageManager.reload();
+        if (kitService != null) {
+            kitService.reload();
+        }
+        if (homeService != null) {
+            homeService.reload();
+        }
+        if (warpService != null) {
+            warpService.reload();
+        }
         if (protectionService != null) {
             protectionService.reload();
+        }
+        if (sleepListener != null) {
+            sleepListener.refresh();
         }
         getLogger().info("RihanX configuration reloaded.");
     }
@@ -251,6 +296,22 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull TeleportService getTeleportService() {
         return teleportService;
+    }
+
+    public @NotNull TpaService getTpaService() {
+        return tpaService;
+    }
+
+    public @NotNull HomeService getHomeService() {
+        return homeService;
+    }
+
+    public @NotNull WarpService getWarpService() {
+        return warpService;
+    }
+
+    public @NotNull KitService getKitService() {
+        return kitService;
     }
 
     public @NotNull SlimeService getSlimeService() {

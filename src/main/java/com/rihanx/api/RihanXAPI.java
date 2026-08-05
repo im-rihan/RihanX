@@ -3,8 +3,11 @@ package com.rihanx.api;
 import com.rihanx.cache.SearchCache;
 import com.rihanx.chunk.ChunkService;
 import com.rihanx.database.DatabaseManager;
+import com.rihanx.edit.EditService;
+import com.rihanx.home.HomeService;
 import com.rihanx.inventory.InventoryService;
 import com.rihanx.items.ItemService;
+import com.rihanx.kits.KitService;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.ConfigManager;
 import com.rihanx.managers.CooldownManager;
@@ -13,12 +16,15 @@ import com.rihanx.managers.MessageManager;
 import com.rihanx.managers.VanishManager;
 import com.rihanx.performance.PerformanceService;
 import com.rihanx.player.PlayerService;
+import com.rihanx.protection.ProtectionService;
 import com.rihanx.scheduler.AsyncTaskTracker;
 import com.rihanx.scheduler.SchedulerUtil;
 import com.rihanx.search.BlockSearchService;
 import com.rihanx.search.FindService;
 import com.rihanx.slime.SlimeService;
 import com.rihanx.teleport.TeleportService;
+import com.rihanx.teleport.TpaService;
+import com.rihanx.warp.WarpService;
 import com.rihanx.world.WorldService;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +53,12 @@ public final class RihanXAPI {
     private final @NotNull InventoryService inventoryService;
     private final @NotNull ItemService itemService;
     private final @NotNull PerformanceService performanceService;
+    private final @NotNull ProtectionService protectionService;
+    private final @NotNull EditService editService;
+    private final @NotNull HomeService homeService;
+    private final @NotNull WarpService warpService;
+    private final @NotNull TpaService tpaService;
+    private final @NotNull KitService kitService;
 
     public RihanXAPI(
             @NotNull ConfigManager configManager,
@@ -68,7 +80,13 @@ public final class RihanXAPI {
             @NotNull PlayerService playerService,
             @NotNull InventoryService inventoryService,
             @NotNull ItemService itemService,
-            @NotNull PerformanceService performanceService
+            @NotNull PerformanceService performanceService,
+            @NotNull ProtectionService protectionService,
+            @NotNull EditService editService,
+            @NotNull HomeService homeService,
+            @NotNull WarpService warpService,
+            @NotNull TpaService tpaService,
+            @NotNull KitService kitService
     ) {
         this.configManager = configManager;
         this.messageManager = messageManager;
@@ -90,6 +108,12 @@ public final class RihanXAPI {
         this.inventoryService = inventoryService;
         this.itemService = itemService;
         this.performanceService = performanceService;
+        this.protectionService = protectionService;
+        this.editService = editService;
+        this.homeService = homeService;
+        this.warpService = warpService;
+        this.tpaService = tpaService;
+        this.kitService = kitService;
     }
 
     public @NotNull ConfigManager config() {
@@ -170,5 +194,29 @@ public final class RihanXAPI {
 
     public @NotNull PerformanceService performance() {
         return performanceService;
+    }
+
+    public @NotNull ProtectionService protection() {
+        return protectionService;
+    }
+
+    public @NotNull EditService edit() {
+        return editService;
+    }
+
+    public @NotNull HomeService home() {
+        return homeService;
+    }
+
+    public @NotNull WarpService warp() {
+        return warpService;
+    }
+
+    public @NotNull TpaService tpa() {
+        return tpaService;
+    }
+
+    public @NotNull KitService kit() {
+        return kitService;
     }
 }

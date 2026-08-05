@@ -7,6 +7,7 @@ author: Rihan
 website: https://github.com/im-rihan/RihanX
 folia-supported: false
 load: POSTWORLD
+softdepend: [PlaceholderAPI]
 
 commands:
   rihanx:
@@ -102,6 +103,66 @@ commands:
     description: Set your gamemode (optional player).
     usage: /gm <survival|creative|adventure|spectator> [player]
     permission: rihanx.player.gamemode
+  home:
+    description: Teleport to a home (also /rx home).
+    usage: /home [name]
+    permission: rihanx.home
+  sethome:
+    description: Set a home.
+    usage: /sethome [name]
+    permission: rihanx.home.set
+  delhome:
+    description: Delete a home.
+    usage: /delhome [name]
+    permission: rihanx.home.delete
+  homes:
+    description: List your homes.
+    usage: /homes
+    permission: rihanx.home.list
+  warp:
+    description: Teleport to a warp (also /rx warp).
+    usage: /warp <name>
+    permission: rihanx.warp
+  setwarp:
+    description: Set a server warp.
+    usage: /setwarp <name>
+    permission: rihanx.warp.set
+  delwarp:
+    description: Delete a server warp.
+    usage: /delwarp <name>
+    permission: rihanx.warp.delete
+  warps:
+    description: List warps.
+    usage: /warps
+    permission: rihanx.warp.list
+  tpa:
+    description: Request to teleport to a player.
+    usage: /tpa <player>
+    permission: rihanx.tpa
+  tpahere:
+    description: Request a player to teleport to you.
+    usage: /tpahere <player>
+    permission: rihanx.tpa.here
+  tpaccept:
+    description: Accept a teleport request.
+    usage: /tpaccept
+    permission: rihanx.tpa.accept
+  tpdeny:
+    description: Deny a teleport request.
+    usage: /tpdeny
+    permission: rihanx.tpa.deny
+  tpcancel:
+    description: Cancel your outgoing teleport request.
+    usage: /tpcancel
+    permission: rihanx.tpa.cancel
+  kit:
+    description: Claim a kit.
+    usage: /kit <name>
+    permission: rihanx.kit
+  kits:
+    description: List kits.
+    usage: /kits
+    permission: rihanx.kit.list
 
 permissions:
   rihanx.*:
@@ -123,6 +184,10 @@ permissions:
       rihanx.performance.*: true
       rihanx.protect.*: true
       rihanx.edit.*: true
+      rihanx.home.*: true
+      rihanx.warp.*: true
+      rihanx.tpa.*: true
+      rihanx.kit.*: true
   rihanx.use:
     description: Access the /rihanx root command.
     default: op
@@ -445,6 +510,73 @@ permissions:
   rihanx.edit.clipboard:
     default: op
   rihanx.edit.history:
+    default: op
+  rihanx.home:
+    description: Teleport to homes.
+    default: op
+  rihanx.home.*:
+    default: op
+    children:
+      rihanx.home: true
+      rihanx.home.set: true
+      rihanx.home.delete: true
+      rihanx.home.list: true
+      rihanx.home.tp: true
+  rihanx.home.set:
+    default: op
+  rihanx.home.delete:
+    default: op
+  rihanx.home.list:
+    default: op
+  rihanx.home.tp:
+    default: op
+  rihanx.warp:
+    description: Teleport to warps.
+    default: op
+  rihanx.warp.*:
+    default: op
+    children:
+      rihanx.warp: true
+      rihanx.warp.set: true
+      rihanx.warp.delete: true
+      rihanx.warp.list: true
+      rihanx.warp.tp: true
+  rihanx.warp.set:
+    default: op
+  rihanx.warp.delete:
+    default: op
+  rihanx.warp.list:
+    default: op
+  rihanx.warp.tp:
+    default: op
+  rihanx.tpa:
+    description: Send teleport requests.
+    default: op
+  rihanx.tpa.*:
+    default: op
+    children:
+      rihanx.tpa: true
+      rihanx.tpa.here: true
+      rihanx.tpa.accept: true
+      rihanx.tpa.deny: true
+      rihanx.tpa.cancel: true
+  rihanx.tpa.here:
+    default: op
+  rihanx.tpa.accept:
+    default: op
+  rihanx.tpa.deny:
+    default: op
+  rihanx.tpa.cancel:
+    default: op
+  rihanx.kit:
+    description: Claim kits.
+    default: op
+  rihanx.kit.*:
+    default: op
+    children:
+      rihanx.kit: true
+      rihanx.kit.list: true
+  rihanx.kit.list:
     default: op
   rihanx.bypass.cooldown:
     description: Bypass command cooldowns.
