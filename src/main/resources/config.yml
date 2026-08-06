@@ -155,3 +155,6 @@ kits:
   #   shulker    = gives portable filled kit-chest item(s) in inventory
   #   inventory  = dump loose items into your inventory
   delivery: auto
+  # Kit name given automatically 1 second (20 ticks) after a brand-new player's first join.
+  # Leave blank ("") to disable.
+  first-join-kit: starter

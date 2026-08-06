@@ -152,6 +152,12 @@ public final class PermissionNodes {
     public static final String KIT_ALL = KIT + ".*";
     public static final String KIT_LIST = KIT + ".list";
 
+    public static final String MSG = ROOT + ".msg";
+    public static final String REPLY = ROOT + ".reply";
+    public static final String AFK = ROOT + ".afk";
+    public static final String SPAWN = ROOT + ".spawn";
+    public static final String SETSPAWN = ROOT + ".setspawn";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

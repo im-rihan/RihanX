@@ -30,7 +30,8 @@ public final class RihanXTabCompleter implements TabCompleter {
 
     private static final List<String> MODULES = List.of(
             "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
-            "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit", "admin"
+            "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
+            "msg", "reply", "afk", "spawn", "setspawn", "admin"
     );
 
     private static final Set<String> TP_PLAYER_SUBS = Set.of("player", "here", "home");
@@ -102,6 +103,8 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "warp", "setwarp", "delwarp", "warps" -> completeWarp(module, prefixed);
             case "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel" -> completeTpa(module, prefixed);
             case "kit", "kits" -> completeKit(module, prefixed);
+            case "msg", "reply" -> completeMsg(module, prefixed);
+            case "afk", "spawn", "setspawn" -> new ArrayList<>();
             case "admin" -> completeAdmin(prefixed);
             default -> new ArrayList<>();
         };
@@ -457,6 +460,16 @@ public final class RihanXTabCompleter implements TabCompleter {
             List<String> options = new ArrayList<>(List.of("list"));
             options.addAll(plugin.getKitService().listKits());
             return filter(options, args[1]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeMsg(@NotNull String module, @NotNull String[] args) {
+        if (module.equals("reply")) {
+            return new ArrayList<>();
+        }
+        if (args.length == 2) {
+            return players(args[1]);
         }
         return new ArrayList<>();
     }

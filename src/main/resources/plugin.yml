@@ -163,6 +163,28 @@ commands:
     description: List kits.
     usage: /kits
     permission: rihanx.kit.list
+  msg:
+    description: Send a private message to a player.
+    usage: /msg <player> <message>
+    permission: rihanx.msg
+    aliases: [tell, w]
+  reply:
+    description: Reply to the last player who messaged you (or you messaged).
+    usage: /reply <message>
+    permission: rihanx.reply
+    aliases: [r]
+  afk:
+    description: Toggle your AFK status.
+    usage: /afk
+    permission: rihanx.afk
+  spawn:
+    description: Teleport to spawn.
+    usage: /spawn
+    permission: rihanx.spawn
+  setspawn:
+    description: Set the world spawn (and the "spawn" warp) to your location.
+    usage: /setspawn
+    permission: rihanx.setspawn
 
 permissions:
   rihanx.*:
@@ -188,6 +210,11 @@ permissions:
       rihanx.warp.*: true
       rihanx.tpa.*: true
       rihanx.kit.*: true
+      rihanx.msg: true
+      rihanx.reply: true
+      rihanx.afk: true
+      rihanx.spawn: true
+      rihanx.setspawn: true
   rihanx.use:
     description: Access the /rihanx root command.
     default: op
@@ -577,6 +604,21 @@ permissions:
       rihanx.kit: true
       rihanx.kit.list: true
   rihanx.kit.list:
+    default: op
+  rihanx.msg:
+    description: Send private messages.
+    default: op
+  rihanx.reply:
+    description: Reply to the last private message.
+    default: op
+  rihanx.afk:
+    description: Toggle AFK status.
+    default: op
+  rihanx.spawn:
+    description: Teleport to spawn.
+    default: op
+  rihanx.setspawn:
+    description: Set the world spawn and "spawn" warp.
     default: op
   rihanx.bypass.cooldown:
     description: Bypass command cooldowns.

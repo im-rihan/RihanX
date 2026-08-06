@@ -362,6 +362,32 @@ Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`
 
 Config: `tpa.timeout-seconds` (60), `tpa.cooldown-seconds` (5). Vanished targets are hidden unless `rihanx.see.vanished`.
 
+### Private messages — `/msg` · `/tell` · `/w` · `/reply` · `/r`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/msg <player> <message>` | `rihanx.msg` | Send a private message (`/tell` and `/w` are aliases) |
+| `/reply <message>` | `rihanx.reply` | Reply to the last player who messaged you, or who you last messaged (`/r` alias) |
+
+Vanished players cannot be messaged unless the sender has `rihanx.see.vanished`. Also works as `/rx msg …` / `/rx reply …`.
+
+### AFK — `/afk`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/afk` | `rihanx.afk` | Toggle your AFK status |
+
+AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in the tab list. Moving, interacting, or chatting automatically clears AFK. Also `/rx afk`.
+
+### Spawn — `/spawn` · `/setspawn`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/spawn` | `rihanx.spawn` | Teleport to the `spawn` warp (falls back to world spawn if unset) |
+| `/setspawn` | `rihanx.setspawn` | Set the world spawn **and** create/update the `spawn` warp to your location |
+
+`/setspawn` updates both the vanilla world spawn and a warp named `spawn` (visible via `/warps`), so `/spawn`, `/warp spawn`, and respawns all point to the same place. Also `/rx spawn` / `/rx setspawn`.
+
 ### Kits — `/kit` · `/kits`
 
 | Command | Permission | Description |
@@ -373,13 +399,30 @@ Definitions in `kits.yml`. Bundled kits (synced on reload when `kits.sync-bundle
 
 | Kit | Contents (summary) | Cooldown |
 |-----|--------------------|----------|
-| `starter` | Chainmail + stone tools, food, bow, basics | 1h |
-| `survival` | **Elytra**, diamond gear/tools, totem, shulkers, building | 24h |
-| `pro` | **Netherite** + elytra, mace/trident, beacon, totems×5, blocks of ore | 48h |
+| `starter` | Chainmail + stone tools (light enchants), food, bow, basics | 1 hour |
+| `survival` | **Elytra**, enchanted diamond gear/tools (Protection II, Sharpness III, Efficiency III), totem, shulkers, building | 24 hours |
+| `pro` | **Netherite** + elytra, Protection IV / Sharpness V / Efficiency V / Unbreaking III / Mending gear, mace/trident, beacon, totems×5, blocks of ore | **48 hours** |
+
+**Cooldowns explained:** `cooldown-seconds` in `kits.yml` is the wait time between claims of that kit, per player. `pro` is set to `172800` seconds = **48 hours** — a player who claims `/kit pro` must wait 2 full days before claiming it again (unless they have `rihanx.bypass.cooldown` or `rihanx.admin`). `starter` = 3600s (1h), `survival` = 86400s (24h).
 
 Examples: `/kit survival` · `/kit pro`
 
 **Delivery:** `/kit` auto-places **colored shulker boxes** (better chests) filled with items — white / lime / purple. No crafting needed. Config `kits.delivery`: `auto` · `shulker` · `inventory`.
+
+#### Enchanted kit gear
+
+`kits.yml` items support an extended format: `MATERIAL:amount:enchant1:level1:enchant2:level2...`
+
+```text
+DIAMOND_SWORD:1:sharpness:5:unbreaking:3
+NETHERITE_HELMET:1:protection:4:unbreaking:3:mending:1
+```
+
+Enchant ids and levels use the same names as `/item enchant`. Applied with `meta.addEnchant(enchant, level, true)`, so unsafe/high levels are allowed on kit items even though `/item enchant` itself is capped by normal rules.
+
+#### First-join kit
+
+Config `kits.first-join-kit` (default: `starter`). The first time a brand-new player joins (`hasPlayedBefore() == false`), they're given that kit automatically 1 second (20 ticks) after joining — no command needed. Set it to `""` (blank) to disable.
 
 ### Fly / god persistence
 
@@ -389,26 +432,23 @@ Examples: `/kit survival` · `/kit pro`
 
 High value next additions if you want them:
 
-- `/spawn` warp shortcut + first-join kit auto-claim  
-- Enchanted kit gear (Protection / Sharpness / Efficiency books pre-applied)  
-- `/msg` / `/r` private chat (if you fully drop EssentialsX)  
-- `/afk` status  
 - Simple economy (`/balance` `/pay`) or Vault hook  
 - `/rtp` world filter UI  
 - Claim GUI for protect regions  
-- Discord / webhook alerts for staff
+- Discord / webhook alerts for staff  
+- Nicknames (`/nick`)  
+- AFK-based kick timer
 
 ### Do you still need EssentialsX?
 
-For most Minehut survival servers using RihanX: **no — you can remove EssentialsX** if you only used it for homes, warps, TPA, kits, heal/fly/god, back, and spawn-ish teleports. RihanX covers those.
+For most Minehut survival servers using RihanX: **no — you can remove EssentialsX** if you only used it for homes, warps, TPA, kits, heal/fly/god, back, spawn, chat (`/msg`/`/r`), and AFK. RihanX covers those.
 
 **Keep EssentialsX** only if you still need features RihanX does not have, for example:
 
 - Economy (`/pay`, `/balance`, shops, worth)
-- Chat (`/msg`, `/nick`, mail)
+- Nicknames (`/nick`), mail
 - Punishment suite (`/mute`, `/ban`, `/jail`, `/kick` as Essentials commands)
-- AFK / vanish beyond RihanX vanish
-- `/spawn` as a dedicated player spawn warp (you can set a `/setwarp spawn` instead)
+- Vanish beyond RihanX vanish (e.g. Essentials' cross-plugin vanish hooks)
 
 If you remove EssentialsX: delete its jar, restart, and grant players `rihanx.home` / `rihanx.warp` / `rihanx.tpa` / `rihanx.kit` (or keep default op). That also removes the “out of date” EssentialsX chat spam.
 
@@ -511,7 +551,7 @@ Soft-depend. When PlaceholderAPI is installed:
 
 ## Configuration
 
-- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, sleep, homes, tpa, kits, **timezone (`general.timezone`)**, **item.enchant XP**
+- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, sleep, homes, tpa, kits (incl. `kits.first-join-kit`), **timezone (`general.timezone`)**, **item.enchant XP**
 - `messages.yml` — every user-facing string (MiniMessage + legacy)
 - `kits.yml` — kit definitions
 - `permissions.yml` — permission node list (plugin.yml is authoritative for Bukkit)
@@ -527,9 +567,11 @@ Optional SQLite back-location storage: set `database.enabled: true`.
 com.rihanx
 ├── api            Public facade + permission constants
 ├── commands       /rx + standalone module router
-│   └── modules    Home, Warp, Tpa, Kit, Protect, Edit handlers
+│   └── modules    Home, Warp, Tpa, Kit, Chat, Afk, Spawn, Protect, Edit handlers
 ├── tabcomplete    Tab completion (both styles)
-├── managers       Config, messages, cooldowns, freeze, vanish, god, back, commands
+├── managers       Config, messages, cooldowns, freeze, vanish, god, back, afk, commands
+├── chat           Private messages (/msg, /r) with vanish + reply tracking
+├── spawn          /spawn + /setspawn (world spawn + "spawn" warp)
 ├── home / warp / kits / teleport (incl. TPA)
 ├── protection     WorldGuard-lite (flags, regions, owners, priority)
 ├── edit           WorldEdit-lite (selection, clipboard, history, expand)

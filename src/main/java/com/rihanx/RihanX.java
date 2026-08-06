@@ -2,6 +2,7 @@ package com.rihanx;
 
 import com.rihanx.api.RihanXAPI;
 import com.rihanx.cache.SearchCache;
+import com.rihanx.chat.ChatService;
 import com.rihanx.chunk.ChunkService;
 import com.rihanx.database.DatabaseManager;
 import com.rihanx.edit.EditService;
@@ -11,11 +12,14 @@ import com.rihanx.home.HomeService;
 import com.rihanx.inventory.InventoryService;
 import com.rihanx.items.ItemService;
 import com.rihanx.kits.KitService;
+import com.rihanx.listeners.AfkListener;
+import com.rihanx.listeners.FirstJoinListener;
 import com.rihanx.listeners.FreezeListener;
 import com.rihanx.listeners.PlayerListener;
 import com.rihanx.listeners.SleepListener;
 import com.rihanx.listeners.TeleportListener;
 import com.rihanx.listeners.WandListener;
+import com.rihanx.managers.AfkManager;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.CommandManager;
 import com.rihanx.managers.ConfigManager;
@@ -36,6 +40,7 @@ import com.rihanx.scheduler.SchedulerUtil;
 import com.rihanx.search.BlockSearchService;
 import com.rihanx.search.FindService;
 import com.rihanx.slime.SlimeService;
+import com.rihanx.spawn.SpawnService;
 import com.rihanx.teleport.TeleportManager;
 import com.rihanx.teleport.TeleportService;
 import com.rihanx.teleport.TpaService;
@@ -83,6 +88,9 @@ public final class RihanX extends JavaPlugin {
     private GuiManager guiManager;
     private CommandManager commandManager;
     private SleepListener sleepListener;
+    private ChatService chatService;
+    private AfkManager afkManager;
+    private SpawnService spawnService;
     private RihanXAPI api;
 
     @Override
@@ -117,6 +125,9 @@ public final class RihanX extends JavaPlugin {
         this.homeService = new HomeService(this, messageManager, teleportManager);
         this.warpService = new WarpService(this, messageManager, teleportManager);
         this.kitService = new KitService(this, messageManager);
+        this.chatService = new ChatService(messageManager, vanishManager);
+        this.afkManager = new AfkManager();
+        this.spawnService = new SpawnService(messageManager, teleportManager, warpService);
         this.slimeService = new SlimeService(configManager, messageManager, schedulerUtil, asyncTaskTracker, searchCache);
         this.worldService = new WorldService(messageManager);
         this.chunkService = new ChunkService(messageManager);
@@ -162,13 +173,15 @@ public final class RihanX extends JavaPlugin {
         this.commandManager.register();
 
         getServer().getPluginManager().registerEvents(
-                new PlayerListener(freezeManager, vanishManager, godManager, flyManager, teleportManager, configManager, cooldownManager, asyncTaskTracker, backLocationManager),
+                new PlayerListener(freezeManager, vanishManager, godManager, flyManager, teleportManager, configManager, cooldownManager, asyncTaskTracker, backLocationManager, chatService, afkManager),
                 this
         );
         getServer().getPluginManager().registerEvents(new FreezeListener(freezeManager, messageManager), this);
         getServer().getPluginManager().registerEvents(new TeleportListener(teleportManager, messageManager, configManager), this);
         getServer().getPluginManager().registerEvents(new ProtectionListener(protectionService), this);
         getServer().getPluginManager().registerEvents(new WandListener(protectionService, editService), this);
+        getServer().getPluginManager().registerEvents(new AfkListener(afkManager, messageManager), this);
+        getServer().getPluginManager().registerEvents(new FirstJoinListener(this, kitService, schedulerUtil), this);
         this.sleepListener = new SleepListener(this, messageManager, vanishManager);
         vanishManager.setStateListener(sleepListener::syncSleepingIgnored);
         getServer().getPluginManager().registerEvents(sleepListener, this);
@@ -197,6 +210,9 @@ public final class RihanX extends JavaPlugin {
         }
         if (flyManager != null) {
             flyManager.clearAll();
+        }
+        if (afkManager != null) {
+            afkManager.clearAll();
         }
         if (protectionService != null) {
             protectionService.save();
@@ -368,5 +384,17 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull GuiManager getGuiManager() {
         return guiManager;
+    }
+
+    public @NotNull ChatService getChatService() {
+        return chatService;
+    }
+
+    public @NotNull AfkManager getAfkManager() {
+        return afkManager;
+    }
+
+    public @NotNull SpawnService getSpawnService() {
+        return spawnService;
     }
 }

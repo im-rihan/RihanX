@@ -1,20 +1,27 @@
 # RihanX kits — claim with /kit <name>
 # Auto-places colored shulker boxes filled with gear (starter=white, survival=lime, pro=purple)
+#
+# Item format: MATERIAL:amount  OR  MATERIAL:amount:enchant1:level1:enchant2:level2...
+#   e.g. DIAMOND_SWORD:1:sharpness:5:unbreaking:3
+#
+# cooldown-seconds is the wait time between /kit <name> claims for that kit, per player.
+#   3600 = 1 hour | 86400 = 24 hours | 172800 = 48 hours
+# (pro is set to 172800 = 48 hours between claims)
 
 kits:
   starter:
     cooldown-seconds: 3600
     items:
-      - STONE_SWORD:1
-      - STONE_PICKAXE:1
-      - STONE_AXE:1
-      - STONE_SHOVEL:1
-      - CHAINMAIL_HELMET:1
-      - CHAINMAIL_CHESTPLATE:1
-      - CHAINMAIL_LEGGINGS:1
-      - CHAINMAIL_BOOTS:1
+      - STONE_SWORD:1:sharpness:1
+      - STONE_PICKAXE:1:efficiency:1
+      - STONE_AXE:1:efficiency:1
+      - STONE_SHOVEL:1:efficiency:1
+      - CHAINMAIL_HELMET:1:protection:1
+      - CHAINMAIL_CHESTPLATE:1:protection:1
+      - CHAINMAIL_LEGGINGS:1:protection:1
+      - CHAINMAIL_BOOTS:1:protection:1
       - SHIELD:1
-      - BOW:1
+      - BOW:1:power:1
       - ARROW:32
       - COOKED_BEEF:32
       - BREAD:32
@@ -37,17 +44,17 @@ kits:
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
-      - DIAMOND_HELMET:1
-      - DIAMOND_CHESTPLATE:1
-      - DIAMOND_LEGGINGS:1
-      - DIAMOND_BOOTS:1
+      - DIAMOND_HELMET:1:protection:2:unbreaking:2
+      - DIAMOND_CHESTPLATE:1:protection:2:unbreaking:2
+      - DIAMOND_LEGGINGS:1:protection:2:unbreaking:2
+      - DIAMOND_BOOTS:1:protection:2:unbreaking:2:feather_falling:2
       - SHIELD:1
-      - DIAMOND_SWORD:1
-      - DIAMOND_PICKAXE:1
-      - DIAMOND_AXE:1
-      - DIAMOND_SHOVEL:1
-      - DIAMOND_HOE:1
-      - BOW:1
+      - DIAMOND_SWORD:1:sharpness:3:unbreaking:2
+      - DIAMOND_PICKAXE:1:efficiency:3:unbreaking:2
+      - DIAMOND_AXE:1:efficiency:3:unbreaking:2
+      - DIAMOND_SHOVEL:1:efficiency:3:unbreaking:2
+      - DIAMOND_HOE:1:efficiency:2:unbreaking:2
+      - BOW:1:power:3:unbreaking:2
       - ARROW:64
       - SPECTRAL_ARROW:16
       - COOKED_BEEF:64
@@ -89,6 +96,7 @@ kits:
       - IRON_HORSE_ARMOR:1
 
   pro:
+    # 172800 seconds = 48 hours between /kit pro claims
     cooldown-seconds: 172800
     items:
       - ELYTRA:1
@@ -96,20 +104,20 @@ kits:
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
-      - NETHERITE_HELMET:1
-      - NETHERITE_CHESTPLATE:1
-      - NETHERITE_LEGGINGS:1
-      - NETHERITE_BOOTS:1
+      - NETHERITE_HELMET:1:protection:4:unbreaking:3:mending:1
+      - NETHERITE_CHESTPLATE:1:protection:4:unbreaking:3:mending:1
+      - NETHERITE_LEGGINGS:1:protection:4:unbreaking:3:mending:1
+      - NETHERITE_BOOTS:1:protection:4:unbreaking:3:mending:1:feather_falling:4
       - SHIELD:1
-      - NETHERITE_SWORD:1
-      - NETHERITE_PICKAXE:1
-      - NETHERITE_AXE:1
-      - NETHERITE_SHOVEL:1
-      - NETHERITE_HOE:1
-      - TRIDENT:1
-      - MACE:1
-      - CROSSBOW:1
-      - BOW:1
+      - NETHERITE_SWORD:1:sharpness:5:unbreaking:3:mending:1:fire_aspect:2
+      - NETHERITE_PICKAXE:1:efficiency:5:unbreaking:3:mending:1
+      - NETHERITE_AXE:1:efficiency:5:unbreaking:3:mending:1
+      - NETHERITE_SHOVEL:1:efficiency:5:unbreaking:3:mending:1
+      - NETHERITE_HOE:1:efficiency:5:unbreaking:3:mending:1
+      - TRIDENT:1:loyalty:3:unbreaking:3:mending:1
+      - MACE:1:unbreaking:3:mending:1
+      - CROSSBOW:1:quick_charge:3:unbreaking:3:mending:1
+      - BOW:1:power:5:unbreaking:3:mending:1:infinity:1
       - ARROW:64
       - SPECTRAL_ARROW:64
       - ENCHANTED_GOLDEN_APPLE:8

@@ -2,10 +2,13 @@ package com.rihanx.commands;
 
 import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
+import com.rihanx.commands.modules.AfkModule;
+import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
 import com.rihanx.commands.modules.KitModule;
 import com.rihanx.commands.modules.ProtectModule;
+import com.rihanx.commands.modules.SpawnModule;
 import com.rihanx.commands.modules.TpaModule;
 import com.rihanx.commands.modules.WarpModule;
 import com.rihanx.managers.CooldownManager;
@@ -46,7 +49,8 @@ public final class RihanXCommand implements CommandExecutor {
             "home", "sethome", "delhome", "homes",
             "warp", "setwarp", "delwarp", "warps",
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
-            "kit", "kits"
+            "kit", "kits",
+            "msg", "reply", "afk", "spawn", "setspawn"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -61,6 +65,9 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull KitModule kitModule;
     private final @NotNull ProtectModule protectModule;
     private final @NotNull EditModule editModule;
+    private final @NotNull ChatModule chatModule;
+    private final @NotNull AfkModule afkModule;
+    private final @NotNull SpawnModule spawnModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
@@ -70,6 +77,9 @@ public final class RihanXCommand implements CommandExecutor {
         this.kitModule = new KitModule(plugin);
         this.protectModule = new ProtectModule(plugin);
         this.editModule = new EditModule(plugin);
+        this.chatModule = new ChatModule(plugin);
+        this.afkModule = new AfkModule(plugin);
+        this.spawnModule = new SpawnModule(plugin);
     }
 
     @Override
@@ -131,6 +141,9 @@ public final class RihanXCommand implements CommandExecutor {
             case "warp", "setwarp", "delwarp", "warps" -> warpModule.handle(sender, module, subArgs, messages);
             case "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel" -> tpaModule.handle(sender, module, subArgs, messages);
             case "kit", "kits" -> kitModule.handle(sender, module, subArgs, messages);
+            case "msg", "reply" -> chatModule.handle(sender, module, subArgs, messages);
+            case "afk" -> afkModule.handle(sender, subArgs, messages);
+            case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -182,6 +195,8 @@ public final class RihanXCommand implements CommandExecutor {
             case "setwarp", "delwarp", "warps" -> module;
             case "tpahere", "tpaccept", "tpdeny", "tpcancel" -> module;
             case "kits" -> module;
+            case "tell", "w" -> "msg";
+            case "r" -> "reply";
             default -> module;
         };
     }
@@ -210,6 +225,9 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "warp", "Warps");
         sendHelpLine(messages, sender, "tpa", "Teleport requests");
         sendHelpLine(messages, sender, "kit", "Kits");
+        sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");
+        sendHelpLine(messages, sender, "afk", "Toggle AFK status");
+        sendHelpLine(messages, sender, "spawn", "Teleport to spawn");
         sendHelpLine(messages, sender, "admin", "Admin tools");
         messages.send(sender, "help-dual");
     }

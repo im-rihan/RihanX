@@ -226,6 +226,17 @@ kit-missing: "<red>Kit <yellow>{kit}</yellow> not found.</red>"
 kit-list: "<gray>Kits (<yellow>{count}</yellow>): <yellow>{kits}</yellow></gray>"
 kit-cooldown: "<red>Kit <yellow>{kit}</yellow> on cooldown: <aqua>{seconds}s</aqua>.</red>"
 
+msg-self: "<red>You cannot message yourself.</red>"
+msg-sent: "<gray>[<yellow>You</yellow> -> <aqua>{player}</aqua>]</gray> {message}"
+msg-received: "<gray>[<aqua>{player}</aqua> -> <yellow>You</yellow>]</gray> {message}"
+msg-no-reply-target: "<red>Nobody to reply to.</red>"
+
+afk-on: "<yellow>{player} is now AFK.</yellow>"
+afk-off: "<green>{player} is no longer AFK.</green>"
+
+spawn-teleport: "<green>Teleporting to spawn...</green>"
+spawn-set: "<green>Spawn set (world spawn + <yellow>/warp spawn</yellow> updated).</green>"
+
 protect-owner-added: "<green>Added owner <yellow>{player}</yellow> to <aqua>{name}</aqua>.</green>"
 protect-owner-removed: "<yellow>Removed owner <aqua>{player}</aqua> from <yellow>{name}</yellow>.</yellow>"
 protect-priority-set: "<green>Region <yellow>{name}</yellow> priority set to <aqua>{priority}</aqua>.</green>"

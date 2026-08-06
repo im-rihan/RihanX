@@ -6,12 +6,15 @@ import com.rihanx.utils.MaterialUtil;
 import com.rihanx.utils.MessageUtil;
 import com.rihanx.utils.PermissionUtil;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -549,6 +552,10 @@ public final class KitService {
             return new KitDefinition(name, Math.max(0, cooldown), List.copyOf(items));
         }
 
+        /**
+         * Parses {@code MATERIAL:amount} or {@code MATERIAL:amount:enchant1:level1:enchant2:level2...}.
+         * Example: {@code DIAMOND_SWORD:1:sharpness:5:unbreaking:3}
+         */
         private static @Nullable ItemStack parseItem(@Nullable String raw) {
             if (raw == null || raw.isBlank()) {
                 return null;
@@ -566,7 +573,52 @@ public final class KitService {
                     amount = 1;
                 }
             }
-            return new ItemStack(material, amount);
+            ItemStack stack = new ItemStack(material, amount);
+            if (parts.length >= 4) {
+                applyEnchants(stack, parts);
+            }
+            return stack;
+        }
+
+        private static void applyEnchants(@NotNull ItemStack stack, @NotNull String[] parts) {
+            ItemMeta meta = stack.getItemMeta();
+            if (meta == null) {
+                return;
+            }
+            boolean changed = false;
+            for (int i = 2; i + 1 < parts.length; i += 2) {
+                Enchantment enchantment = resolveEnchantment(parts[i].trim());
+                if (enchantment == null) {
+                    continue;
+                }
+                int level;
+                try {
+                    level = Integer.parseInt(parts[i + 1].trim());
+                } catch (NumberFormatException ex) {
+                    continue;
+                }
+                meta.addEnchant(enchantment, Math.max(1, level), true);
+                changed = true;
+            }
+            if (changed) {
+                stack.setItemMeta(meta);
+            }
+        }
+
+        private static @Nullable Enchantment resolveEnchantment(@NotNull String input) {
+            String normalized = input.toLowerCase(Locale.ROOT).replace(' ', '_');
+            Registry<Enchantment> registry = Registry.ENCHANTMENT;
+            Enchantment enchantment = registry.get(NamespacedKey.minecraft(normalized));
+            if (enchantment != null) {
+                return enchantment;
+            }
+            for (Enchantment candidate : registry) {
+                NamespacedKey key = registry.getKey(candidate);
+                if (key != null && key.getKey().equalsIgnoreCase(normalized)) {
+                    return candidate;
+                }
+            }
+            return null;
         }
     }
 }

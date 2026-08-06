@@ -1,5 +1,7 @@
 package com.rihanx.listeners;
 
+import com.rihanx.chat.ChatService;
+import com.rihanx.managers.AfkManager;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.ConfigManager;
 import com.rihanx.managers.CooldownManager;
@@ -36,6 +38,8 @@ public final class PlayerListener implements Listener {
     private final @NotNull CooldownManager cooldownManager;
     private final @NotNull AsyncTaskTracker taskTracker;
     private final @NotNull BackLocationManager backLocationManager;
+    private final @NotNull ChatService chatService;
+    private final @NotNull AfkManager afkManager;
 
     public PlayerListener(
             @NotNull FreezeManager freezeManager,
@@ -46,7 +50,9 @@ public final class PlayerListener implements Listener {
             @NotNull ConfigManager configManager,
             @NotNull CooldownManager cooldownManager,
             @NotNull AsyncTaskTracker taskTracker,
-            @NotNull BackLocationManager backLocationManager
+            @NotNull BackLocationManager backLocationManager,
+            @NotNull ChatService chatService,
+            @NotNull AfkManager afkManager
     ) {
         this.freezeManager = freezeManager;
         this.vanishManager = vanishManager;
@@ -57,6 +63,8 @@ public final class PlayerListener implements Listener {
         this.cooldownManager = cooldownManager;
         this.taskTracker = taskTracker;
         this.backLocationManager = backLocationManager;
+        this.chatService = chatService;
+        this.afkManager = afkManager;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -128,6 +136,8 @@ public final class PlayerListener implements Listener {
         teleportManager.cancel(player.getUniqueId(), false);
         cooldownManager.clear(player.getUniqueId());
         taskTracker.cancel(player.getUniqueId());
+        chatService.clear(player.getUniqueId());
+        afkManager.handleQuit(player);
     }
 
     @EventHandler

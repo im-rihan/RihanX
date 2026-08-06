@@ -3,6 +3,7 @@ package com.rihanx.managers;
 import com.rihanx.RihanX;
 import com.rihanx.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -90,6 +91,15 @@ public final class MessageManager {
 
     public void sendActionBar(@NotNull Player player, @NotNull String path, @NotNull Map<String, String> placeholders) {
         MessageUtil.sendActionBar(player, MessageUtil.applyPlaceholders(raw(path), placeholders));
+    }
+
+    /** Sends a message to every online player and the console (e.g. AFK toggles). */
+    public void broadcast(@NotNull String path, @NotNull Map<String, String> placeholders) {
+        Component component = component(path, placeholders);
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            MessageUtil.send(online, component);
+        }
+        MessageUtil.send(Bukkit.getConsoleSender(), component);
     }
 
     public static @NotNull Map<String, String> placeholders(@NotNull Object... pairs) {
