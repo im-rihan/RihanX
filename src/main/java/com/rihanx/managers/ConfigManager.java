@@ -245,6 +245,14 @@ public final class ConfigManager {
         return config.getBoolean("general.unvanish-on-quit", false);
     }
 
+    public boolean ungodOnQuit() {
+        return config.getBoolean("general.ungod-on-quit", false);
+    }
+
+    public boolean unflyOnQuit() {
+        return config.getBoolean("general.unfly-on-quit", false);
+    }
+
     public @NotNull String getLanguageFile() {
         return config.getString("general.language-file", "messages.yml");
     }

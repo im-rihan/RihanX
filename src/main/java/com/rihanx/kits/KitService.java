@@ -8,7 +8,6 @@ import com.rihanx.utils.PermissionUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -225,15 +224,15 @@ public final class KitService {
                 placed++;
                 continue;
             }
-            target.setType(Material.CHEST, false);
-            if (!(target.getState() instanceof Chest chest)) {
+            Material box = shulkerForKit(kit.name());
+            target.setType(box, false);
+            if (!(target.getState() instanceof ShulkerBox shulker)) {
                 continue;
             }
             String title = capitalize(kit.name()) + " Kit"
                     + (pages.size() > 1 ? " (" + (i + 1) + "/" + pages.size() + ")" : "");
-            chest.customName(MessageUtil.parse("<gold>" + title + "</gold>"));
-            // Fill SNAPSHOT then update once — filling live inventory then update() wipes items on Paper
-            Inventory inv = chest.getSnapshotInventory();
+            shulker.customName(MessageUtil.parse("<gold>" + title + "</gold>"));
+            Inventory inv = shulker.getSnapshotInventory();
             inv.clear();
             int slot = 0;
             for (ItemStack stack : pages.get(i)) {
@@ -242,7 +241,7 @@ public final class KitService {
                 }
                 inv.setItem(slot++, stack.clone());
             }
-            chest.update(true, false);
+            shulker.update(true, false);
             placed++;
         }
         return placed;

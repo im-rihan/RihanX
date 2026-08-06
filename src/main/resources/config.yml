@@ -71,8 +71,9 @@ general:
   max-back-history: 10
   unfreeze-on-quit: true
   unvanish-on-quit: false
-  ungod-on-quit: true
-  unfly-on-quit: true
+  # Keep fly/god after disconnect/rejoin (and across restarts via player-states.yml)
+  ungod-on-quit: false
+  unfly-on-quit: false
   language-file: messages.yml
 
 cache:

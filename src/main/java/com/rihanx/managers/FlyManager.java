@@ -1,8 +1,10 @@
 package com.rihanx.managers;
 
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -11,10 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Tracks which players have flight enabled by RihanX (per-UUID only).
+ * State persists across disconnect/rejoin (and restart via {@link PlayerStateStore}).
  */
 public final class FlyManager {
 
     private final Set<UUID> flying = ConcurrentHashMap.newKeySet();
+    private @Nullable PlayerStateStore store;
+
+    public void attachStore(@NotNull PlayerStateStore store) {
+        this.store = store;
+        flying.addAll(store.getFly());
+    }
 
     public boolean toggle(@NotNull Player player) {
         if (isFlying(player)) {
@@ -28,8 +37,10 @@ public final class FlyManager {
     public void enable(@NotNull Player player) {
         UUID id = player.getUniqueId();
         flying.add(id);
-        // Only mutate THIS player instance
-        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (store != null) {
+            store.setFly(id, true);
+        }
+        Player online = Bukkit.getPlayer(id);
         if (online == null || !online.equals(player)) {
             online = player;
         }
@@ -42,7 +53,10 @@ public final class FlyManager {
     public void disable(@NotNull Player player) {
         UUID id = player.getUniqueId();
         flying.remove(id);
-        Player online = org.bukkit.Bukkit.getPlayer(id);
+        if (store != null) {
+            store.setFly(id, false);
+        }
+        Player online = Bukkit.getPlayer(id);
         if (online == null) {
             online = player;
         }
@@ -65,21 +79,34 @@ public final class FlyManager {
         return Collections.unmodifiableSet(flying);
     }
 
+    /**
+     * @param disableOnQuit if true, turns fly off and forgets it; if false, keeps it for rejoin
+     */
     public void handleQuit(@NotNull Player player, boolean disableOnQuit) {
         if (disableOnQuit) {
             disable(player);
-        } else {
-            flying.remove(player.getUniqueId());
+            return;
         }
+        // Keep UUID marked — do not remove — so handleJoin restores flight
     }
 
     public void handleJoin(@NotNull Player player) {
-        if (isFlying(player)) {
+        if (isFlying(player) || (store != null && store.hasFly(player.getUniqueId()))) {
+            flying.add(player.getUniqueId());
             enable(player);
         }
     }
 
     public void clearAll() {
+        for (UUID id : Set.copyOf(flying)) {
+            Player player = Bukkit.getPlayer(id);
+            if (player != null) {
+                if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR) {
+                    player.setFlying(false);
+                    player.setAllowFlight(false);
+                }
+            }
+        }
         flying.clear();
     }
 }

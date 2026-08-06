@@ -24,6 +24,7 @@ import com.rihanx.managers.FlyManager;
 import com.rihanx.managers.FreezeManager;
 import com.rihanx.managers.GodManager;
 import com.rihanx.managers.MessageManager;
+import com.rihanx.managers.PlayerStateStore;
 import com.rihanx.managers.VanishManager;
 import com.rihanx.performance.PerformanceService;
 import com.rihanx.placeholders.RihanXPlaceholders;
@@ -99,6 +100,9 @@ public final class RihanX extends JavaPlugin {
         this.vanishManager = new VanishManager(this);
         this.godManager = new GodManager();
         this.flyManager = new FlyManager();
+        PlayerStateStore playerStateStore = new PlayerStateStore(this);
+        this.godManager.attachStore(playerStateStore);
+        this.flyManager.attachStore(playerStateStore);
         this.databaseManager = new DatabaseManager(this, configManager);
         this.databaseManager.init();
         this.backLocationManager = new BackLocationManager(this, configManager, databaseManager);

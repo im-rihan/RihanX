@@ -373,13 +373,30 @@ Definitions in `kits.yml`. Bundled kits (synced on reload when `kits.sync-bundle
 
 | Kit | Contents (summary) | Cooldown |
 |-----|--------------------|----------|
-| `starter` | Leather armor, wood tools, food, torches, bed, shield | 1h |
-| `survival` | **Elytra** + fireworks, iron gear/tools, food, building, totem, pearls | 24h |
-| `pro` | **Netherite** set + elytra, shulkers, totems×3, god apples, ores, base gear | 48h |
+| `starter` | Chainmail + stone tools, food, bow, basics | 1h |
+| `survival` | **Elytra**, diamond gear/tools, totem, shulkers, building | 24h |
+| `pro` | **Netherite** + elytra, mace/trident, beacon, totems×5, blocks of ore | 48h |
 
 Examples: `/kit survival` · `/kit pro`
 
-**Delivery:** You do **not** craft or place a chest first. `/kit …` **auto-creates** filled chest(s) next to you. Config `kits.delivery`: `auto` (default) · `shulker` (portable kit chest item) · `inventory` (loose items).
+**Delivery:** `/kit` auto-places **colored shulker boxes** (better chests) filled with items — white / lime / purple. No crafting needed. Config `kits.delivery`: `auto` · `shulker` · `inventory`.
+
+### Fly / god persistence
+
+`/fly` and `/god` stay as you left them after disconnect and server restart (`player-states.yml`). Set `general.unfly-on-quit: true` / `ungod-on-quit: true` only if you want them cleared on quit.
+
+### Ideas for more features
+
+High value next additions if you want them:
+
+- `/spawn` warp shortcut + first-join kit auto-claim  
+- Enchanted kit gear (Protection / Sharpness / Efficiency books pre-applied)  
+- `/msg` / `/r` private chat (if you fully drop EssentialsX)  
+- `/afk` status  
+- Simple economy (`/balance` `/pay`) or Vault hook  
+- `/rtp` world filter UI  
+- Claim GUI for protect regions  
+- Discord / webhook alerts for staff
 
 ### Do you still need EssentialsX?
 

@@ -123,8 +123,8 @@ public final class PlayerListener implements Listener {
         Player player = event.getPlayer();
         freezeManager.handleQuit(player, configManager.unfreezeOnQuit());
         vanishManager.handleQuit(player, configManager.unvanishOnQuit());
-        godManager.handleQuit(player, configManager.raw().getBoolean("general.ungod-on-quit", true));
-        flyManager.handleQuit(player, configManager.raw().getBoolean("general.unfly-on-quit", true));
+        godManager.handleQuit(player, configManager.ungodOnQuit());
+        flyManager.handleQuit(player, configManager.unflyOnQuit());
         teleportManager.cancel(player.getUniqueId(), false);
         cooldownManager.clear(player.getUniqueId());
         taskTracker.cancel(player.getUniqueId());

@@ -1,80 +1,79 @@
-# RihanX kits
-# Format: MATERIAL:amount  (vanilla item ids)
-# Claim with /kit <name> or /kits
+# RihanX kits — claim with /kit <name>
+# Auto-places colored shulker boxes filled with gear (starter=white, survival=lime, pro=purple)
 
 kits:
-  # Light join kit
   starter:
     cooldown-seconds: 3600
     items:
-      - WOODEN_SWORD:1
-      - WOODEN_PICKAXE:1
-      - WOODEN_AXE:1
-      - WOODEN_SHOVEL:1
-      - LEATHER_HELMET:1
-      - LEATHER_CHESTPLATE:1
-      - LEATHER_LEGGINGS:1
-      - LEATHER_BOOTS:1
+      - STONE_SWORD:1
+      - STONE_PICKAXE:1
+      - STONE_AXE:1
+      - STONE_SHOVEL:1
+      - CHAINMAIL_HELMET:1
+      - CHAINMAIL_CHESTPLATE:1
+      - CHAINMAIL_LEGGINGS:1
+      - CHAINMAIL_BOOTS:1
+      - SHIELD:1
+      - BOW:1
+      - ARROW:32
+      - COOKED_BEEF:32
       - BREAD:32
-      - APPLE:16
+      - GOLDEN_APPLE:2
       - TORCH:64
-      - OAK_LOG:16
+      - OAK_LOG:32
+      - COBBLESTONE:64
       - CRAFTING_TABLE:1
       - FURNACE:1
-      - CHEST:2
+      - CHEST:4
       - WATER_BUCKET:1
       - WHITE_BED:1
-      - SHIELD:1
+      - OAK_BOAT:1
+      - COMPASS:1
 
-  # Full survival kit (elytra + tools + gear)
   survival:
     cooldown-seconds: 86400
     items:
-      # Flight
       - ELYTRA:1
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
-      # Armor
-      - IRON_HELMET:1
-      - IRON_CHESTPLATE:1
-      - IRON_LEGGINGS:1
-      - IRON_BOOTS:1
+      - FIREWORK_ROCKET:64
+      - DIAMOND_HELMET:1
+      - DIAMOND_CHESTPLATE:1
+      - DIAMOND_LEGGINGS:1
+      - DIAMOND_BOOTS:1
       - SHIELD:1
-      # Tools / weapons
-      - IRON_SWORD:1
-      - IRON_PICKAXE:1
-      - IRON_AXE:1
-      - IRON_SHOVEL:1
-      - IRON_HOE:1
+      - DIAMOND_SWORD:1
+      - DIAMOND_PICKAXE:1
+      - DIAMOND_AXE:1
+      - DIAMOND_SHOVEL:1
+      - DIAMOND_HOE:1
       - BOW:1
       - ARROW:64
-      # Food / farming
-      - COOKED_BEEF:32
-      - BREAD:32
-      - GOLDEN_APPLE:4
-      - GOLDEN_CARROT:16
-      - WHEAT_SEEDS:16
-      - BONE_MEAL:16
-      # Building / light
+      - SPECTRAL_ARROW:16
+      - COOKED_BEEF:64
+      - GOLDEN_APPLE:8
+      - GOLDEN_CARROT:32
+      - TOTEM_OF_UNDYING:1
       - TORCH:64
       - TORCH:64
       - OAK_LOG:64
-      - COBBLESTONE:64
+      - STONE:64
       - GLASS:32
+      - IRON_BLOCK:8
+      - GOLD_BLOCK:4
+      - DIAMOND:16
       - CRAFTING_TABLE:1
       - FURNACE:1
       - BLAST_FURNACE:1
       - SMOKER:1
-      - CHEST:4
-      - ENDER_CHEST:1
       - ANVIL:1
       - ENCHANTING_TABLE:1
-      - BOOKSHELF:8
+      - BOOKSHELF:15
       - BREWING_STAND:1
-      # Buckets / utility
+      - ENDER_CHEST:1
+      - SHULKER_BOX:2
       - WATER_BUCKET:2
       - LAVA_BUCKET:1
-      - BUCKET:2
       - WHITE_BED:1
       - COMPASS:1
       - CLOCK:1
@@ -83,62 +82,67 @@ kits:
       - FLINT_AND_STEEL:1
       - SHEARS:1
       - FISHING_ROD:1
-      # Combat / travel extras
-      - TOTEM_OF_UNDYING:1
-      - ENDER_PEARL:8
-      - EXPERIENCE_BOTTLE:16
+      - ENDER_PEARL:16
+      - EXPERIENCE_BOTTLE:32
       - OAK_BOAT:1
       - SADDLE:1
       - IRON_HORSE_ARMOR:1
 
-  # Pro / VIP kit — netherite + heavy supplies
   pro:
     cooldown-seconds: 172800
     items:
-      # Flight
       - ELYTRA:1
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
       - FIREWORK_ROCKET:64
-      # Netherite armor
+      - FIREWORK_ROCKET:64
       - NETHERITE_HELMET:1
       - NETHERITE_CHESTPLATE:1
       - NETHERITE_LEGGINGS:1
       - NETHERITE_BOOTS:1
       - SHIELD:1
-      # Netherite tools / weapons
       - NETHERITE_SWORD:1
       - NETHERITE_PICKAXE:1
       - NETHERITE_AXE:1
       - NETHERITE_SHOVEL:1
       - NETHERITE_HOE:1
       - TRIDENT:1
+      - MACE:1
       - CROSSBOW:1
+      - BOW:1
       - ARROW:64
-      - SPECTRAL_ARROW:32
-      # Food / potions
-      - GOLDEN_APPLE:16
-      - ENCHANTED_GOLDEN_APPLE:2
-      - GOLDEN_CARROT:32
+      - SPECTRAL_ARROW:64
+      - ENCHANTED_GOLDEN_APPLE:8
+      - GOLDEN_APPLE:32
+      - GOLDEN_CARROT:64
       - COOKED_BEEF:64
       - COOKED_BEEF:64
-      - TOTEM_OF_UNDYING:3
+      - TOTEM_OF_UNDYING:5
       - EXPERIENCE_BOTTLE:64
-      # Blocks / base
-      - SHULKER_BOX:4
+      - EXPERIENCE_BOTTLE:64
+      - SHULKER_BOX:8
       - ENDER_CHEST:1
-      - CHEST:8
-      - BARREL:4
+      - BEACON:1
+      - NETHER_STAR:1
+      - CONDUIT:1
+      - HEART_OF_THE_SEA:1
       - TORCH:64
       - TORCH:64
-      - SEA_LANTERN:16
-      - OBSIDIAN:32
-      - CRYING_OBSIDIAN:16
+      - SEA_LANTERN:32
+      - GLOWSTONE:64
+      - OBSIDIAN:64
+      - CRYING_OBSIDIAN:32
       - RESPAWN_ANCHOR:1
-      - GLOWSTONE:32
+      - END_CRYSTAL:4
       - OAK_LOG:64
       - STONE:64
+      - DEEPSLATE:64
       - GLASS:64
+      - IRON_BLOCK:16
+      - GOLD_BLOCK:16
+      - DIAMOND_BLOCK:8
+      - EMERALD_BLOCK:8
+      - NETHERITE_BLOCK:2
       - CRAFTING_TABLE:1
       - FURNACE:1
       - BLAST_FURNACE:1
@@ -150,7 +154,6 @@ kits:
       - BOOKSHELF:15
       - BREWING_STAND:1
       - CAULDRON:1
-      # Utility
       - WATER_BUCKET:2
       - LAVA_BUCKET:2
       - POWDER_SNOW_BUCKET:1
@@ -164,15 +167,15 @@ kits:
       - SHEARS:1
       - FISHING_ROD:1
       - BRUSH:1
-      - ENDER_PEARL:16
-      - CHORUS_FRUIT:16
+      - ENDER_PEARL:32
+      - CHORUS_FRUIT:32
       - OAK_BOAT:1
       - SADDLE:1
       - DIAMOND_HORSE_ARMOR:1
-      - NAME_TAG:4
-      - LEAD:4
-      - NETHERITE_INGOT:8
-      - DIAMOND:32
-      - EMERALD:32
-      - GOLD_INGOT:32
+      - NAME_TAG:8
+      - LEAD:8
+      - NETHERITE_INGOT:16
+      - DIAMOND:64
+      - EMERALD:64
+      - GOLD_INGOT:64
       - IRON_INGOT:64
