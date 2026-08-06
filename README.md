@@ -443,6 +443,7 @@ Config `kits.first-join-kit` (default: `starter`). The first time a brand-new pl
 
 High value next additions if you want them:
 
+- Pasteable house templates (`/base villa|bungalow|hut`) — not built yet; today use `/edit` wand + set/copy/paste
 - Simple economy (`/balance` `/pay`) or Vault hook  
 - `/rtp` world filter UI  
 - Claim GUI for protect regions  
