@@ -185,6 +185,11 @@ commands:
     description: Set the world spawn (and the "spawn" warp) to your location.
     usage: /setspawn
     permission: rihanx.setspawn
+  base:
+    description: Paste a house / base template (hut, cottage, bungalow, villa, village).
+    usage: /base <hut|cottage|bungalow|villa|village|list>
+    permission: rihanx.base
+    aliases: [house, buildbase]
 
 permissions:
   rihanx.*:
@@ -210,6 +215,7 @@ permissions:
       rihanx.warp.*: true
       rihanx.tpa.*: true
       rihanx.kit.*: true
+      rihanx.base.*: true
       rihanx.msg: true
       rihanx.reply: true
       rihanx.afk: true
@@ -604,6 +610,21 @@ permissions:
       rihanx.kit: true
       rihanx.kit.list: true
   rihanx.kit.list:
+    default: op
+  rihanx.base:
+    description: List and use base / house templates.
+    default: op
+  rihanx.base.*:
+    default: op
+    children:
+      rihanx.base: true
+      rihanx.base.build: true
+      rihanx.base.list: true
+  rihanx.base.build:
+    description: Paste a base template at your location.
+    default: op
+  rihanx.base.list:
+    description: List base templates.
     default: op
   rihanx.msg:
     description: Send private messages.

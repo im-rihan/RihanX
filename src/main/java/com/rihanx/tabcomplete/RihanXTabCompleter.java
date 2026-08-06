@@ -31,7 +31,7 @@ public final class RihanXTabCompleter implements TabCompleter {
     private static final List<String> MODULES = List.of(
             "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
             "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
-            "msg", "reply", "afk", "spawn", "setspawn", "admin"
+            "msg", "reply", "afk", "spawn", "setspawn", "base", "admin"
     );
 
     private static final Set<String> TP_PLAYER_SUBS = Set.of("player", "here", "home");
@@ -104,6 +104,7 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel" -> completeTpa(module, prefixed);
             case "kit", "kits" -> completeKit(module, prefixed);
             case "msg", "reply" -> completeMsg(module, prefixed);
+            case "base" -> completeBase(prefixed);
             case "afk", "spawn", "setspawn" -> new ArrayList<>();
             case "admin" -> completeAdmin(prefixed);
             default -> new ArrayList<>();
@@ -459,6 +460,15 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             List<String> options = new ArrayList<>(List.of("list"));
             options.addAll(plugin.getKitService().listKits());
+            return filter(options, args[1]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeBase(@NotNull String[] args) {
+        if (args.length == 2) {
+            List<String> options = new ArrayList<>(plugin.getBaseService().listIds());
+            options.add("list");
             return filter(options, args[1]);
         }
         return new ArrayList<>();

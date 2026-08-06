@@ -158,6 +158,11 @@ public final class PermissionNodes {
     public static final String SPAWN = ROOT + ".spawn";
     public static final String SETSPAWN = ROOT + ".setspawn";
 
+    public static final String BASE = ROOT + ".base";
+    public static final String BASE_ALL = BASE + ".*";
+    public static final String BASE_BUILD = BASE + ".build";
+    public static final String BASE_LIST = BASE + ".list";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

@@ -150,11 +150,15 @@ kits:
   persist-cooldowns: true
   # Keep starter + survival + pro kits updated from the plugin jar on reload
   sync-bundled: true
-  # How kits are delivered (you never need to craft/place a chest first):
-  #   auto       = plugin auto-creates filled chests near you (default)
+  # How kits are delivered:
+  #   auto       = plugin auto-creates filled kit shulkers near you (default)
   #   shulker    = gives portable filled kit-chest item(s) in inventory
   #   inventory  = dump loose items into your inventory
   delivery: auto
   # Kit name given automatically 1 second (20 ticks) after a brand-new player's first join.
   # Leave blank ("") to disable.
   first-join-kit: starter
+
+base:
+  # How many blocks to place per tick when pasting a house template
+  blocks-per-tick: 800

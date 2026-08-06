@@ -1,6 +1,7 @@
 package com.rihanx;
 
 import com.rihanx.api.RihanXAPI;
+import com.rihanx.base.BaseService;
 import com.rihanx.cache.SearchCache;
 import com.rihanx.chat.ChatService;
 import com.rihanx.chunk.ChunkService;
@@ -73,6 +74,7 @@ public final class RihanX extends JavaPlugin {
     private HomeService homeService;
     private WarpService warpService;
     private KitService kitService;
+    private BaseService baseService;
     private SlimeService slimeService;
     private WorldService worldService;
     private FindService findService;
@@ -125,6 +127,7 @@ public final class RihanX extends JavaPlugin {
         this.homeService = new HomeService(this, messageManager, teleportManager);
         this.warpService = new WarpService(this, messageManager, teleportManager);
         this.kitService = new KitService(this, messageManager);
+        this.baseService = new BaseService(this, messageManager);
         this.chatService = new ChatService(messageManager, vanishManager);
         this.afkManager = new AfkManager();
         this.spawnService = new SpawnService(messageManager, teleportManager, warpService);
@@ -332,6 +335,10 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull KitService getKitService() {
         return kitService;
+    }
+
+    public @NotNull BaseService getBaseService() {
+        return baseService;
     }
 
     public @NotNull SlimeService getSlimeService() {

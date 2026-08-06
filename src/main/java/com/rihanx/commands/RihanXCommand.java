@@ -3,6 +3,7 @@ package com.rihanx.commands;
 import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
 import com.rihanx.commands.modules.AfkModule;
+import com.rihanx.commands.modules.BaseModule;
 import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
@@ -50,7 +51,8 @@ public final class RihanXCommand implements CommandExecutor {
             "warp", "setwarp", "delwarp", "warps",
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
             "kit", "kits",
-            "msg", "reply", "afk", "spawn", "setspawn"
+            "msg", "reply", "afk", "spawn", "setspawn",
+            "base"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -68,6 +70,7 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull ChatModule chatModule;
     private final @NotNull AfkModule afkModule;
     private final @NotNull SpawnModule spawnModule;
+    private final @NotNull BaseModule baseModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
@@ -80,6 +83,7 @@ public final class RihanXCommand implements CommandExecutor {
         this.chatModule = new ChatModule(plugin);
         this.afkModule = new AfkModule(plugin);
         this.spawnModule = new SpawnModule(plugin);
+        this.baseModule = new BaseModule(plugin);
     }
 
     @Override
@@ -144,6 +148,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "msg", "reply" -> chatModule.handle(sender, module, subArgs, messages);
             case "afk" -> afkModule.handle(sender, subArgs, messages);
             case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
+            case "base" -> baseModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -225,6 +230,7 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "warp", "Warps");
         sendHelpLine(messages, sender, "tpa", "Teleport requests");
         sendHelpLine(messages, sender, "kit", "Kits");
+        sendHelpLine(messages, sender, "base", "House / base templates");
         sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");
         sendHelpLine(messages, sender, "afk", "Toggle AFK status");
         sendHelpLine(messages, sender, "spawn", "Teleport to spawn");

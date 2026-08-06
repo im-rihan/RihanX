@@ -399,6 +399,21 @@ AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in 
 
 `/setspawn` updates both the vanilla world spawn and a warp named `spawn` (visible via `/warps`), so `/spawn`, `/warp spawn`, and respawns all point to the same place. Also `/rx spawn` / `/rx setspawn`.
 
+### Bases — `/base`
+
+Stand where the **floor center** should be, face the front door direction, then paste:
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/base <name>` | `rihanx.base.build` | Paste a house template facing you |
+| `/base list` | `rihanx.base` | List templates |
+
+Built-in templates: `hut` · `cottage` · `bungalow` · `villa` · `village`
+
+Also `/house`, `/buildbase`, or `/rx base …`. Respects protect regions (`BUILD`/`PLACE`). Speed: `base.blocks-per-tick` (default 800).
+
+Examples: `/base hut` · `/base villa` · `/base list`
+
 ### Kits — `/kit` · `/kits`
 
 | Command | Permission | Description |
@@ -443,7 +458,6 @@ Config `kits.first-join-kit` (default: `starter`). The first time a brand-new pl
 
 High value next additions if you want them:
 
-- Pasteable house templates (`/base villa|bungalow|hut`) — not built yet; today use `/edit` wand + set/copy/paste
 - Simple economy (`/balance` `/pay`) or Vault hook  
 - `/rtp` world filter UI  
 - Claim GUI for protect regions  
@@ -584,6 +598,7 @@ com.rihanx
 ├── managers       Config, messages, cooldowns, freeze, vanish, god, back, afk, commands
 ├── chat           Private messages (/msg, /r) with vanish + reply tracking
 ├── spawn          /spawn + /setspawn (world spawn + "spawn" warp)
+├── base           /base house templates (hut, cottage, bungalow, villa, village)
 ├── home / warp / kits / teleport (incl. TPA)
 ├── protection     WorldGuard-lite (flags, regions, owners, priority)
 ├── edit           WorldEdit-lite (selection, clipboard, history, expand)
