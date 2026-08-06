@@ -17,6 +17,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,34 +63,112 @@ public final class ItemService {
             @NotNull String materialName,
             int amount
     ) {
-        Material material = MaterialUtil.match(materialName);
-        if (material == null || material.isAir() || !material.isItem()) {
+        ItemStack template = createGiveStack(materialName, 1);
+        if (template == null) {
             messages.send(sender, "item-material-invalid", MessageManager.placeholders("input", materialName));
             return;
         }
+        Material material = template.getType();
         int safeAmount = Math.max(1, Math.min(amount, material.getMaxStackSize() * 36));
         int remaining = safeAmount;
         while (remaining > 0) {
             int stack = Math.min(remaining, material.getMaxStackSize());
-            ItemStack stackItem = new ItemStack(material, stack);
+            ItemStack stackItem = template.clone();
+            stackItem.setAmount(stack);
             var leftover = target.getInventory().addItem(stackItem);
             if (!leftover.isEmpty()) {
                 leftover.values().forEach(drop -> target.getWorld().dropItemNaturally(target.getLocation(), drop));
             }
             remaining -= stack;
         }
+        String label = describeItem(template);
         messages.send(sender, "item-give-success", MessageManager.placeholders(
                 "amount", safeAmount,
-                "material", MaterialUtil.key(material),
+                "material", label,
                 "player", target.getName()
         ));
         if (!(sender instanceof Player player) || !player.equals(target)) {
             messages.send(target, "item-give-received", MessageManager.placeholders(
                     "amount", safeAmount,
-                    "material", MaterialUtil.key(material),
+                    "material", label,
                     "sender", sender.getName()
             ));
         }
+    }
+
+    /**
+     * Builds an item for /item give.
+     * Supports {@code tipped_arrow:strong_harming}, {@code potion:swiftness},
+     * and aliases like {@code arrow_of_harming_2}.
+     */
+    public @Nullable ItemStack createGiveStack(@NotNull String input, int amount) {
+        String raw = input.trim().toLowerCase(Locale.ROOT).replace(' ', '_');
+        PotionType potionType = null;
+        String materialPart = raw;
+
+        // Friendly aliases for Harming arrows
+        if (raw.equals("arrow_of_harming") || raw.equals("harming_arrow") || raw.equals("arrow_harming")) {
+            materialPart = "tipped_arrow";
+            potionType = PotionType.HARMING;
+        } else if (raw.equals("arrow_of_harming_2") || raw.equals("arrow_of_harming_ii")
+                || raw.equals("harming_arrow_2") || raw.equals("strong_harming_arrow")) {
+            materialPart = "tipped_arrow";
+            potionType = PotionType.STRONG_HARMING;
+        } else if (raw.contains(":")) {
+            String[] parts = raw.split(":", 2);
+            materialPart = parts[0];
+            potionType = resolvePotionType(parts[1]);
+        }
+
+        Material material = MaterialUtil.match(materialPart);
+        if (material == null || material.isAir() || !material.isItem()) {
+            return null;
+        }
+        ItemStack stack = new ItemStack(material, Math.max(1, amount));
+        if (potionType != null && stack.getItemMeta() instanceof PotionMeta meta) {
+            meta.setBasePotionType(potionType);
+            stack.setItemMeta(meta);
+        } else if (potionType != null && material != Material.TIPPED_ARROW
+                && material != Material.POTION
+                && material != Material.SPLASH_POTION
+                && material != Material.LINGERING_POTION) {
+            // User asked for a potion type on a non-potion item — force tipped arrow
+            stack = new ItemStack(Material.TIPPED_ARROW, Math.max(1, amount));
+            if (stack.getItemMeta() instanceof PotionMeta meta) {
+                meta.setBasePotionType(potionType);
+                stack.setItemMeta(meta);
+            }
+        }
+        return stack;
+    }
+
+    private static @Nullable PotionType resolvePotionType(@NotNull String name) {
+        String key = name.trim().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        if (key.equals("harming2") || key.equals("harming_ii") || key.equals("harming_2")) {
+            return PotionType.STRONG_HARMING;
+        }
+        if (key.equals("healing2") || key.equals("healing_ii") || key.equals("healing_2")) {
+            return PotionType.STRONG_HEALING;
+        }
+        try {
+            return PotionType.valueOf(key.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            // fall through
+        }
+        for (PotionType type : PotionType.values()) {
+            if (type.name().equalsIgnoreCase(key) || type.name().equalsIgnoreCase("STRONG_" + key)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    private static @NotNull String describeItem(@NotNull ItemStack stack) {
+        String base = MaterialUtil.key(stack.getType());
+        if (stack.getItemMeta() instanceof PotionMeta meta && meta.getBasePotionType() != null) {
+            return base + ":" + meta.getBasePotionType().name().toLowerCase(Locale.ROOT);
+        }
+        return base;
     }
 
     public void rename(@NotNull Player player, @NotNull String name) {

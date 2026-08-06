@@ -953,7 +953,7 @@ public final class RihanXCommand implements CommandExecutor {
                 case "give" -> {
                     if (!checkOpPerm(player, PermissionNodes.ITEM_GIVE, messages)) return true;
                     if (args.length < 2) {
-                        usage(sender, "/rx item give <material> [amount] [player]");
+                        usage(sender, "/rx item give <material|tipped_arrow:strong_harming> [amount] [player]");
                         return true;
                     }
                     int amount = 1;

@@ -167,6 +167,17 @@ Player names support partial match + tab completion (e.g. `/rxtp player Ste` →
 |---------|------------|-------------|
 | `/item info` | `rihanx.item.info` | Held item info |
 | `/item give <material> [amount] [player]` | `rihanx.item.give` | Give items (`rihanx.item.give.others` for other players) |
+
+Tipped arrows / potions (not enchants):
+
+```text
+/item give arrow_of_harming_2 64
+/item give tipped_arrow:strong_harming 64
+/item give tipped_arrow:harming 16
+/item give potion:strong_healing 1
+```
+
+**Note:** Arrow of Harming II is a **tipped arrow** (`STRONG_HARMING`), not an enchantment — `/item enchant` will not create it.
 | `/item rename <name…>` | `rihanx.item.rename` | Rename (MiniMessage) |
 | `/item lore <text…>` | `rihanx.item.lore` | Add lore line |
 | `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant (**costs XP**; free with `rihanx.item.enchant.free`) |
