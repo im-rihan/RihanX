@@ -3,6 +3,7 @@ package com.rihanx.commands;
 import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
 import com.rihanx.commands.modules.AfkModule;
+import com.rihanx.commands.modules.FarmModule;
 import com.rihanx.commands.modules.BaseModule;
 import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
@@ -52,7 +53,7 @@ public final class RihanXCommand implements CommandExecutor {
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
             "kit", "kits",
             "msg", "reply", "afk", "spawn", "setspawn",
-            "base"
+            "base", "farm"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -71,6 +72,7 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull AfkModule afkModule;
     private final @NotNull SpawnModule spawnModule;
     private final @NotNull BaseModule baseModule;
+    private final @NotNull FarmModule farmModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
@@ -84,6 +86,7 @@ public final class RihanXCommand implements CommandExecutor {
         this.afkModule = new AfkModule(plugin);
         this.spawnModule = new SpawnModule(plugin);
         this.baseModule = new BaseModule(plugin);
+        this.farmModule = new FarmModule(plugin);
     }
 
     @Override
@@ -149,6 +152,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "afk" -> afkModule.handle(sender, subArgs, messages);
             case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
             case "base" -> baseModule.handle(sender, module, subArgs, messages);
+            case "farm" -> farmModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -231,6 +235,7 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "tpa", "Teleport requests");
         sendHelpLine(messages, sender, "kit", "Kits");
         sendHelpLine(messages, sender, "base", "House / base templates");
+        sendHelpLine(messages, sender, "farm", "Auto farms with hoppers & gadgets");
         sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");
         sendHelpLine(messages, sender, "afk", "Toggle AFK status");
         sendHelpLine(messages, sender, "spawn", "Teleport to spawn");
@@ -466,7 +471,8 @@ public final class RihanXCommand implements CommandExecutor {
                 }
                 case "setspawn" -> {
                     if (!checkPerm(player, PermissionNodes.WORLD_SETSPAWN, messages)) return true;
-                    worldService.setSpawn(player);
+                    // Keep /spawn warp and vanilla world spawn in sync
+                    plugin.getSpawnService().setSpawn(player);
                 }
                 default -> usage(sender, "/rx world <info|seed|weather|difficulty|time|border|spawn|setspawn>");
             }

@@ -401,18 +401,55 @@ AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in 
 
 ### Bases — `/base`
 
-Stand where the **floor center** should be, face the front door direction, then paste:
+Stand where the **front door / porch** should be, look toward where the house should go, then paste (or open `/base` GUI). You stay at the entrance while it builds, then face inside when done.
 
 | Command | Permission | Description |
 |---------|------------|-------------|
+| `/base` | `rihanx.base` | Open the base selection GUI |
 | `/base <name>` | `rihanx.base.build` | Paste a house template facing you |
-| `/base list` | `rihanx.base` | List templates |
+| `/base list` | `rihanx.base` | List templates in chat |
 
-Built-in templates: `hut` · `cottage` · `bungalow` · `villa` · `village`
+Built-in templates (front door faces you). Open the GUI with `/base`:
 
-Also `/house`, `/buildbase`, or `/rx base …`. Respects protect regions (`BUILD`/`PLACE`). Speed: `base.blocks-per-tick` (default 800).
+| Template | Tier | Features |
+|----------|------|----------|
+| `hut` | Beginner | Oak cabin, gabled roof |
+| `cottage` | Intermediate | Spruce + chimney + porch |
+| `village` | Classic | Plains-village oak/cobble |
+| `bungalow` | Luxury | **5 bedrooms**, calcite/quartz, **swimming pool**, kitchen, baths |
+| `villa` | Luxury | 2-storey, **bubble lift**, 5 beds, pool, balcony |
+| `modern` | Luxury | Glass/concrete, lift, 5 beds, **rooftop pool** |
+| `mansion` | Mega | 3 floors, **dual lifts**, 6 suites, indoor + outdoor pools |
+| `resort` | Mega | Mega pool club, **5 cabanas**, bar lounge |
 
-Examples: `/base hut` · `/base villa` · `/base list`
+Also `/house`, `/buildbase`, or `/rx base …`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
+
+**Lift tip:** stand in the glass water tube — soul sand = up, magma = down.
+
+Examples: `/base` · `/base bungalow` · `/base villa` · `/base list`
+
+### Farms — `/farm`
+
+Stand at the **front / collection** side, face into the farm, then open the GUI:
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/farm` | `rihanx.farm` | Open farm selection GUI |
+| `/farm <name>` | `rihanx.farm.build` | Paste a farm |
+| `/farm list` | `rihanx.farm` | List farms |
+
+| Farm | Gadgets |
+|------|---------|
+| `wheat` / `potato` | Water cross, hoppers, chests, composters |
+| `cane` / `bamboo` | Observers, pistons, hoppers |
+| `melon` / `cocoa` / `kelp` / `mushroom` | Crop-specific + hoppers |
+| `nether` | Soul sand wart, hoppers |
+| `animal` | 4 pens, water, hay, chests, hoppers |
+| `cactus` | Break fences, hoppers |
+| `iron` | Water streams, lava kill, hoppers (add villagers + zombie) |
+| `xp` | Dark spawn pads, drop chute, magma + hoppers |
+
+Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm …`.
 
 ### Kits — `/kit` · `/kits`
 

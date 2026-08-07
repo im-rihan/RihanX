@@ -4,6 +4,7 @@ import com.rihanx.models.PendingTeleport;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,35 @@ public final class TeleportUtil {
     public static @Nullable Location prepareDestination(@NotNull Location raw, boolean safe, int maxYOffset) {
         if (!safe) {
             return raw.clone();
+        }
+        return LocationUtil.findSafe(raw, maxYOffset);
+    }
+
+    /**
+     * Like {@link #prepareDestination} but keeps the exact coordinates when they are already safe.
+     * Used for /spawn and warps so players are not shoved to the surface.
+     */
+    public static @Nullable Location prepareDestinationPreferExact(
+            @NotNull Location raw,
+            boolean safe,
+            int maxYOffset
+    ) {
+        if (!safe) {
+            return raw.clone();
+        }
+        World world = raw.getWorld();
+        if (world == null) {
+            return null;
+        }
+        if (LocationUtil.isSafe(world, raw.getBlockX(), raw.getBlockY(), raw.getBlockZ())) {
+            return LocationUtil.centered(
+                    world,
+                    raw.getBlockX(),
+                    raw.getBlockY(),
+                    raw.getBlockZ(),
+                    raw.getYaw(),
+                    raw.getPitch()
+            );
         }
         return LocationUtil.findSafe(raw, maxYOffset);
     }

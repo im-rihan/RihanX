@@ -37,9 +37,14 @@ public final class BaseModule {
         }
 
         BaseService bases = plugin.getBaseService();
-        if (args.length == 0 || args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("help")) {
-            bases.sendList(player);
-            messages.send(player, "base-usage");
+        if (args.length == 0 || args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("help")
+                || args[0].equalsIgnoreCase("gui") || args[0].equalsIgnoreCase("menu")) {
+            if (args.length > 0 && args[0].equalsIgnoreCase("list")) {
+                bases.sendList(player);
+                messages.send(player, "base-usage");
+            } else {
+                bases.openMenu(player);
+            }
             return true;
         }
 

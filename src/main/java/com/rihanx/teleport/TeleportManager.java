@@ -42,11 +42,33 @@ public final class TeleportManager {
     }
 
     public void teleport(@NotNull Player player, @NotNull Location destination, @NotNull String reason) {
-        Location prepared = TeleportUtil.prepareDestination(
-                destination,
-                config.safeTeleport(),
-                config.getSafeTeleportMaxY()
-        );
+        teleport(player, destination, reason, false);
+    }
+
+    /**
+     * @param preferExact when true, keep exact coords if already safe (spawn/warps)
+     */
+    public void teleportPreferExact(@NotNull Player player, @NotNull Location destination, @NotNull String reason) {
+        teleport(player, destination, reason, true);
+    }
+
+    private void teleport(
+            @NotNull Player player,
+            @NotNull Location destination,
+            @NotNull String reason,
+            boolean preferExact
+    ) {
+        Location prepared = preferExact
+                ? TeleportUtil.prepareDestinationPreferExact(
+                        destination,
+                        config.safeTeleport(),
+                        config.getSafeTeleportMaxY()
+                )
+                : TeleportUtil.prepareDestination(
+                        destination,
+                        config.safeTeleport(),
+                        config.getSafeTeleportMaxY()
+                );
         if (prepared == null) {
             messages.send(player, "teleport-unsafe");
             return;
@@ -54,7 +76,7 @@ public final class TeleportManager {
 
         int delaySeconds = PermissionUtil.bypassTeleportDelay(player) ? 0 : config.getTeleportDelaySeconds();
         if (delaySeconds <= 0) {
-            finishTeleport(player, prepared);
+            finishTeleport(player, prepared, reason);
             return;
         }
 
@@ -92,7 +114,7 @@ public final class TeleportManager {
                 if (self != null) {
                     self.cancel();
                 }
-                finishTeleport(player, current.getDestination());
+                finishTeleport(player, current.getDestination(), reason);
             } else {
                 messages.sendActionBar(player, "teleport-warmup",
                         MessageManager.placeholders("seconds", remaining[0]));
@@ -102,6 +124,10 @@ public final class TeleportManager {
     }
 
     public void finishTeleport(@NotNull Player player, @NotNull Location destination) {
+        finishTeleport(player, destination, "");
+    }
+
+    public void finishTeleport(@NotNull Player player, @NotNull Location destination, @NotNull String reason) {
         backLocationManager.push(player, player.getLocation());
         player.teleportAsync(destination).thenAccept(success -> scheduler.runSync(() -> {
             if (!Boolean.TRUE.equals(success)) {
@@ -121,7 +147,11 @@ public final class TeleportManager {
                         config.getTeleportSoundPitch()
                 );
             }
-            messages.send(player, "teleport-success");
+            if ("spawn".equals(reason)) {
+                messages.send(player, "spawn-teleport");
+            } else {
+                messages.send(player, "teleport-success");
+            }
         }));
     }
 

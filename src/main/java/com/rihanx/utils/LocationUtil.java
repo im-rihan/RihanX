@@ -51,9 +51,9 @@ public final class LocationUtil {
         }
 
         int highest = world.getHighestBlockYAt(x, z);
-        if (isSafe(world, x, highest + 1, z) || isSafeStanding(world.getBlockAt(x, highest, z))) {
-            int y = isSafe(world, x, highest + 1, z) ? highest + 1 : highest;
-            return centered(world, x, y, z, destination.getYaw(), destination.getPitch());
+        int feetY = highest + 1;
+        if (feetY <= maxY && isSafe(world, x, feetY, z)) {
+            return centered(world, x, feetY, z, destination.getYaw(), destination.getPitch());
         }
         return null;
     }

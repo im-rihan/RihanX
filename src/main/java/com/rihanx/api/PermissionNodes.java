@@ -163,6 +163,11 @@ public final class PermissionNodes {
     public static final String BASE_BUILD = BASE + ".build";
     public static final String BASE_LIST = BASE + ".list";
 
+    public static final String FARM = ROOT + ".farm";
+    public static final String FARM_ALL = FARM + ".*";
+    public static final String FARM_BUILD = FARM + ".build";
+    public static final String FARM_LIST = FARM + ".list";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

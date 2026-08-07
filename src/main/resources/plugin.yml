@@ -187,9 +187,14 @@ commands:
     permission: rihanx.setspawn
   base:
     description: Paste a house / base template (hut, cottage, bungalow, villa, village).
-    usage: /base <hut|cottage|bungalow|villa|village|list>
+    usage: /base [hut|cottage|village|bungalow|villa|modern|mansion|resort|list]
     permission: rihanx.base
     aliases: [house, buildbase]
+  farm:
+    description: Paste an automatic farm (wheat, cane, bamboo, melon, nether, animal, cactus).
+    usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list]
+    permission: rihanx.farm
+    aliases: [autofarm, farms]
 
 permissions:
   rihanx.*:
@@ -216,6 +221,7 @@ permissions:
       rihanx.tpa.*: true
       rihanx.kit.*: true
       rihanx.base.*: true
+      rihanx.farm.*: true
       rihanx.msg: true
       rihanx.reply: true
       rihanx.afk: true
@@ -625,6 +631,21 @@ permissions:
     default: op
   rihanx.base.list:
     description: List base templates.
+    default: op
+  rihanx.farm:
+    description: List and use farm templates.
+    default: op
+  rihanx.farm.*:
+    default: op
+    children:
+      rihanx.farm: true
+      rihanx.farm.build: true
+      rihanx.farm.list: true
+  rihanx.farm.build:
+    description: Paste a farm template.
+    default: op
+  rihanx.farm.list:
+    description: List farm templates.
     default: op
   rihanx.msg:
     description: Send private messages.

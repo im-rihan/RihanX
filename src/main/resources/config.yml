@@ -161,4 +161,4 @@ kits:
 
 base:
   # How many blocks to place per tick when pasting a house template
-  blocks-per-tick: 800
+  blocks-per-tick: 1200
