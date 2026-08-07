@@ -47,7 +47,13 @@ public final class FarmModule {
             messages.send(player, "farm-usage");
             return true;
         }
-
+        if (args[0].equalsIgnoreCase("undo")) {
+            if (!CommandSupport.checkPerm(player, PermissionNodes.FARM_UNDO, messages)) {
+                return true;
+            }
+            plugin.getBaseService().undo(player);
+            return true;
+        }
         if (!CommandSupport.checkPerm(player, PermissionNodes.FARM_BUILD, messages)) {
             return true;
         }

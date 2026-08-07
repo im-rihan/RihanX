@@ -1,7 +1,7 @@
-# RihanX Configuration
+﻿# RihanX Configuration
 # Paper API: 26.2.build.84-stable | Java 25
 
-prefix: "<gradient:#7C4DFF:#00E5FF><bold>RihanX</bold></gradient> <dark_gray>»</dark_gray> "
+prefix: "<gradient:#7C4DFF:#00E5FF><bold>RihanX</bold></gradient> <dark_gray>Â»</dark_gray> "
 
 search:
   default-radius: 32
@@ -65,7 +65,7 @@ database:
 
 general:
   debug: false
-  # Forced to Asia/Kolkata (IST) — RihanX always uses India time for /server info
+  # Forced to Asia/Kolkata (IST) â€” RihanX always uses India time for /server info
   timezone: Asia/Kolkata
   persistent-back: true
   max-back-history: 10
@@ -162,3 +162,6 @@ kits:
 base:
   # How many blocks to place per tick when pasting a house template
   blocks-per-tick: 1200
+  # How many pastes each player can undo (newest first)
+  max-undo: 5
+

@@ -198,16 +198,35 @@ public final class LuxuryBaseTemplates {
         b.set(-1, 1, maxZ + 2, Material.AIR);
         b.set(-1, 2, maxZ + 2, Material.AIR);
 
-        // Swimming pool to the side
-        buildPool(b, 5, 10, maxZ + 3, maxZ + 8, 0);
+        // Side patio → swimming pool (attached, walkable, stairs into water)
+        poolWalkway(b, 4, 10, maxZ + 1, maxZ + 2, 0);
+        // Side door from kitchen/lounge out to the pool patio
+        b.set(maxX, 1, 4, Material.AIR);
+        b.set(maxX, 2, 4, Material.AIR);
+        b.door(maxX, 1, 4, Material.OAK_DOOR, BlockFace.EAST);
+        buildPool(b, 5, 10, maxZ + 3, maxZ + 8, 0, BlockFace.NORTH);
 
-        // Garden
+        // Garden beds + flower boxes for a richer exterior
         for (int x = minX; x <= -2; x++) {
             b.set(x, 0, maxZ + 4, Material.GRASS_BLOCK);
             b.set(x, 1, maxZ + 4, x % 2 == 0 ? Material.OAK_LEAVES : Material.POPPY);
         }
+        for (int z = -6; z <= 2; z += 4) {
+            b.set(minX - 1, 0, z, Material.GRASS_BLOCK);
+            b.set(minX - 1, 1, z, Material.AZALEA);
+            b.set(maxX + 1, 0, z, Material.GRASS_BLOCK);
+            b.set(maxX + 1, 1, z, Material.FLOWERING_AZALEA);
+        }
+        // Window flower boxes (front sill planters)
+        for (int x = -6; x <= 6; x += 3) {
+            if (x >= -1 && x <= 0) {
+                continue;
+            }
+            b.set(x, 1, minZ - 1, Material.OAK_FENCE);
+            b.set(x, 2, minZ - 1, Material.POTTED_POPPY);
+        }
 
-        return b.build("bungalow", "Luxury 5-bedroom bungalow - pitched roof, porch, pool, kitchen", 0, 0, maxZ + 2);
+        return b.build("bungalow", "Luxury 5-bedroom bungalow - pitched roof, porch, pool patio, kitchen", 0, 0, maxZ + 2);
     }
 
     /** Two-storey villa — lift (bubble elevator), pool, loft, multi-suite. */
@@ -365,10 +384,14 @@ public final class LuxuryBaseTemplates {
             b.set(1, y, maxZ + 2, Material.QUARTZ_PILLAR);
         }
 
-        // Pool to the side so it never seals the entrance
-        buildPool(b, 4, 10, maxZ + 2, maxZ + 8, 0);
+        // Pool patio attached to house (+X), walk-on deck, stairs into water
+        poolWalkway(b, 3, 10, maxZ + 1, maxZ + 2, 0);
+        b.set(maxX, 1, 4, Material.AIR);
+        b.set(maxX, 2, 4, Material.AIR);
+        b.door(maxX, 1, 4, Material.BIRCH_DOOR, BlockFace.EAST);
+        buildPool(b, 4, 10, maxZ + 3, maxZ + 8, 0, BlockFace.NORTH);
 
-        return b.build("villa", "2-storey luxury villa - bubble lift, 5 bedrooms, pool & balcony", 0, 0, maxZ + 2);
+        return b.build("villa", "2-storey luxury villa - bubble lift, 5 bedrooms, pool patio & balcony", 0, 0, maxZ + 2);
     }
 
     /** Mega mansion — 3 levels, dual lifts, indoor + outdoor pools, 6 suites. */
@@ -474,7 +497,9 @@ public final class LuxuryBaseTemplates {
             }
         }
 
-        buildPool(b, 5, 12, maxZ + 2, maxZ + 9, 0);
+        // Outdoor pool with patio from the east wing
+        poolWalkway(b, 5, 12, maxZ + 1, maxZ + 2, 0);
+        buildPool(b, 5, 12, maxZ + 3, maxZ + 9, 0, BlockFace.NORTH);
         for (int x = -2; x <= 1; x++) {
             for (int z = maxZ + 1; z <= maxZ + 3; z++) {
                 b.set(x, -1, z, Material.POLISHED_BLACKSTONE);
@@ -483,8 +508,8 @@ public final class LuxuryBaseTemplates {
                 b.set(x, 2, z, Material.AIR);
             }
         }
-        // Small indoor plunge (side atrium - not in doorway)
-        buildPool(b, 6, 10, -1, 2, 0);
+        // Indoor plunge with open west access from lounge
+        buildPool(b, 6, 10, -1, 2, 0, BlockFace.WEST);
 
         return b.build("mansion", "3-level gold mansion - dual lifts, 6 suites, indoor & outdoor pools", 0, 0, maxZ + 2);
     }
@@ -555,7 +580,8 @@ public final class LuxuryBaseTemplates {
 
         // Rooftop pool
         fillRect(b, minX, maxX, minZ, maxZ, top + 1, Material.WHITE_CONCRETE);
-        buildPool(b, -5, 5, -5, 3, top + 1);
+        // Rooftop pool with open south access from the roof deck
+        buildPool(b, -5, 5, -5, 3, top + 1, BlockFace.SOUTH);
 
         return b.build("modern", "Modern glass-concrete home - lift, 5 beds, rooftop pool", 0, 0, maxZ + 2);
     }
@@ -569,7 +595,8 @@ public final class LuxuryBaseTemplates {
         fillRect(b, -12, 12, -8, 14, 0, Material.SMOOTH_SANDSTONE);
 
         // Huge resort pool center
-        buildPool(b, -6, 6, -2, 10, 0);
+        // Huge resort pool center — open access from clubhouse (north)
+        buildPool(b, -6, 6, -2, 10, 0, BlockFace.NORTH);
 
         // Main clubhouse at back (-Z)
         int minX = -8;
@@ -740,34 +767,121 @@ public final class LuxuryBaseTemplates {
         b.hangingLantern(x, ceilingY - 1, z, Material.LANTERN, ceilingY);
     }
 
+    /**
+     * Swimming pool with deck, open access from {@code access} side, stairs into water, and ladder.
+     * No slab wall on the access edge so you can walk onto the deck from the house patio.
+     */
     private static void buildPool(
             @NotNull BaseTemplates.Builder b,
             int x1, int x2, int z1, int z2,
-            int deckY
+            int deckY,
+            @NotNull BlockFace access
     ) {
-        // Deck ring
-        for (int x = x1 - 1; x <= x2 + 1; x++) {
-            for (int z = z1 - 1; z <= z2 + 1; z++) {
-                boolean edge = x == x1 - 1 || x == x2 + 1 || z == z1 - 1 || z == z2 + 1;
-                if (edge) {
+        int deckMinX = x1 - 1;
+        int deckMaxX = x2 + 1;
+        int deckMinZ = z1 - 1;
+        int deckMaxZ = z2 + 1;
+
+        // Full deck platform (walkable) under and around the basin
+        for (int x = deckMinX; x <= deckMaxX; x++) {
+            for (int z = deckMinZ; z <= deckMaxZ; z++) {
+                b.set(x, deckY - 1, z, Material.PRISMARINE_BRICKS);
+                boolean inWater = x >= x1 && x <= x2 && z >= z1 && z <= z2;
+                if (inWater) {
+                    b.set(x, deckY - 1, z, Material.PRISMARINE);
+                    if ((x + z) % 3 == 0) {
+                        b.set(x, deckY - 1, z, Material.SEA_LANTERN);
+                    }
+                    b.set(x, deckY, z, Material.WATER);
+                } else {
                     b.set(x, deckY, z, Material.PRISMARINE_BRICKS);
-                    b.slab(x, deckY + 1, z, Material.PRISMARINE_SLAB, Slab.Type.BOTTOM);
+                    b.set(x, deckY + 1, z, Material.AIR);
+                    b.set(x, deckY + 2, z, Material.AIR);
                 }
             }
         }
-        // Basin
-        for (int x = x1; x <= x2; x++) {
-            for (int z = z1; z <= z2; z++) {
-                b.set(x, deckY - 1, z, Material.PRISMARINE);
-                b.set(x, deckY, z, Material.WATER);
-                if ((x + z) % 3 == 0) {
-                    b.set(x, deckY - 1, z, Material.SEA_LANTERN);
+
+        // Low fence on non-access edges only (keeps look without blocking entry)
+        for (int x = deckMinX; x <= deckMaxX; x++) {
+            for (int z = deckMinZ; z <= deckMaxZ; z++) {
+                boolean edge = x == deckMinX || x == deckMaxX || z == deckMinZ || z == deckMaxZ;
+                if (!edge) {
+                    continue;
                 }
+                boolean accessEdge =
+                        (access == BlockFace.WEST && x == deckMinX)
+                                || (access == BlockFace.EAST && x == deckMaxX)
+                                || (access == BlockFace.NORTH && z == deckMinZ)
+                                || (access == BlockFace.SOUTH && z == deckMaxZ);
+                if (accessEdge) {
+                    continue; // open for walking onto the deck
+                }
+                b.set(x, deckY + 1, z, Material.PRISMARINE_WALL);
             }
         }
-        // Ladder on deck edge into water (do not delete water column)
-        int mx = (x1 + x2) / 2;
-        b.facing(mx, deckY, z1 - 1, Material.LADDER, BlockFace.SOUTH);
+
+        // Gate opening 3 blocks wide on access edge
+        int midX = (x1 + x2) / 2;
+        int midZ = (z1 + z2) / 2;
+        if (access == BlockFace.WEST) {
+            for (int z = midZ - 1; z <= midZ + 1; z++) {
+                b.set(deckMinX, deckY + 1, z, Material.AIR);
+            }
+        } else if (access == BlockFace.EAST) {
+            for (int z = midZ - 1; z <= midZ + 1; z++) {
+                b.set(deckMaxX, deckY + 1, z, Material.AIR);
+            }
+        } else if (access == BlockFace.NORTH) {
+            for (int x = midX - 1; x <= midX + 1; x++) {
+                b.set(x, deckY + 1, deckMinZ, Material.AIR);
+            }
+        } else {
+            for (int x = midX - 1; x <= midX + 1; x++) {
+                b.set(x, deckY + 1, deckMaxZ, Material.AIR);
+            }
+        }
+
+        // Stairs into the water from the access side
+        if (access == BlockFace.WEST) {
+            b.stairs(x1, deckY, midZ, Material.PRISMARINE_STAIRS, BlockFace.EAST);
+            b.set(x1, deckY + 1, midZ, Material.AIR);
+        } else if (access == BlockFace.EAST) {
+            b.stairs(x2, deckY, midZ, Material.PRISMARINE_STAIRS, BlockFace.WEST);
+            b.set(x2, deckY + 1, midZ, Material.AIR);
+        } else if (access == BlockFace.NORTH) {
+            b.stairs(midX, deckY, z1, Material.PRISMARINE_STAIRS, BlockFace.SOUTH);
+            b.set(midX, deckY + 1, z1, Material.AIR);
+        } else {
+            b.stairs(midX, deckY, z2, Material.PRISMARINE_STAIRS, BlockFace.NORTH);
+            b.set(midX, deckY + 1, z2, Material.AIR);
+        }
+
+        // Ladder on far side to climb out
+        if (access == BlockFace.WEST) {
+            b.facing(x2, deckY, midZ, Material.LADDER, BlockFace.WEST);
+        } else if (access == BlockFace.EAST) {
+            b.facing(x1, deckY, midZ, Material.LADDER, BlockFace.EAST);
+        } else if (access == BlockFace.NORTH) {
+            b.facing(midX, deckY, z2, Material.LADDER, BlockFace.NORTH);
+        } else {
+            b.facing(midX, deckY, z1, Material.LADDER, BlockFace.SOUTH);
+        }
+    }
+
+    /** Patio walkway connecting house wall to pool deck (solid path, no gaps). */
+    private static void poolWalkway(
+            @NotNull BaseTemplates.Builder b,
+            int x1, int x2, int z1, int z2,
+            int y
+    ) {
+        for (int x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
+            for (int z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) {
+                b.set(x, y - 1, z, Material.SMOOTH_STONE);
+                b.set(x, y, z, Material.SMOOTH_QUARTZ);
+                b.set(x, y + 1, z, Material.AIR);
+                b.set(x, y + 2, z, Material.AIR);
+            }
+        }
     }
 
     private static void furnishBedroom(

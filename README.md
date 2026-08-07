@@ -1,4 +1,4 @@
-# RihanX
+﻿# RihanX
 
 Production-ready Paper utility suite for **Minehut / Paper 26.2** (`paper-api 26.2.build.84-stable`).
 
@@ -8,12 +8,12 @@ Every module works **both** ways:
 
 | Style | Example |
 |-------|---------|
-| Prefixed | `/rx slime nearest` · `/rihanx player fly` · `/rihan protect wand` |
-| Standalone | `/slime nearest` · `/player fly` · `/protect wand` |
+| Prefixed | `/rx slime nearest` Â· `/rihanx player fly` Â· `/rihan protect wand` |
+| Standalone | `/slime nearest` Â· `/player fly` Â· `/protect wand` |
 
-Aliases: `/rx` = `/rihanx` = `/rihan` · `/inv` = `/inventory` · `/perf` = `/performance` · `/guard` = `/protect` · `/we` = `/edit`
+Aliases: `/rx` = `/rihanx` = `/rihan` Â· `/inv` = `/inventory` Â· `/perf` = `/performance` Â· `/guard` = `/protect` Â· `/we` = `/edit`
 
-**Teleport exception:** standalone is `/rxtp …` (not `/tp`) so vanilla `/tp` is not overridden. `/rx tp …`, `/rx back`, and `/back` still work.
+**Teleport exception:** standalone is `/rxtp â€¦` (not `/tp`) so vanilla `/tp` is not overridden. `/rx tp â€¦`, `/rx back`, and `/back` still work.
 
 Permission prefix: `rihanx.*`
 
@@ -55,7 +55,7 @@ Upload **`RihanX-1.0.0.jar`** (not any `original-*` jar).
 
 ## Command reference
 
-Below, `/rx <module> …` and `/<module> …` are equivalent unless noted.
+Below, `/rx <module> â€¦` and `/<module> â€¦` are equivalent unless noted.
 
 ### Help
 
@@ -63,18 +63,18 @@ Below, `/rx <module> …` and `/<module> …` are equivalent unless noted.
 |---------|------------|-------------|
 | `/rx help` | `rihanx.use` | List modules |
 
-### Slime — `/rx slime` · `/slime`
+### Slime â€” `/rx slime` Â· `/slime`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/slime` | `rihanx.slime` | Check current chunk |
 | `/slime nearest` | `rihanx.slime.nearest` | Nearest slime chunk |
 | `/slime search <radius>` | `rihanx.slime.search` | Async radius search |
-| `/slime density <radius>` | `rihanx.slime.density` | Density + best 3×3 farm |
+| `/slime density <radius>` | `rihanx.slime.density` | Density + best 3Ã—3 farm |
 | `/slime map [radius]` | `rihanx.slime.map` | ASCII slime map |
 | `/slime tp` | `rihanx.slime.tp` | Teleport to nearest slime |
 
-### World — `/rx world` · `/world`
+### World â€” `/rx world` Â· `/world`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -82,12 +82,12 @@ Below, `/rx <module> …` and `/<module> …` are equivalent unless noted.
 | `/world seed` | `rihanx.world.seed` | World seed |
 | `/world weather <clear\|rain\|thunder>` | `rihanx.world.weather` | Set weather |
 | `/world difficulty <diff>` | `rihanx.world.difficulty` | Set difficulty |
-| `/world time <day\|night\|…\|ticks>` | `rihanx.world.time` | Set time |
+| `/world time <day\|night\|â€¦\|ticks>` | `rihanx.world.time` | Set time |
 | `/world border` | `rihanx.world.border` | Border info |
 | `/world spawn` | `rihanx.world.spawn` | Show spawn |
 | `/world setspawn` | `rihanx.world.setspawn` | Set spawn to you |
 
-### Find — `/rx find` · `/find`
+### Find â€” `/rx find` Â· `/find`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -96,7 +96,7 @@ Below, `/rx <module> …` and `/<module> …` are equivalent unless noted.
 
 Supports every vanilla biome and structure (tab-complete).
 
-### Chunk — `/rx chunk` · `/chunk`
+### Chunk â€” `/rx chunk` Â· `/chunk`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -108,7 +108,7 @@ Supports every vanilla biome and structure (tab-complete).
 | `/chunk entities` | `rihanx.chunk.entities` | Entity count |
 | `/chunk tileentities` | `rihanx.chunk.tileentities` | Tile entity count |
 
-### Teleport — `/rx tp` · `/rxtp` · `/back`
+### Teleport â€” `/rx tp` Â· `/rxtp` Â· `/back`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -123,13 +123,13 @@ Supports every vanilla biome and structure (tab-complete).
 | `/rxtp chunk <x> <z>` | `rihanx.tp.chunk` | Chunk center |
 | `/rxtp random` | `rihanx.tp.random` | Random safe teleport |
 | `/rxtp safe` | `rihanx.tp.safe` | Safe spot near you |
-| `/rxtp back` · `/rx tp back` · `/rx back` · `/back` | `rihanx.tp.back` | Previous location |
+| `/rxtp back` Â· `/rx tp back` Â· `/rx back` Â· `/back` | `rihanx.tp.back` | Previous location |
 
-Player names support partial match + tab completion (e.g. `/rxtp player Ste` → Steve). Tab also suggests online names for `/fly`, `/god`, `/heal`, `/feed`, `/gm`, `/player …`, `/inv see`, `/rxtp here`, etc.
+Player names support partial match + tab completion (e.g. `/rxtp player Ste` â†’ Steve). Tab also suggests online names for `/fly`, `/god`, `/heal`, `/feed`, `/gm`, `/player â€¦`, `/inv see`, `/rxtp here`, etc.
 
-**Self vs other:** `/fly`, `/god`, `/heal`, `/feed`, `/gm` with no name always affect **only you**. Naming a player affects **only that one player** — never everyone online.
+**Self vs other:** `/fly`, `/god`, `/heal`, `/feed`, `/gm` with no name always affect **only you**. Naming a player affects **only that one player** â€” never everyone online.
 
-### Player — `/rx player` · `/player`
+### Player â€” `/rx player` Â· `/player`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -138,11 +138,11 @@ Player names support partial match + tab completion (e.g. `/rxtp player Ste` →
 | `/player feed [player]` | `rihanx.player.feed` | Feed |
 | `/player fly [player]` | `rihanx.player.fly` | Toggle flight (**you** by default; only that player if named) |
 | `/player god [player]` | `rihanx.player.god` | Toggle god mode (**you** by default; only that player if named) |
-| `/fly [player]` | `rihanx.player.fly` | Shortcut — same as `/player fly` (self unless you name someone) |
-| `/god [player]` | `rihanx.player.god` | Shortcut — same as `/player god` |
-| `/heal [player]` · `/feed [player]` | heal/feed perms | Shortcuts — self by default |
-| `/vanish` | `rihanx.player.vanish` | Shortcut — **always you only** |
-| `/gm <mode> [player]` | `rihanx.player.gamemode` | Shortcut — self by default |
+| `/fly [player]` | `rihanx.player.fly` | Shortcut â€” same as `/player fly` (self unless you name someone) |
+| `/god [player]` | `rihanx.player.god` | Shortcut â€” same as `/player god` |
+| `/heal [player]` Â· `/feed [player]` | heal/feed perms | Shortcuts â€” self by default |
+| `/vanish` | `rihanx.player.vanish` | Shortcut â€” **always you only** |
+| `/gm <mode> [player]` | `rihanx.player.gamemode` | Shortcut â€” self by default |
 
 | `/player gamemode <mode> [player]` | `rihanx.player.gamemode` | Set gamemode (`gm` alias) |
 | `/player speed <value> [player]` | `rihanx.player.speed` | Walk/fly speed |
@@ -152,7 +152,7 @@ Player names support partial match + tab completion (e.g. `/rxtp player Ste` →
 | `/player cleareffects [player]` | `rihanx.player.cleareffects` | Clear potion effects |
 | `/player ping [player]` | `rihanx.player.ping` | Ping |
 
-### Inventory — `/rx inventory` · `/inventory` · `/inv`
+### Inventory â€” `/rx inventory` Â· `/inventory` Â· `/inv`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -161,7 +161,7 @@ Player names support partial match + tab completion (e.g. `/rxtp player Ste` →
 | `/inv clear [player]` | `rihanx.inventory.clear` | Clear inventory |
 | `/inv repair [player]` | `rihanx.inventory.repair` | Repair all items |
 
-### Items — `/rx item` · `/item`
+### Items â€” `/rx item` Â· `/item`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -177,9 +177,9 @@ Tipped arrows / potions (not enchants):
 /item give potion:strong_healing 1
 ```
 
-**Note:** Arrow of Harming II is a **tipped arrow** (`STRONG_HARMING`), not an enchantment — `/item enchant` will not create it.
-| `/item rename <name…>` | `rihanx.item.rename` | Rename (MiniMessage) |
-| `/item lore <text…>` | `rihanx.item.lore` | Add lore line |
+**Note:** Arrow of Harming II is a **tipped arrow** (`STRONG_HARMING`), not an enchantment â€” `/item enchant` will not create it.
+| `/item rename <nameâ€¦>` | `rihanx.item.rename` | Rename (MiniMessage) |
+| `/item lore <textâ€¦>` | `rihanx.item.lore` | Add lore line |
 | `/item enchant <enchant> [level]` | `rihanx.item.enchant` | Add enchant (**costs XP**; free with `rihanx.item.enchant.free`) |
 | `/item repair` | `rihanx.item.repair` | Repair held item |
 
@@ -244,27 +244,27 @@ Examples:
 | Netherite ingot | `netherite_ingot` |
 | Ancient debris | `ancient_debris` |
 | Quartz | `quartz` |
-| Raw iron / gold / copper | `raw_iron` · `raw_gold` · `raw_copper` |
+| Raw iron / gold / copper | `raw_iron` Â· `raw_gold` Â· `raw_copper` |
 
 **Blocks**
 
 | Item | Material |
 |------|----------|
-| Stone / cobble / deepslate | `stone` · `cobblestone` · `deepslate` |
-| Dirt / grass | `dirt` · `grass_block` |
-| Sand / gravel | `sand` · `gravel` |
+| Stone / cobble / deepslate | `stone` Â· `cobblestone` Â· `deepslate` |
+| Dirt / grass | `dirt` Â· `grass_block` |
+| Sand / gravel | `sand` Â· `gravel` |
 | Glass | `glass` |
 | Obsidian | `obsidian` |
 | Glowstone | `glowstone` |
-| Oak / spruce / birch log | `oak_log` · `spruce_log` · `birch_log` |
-| Oak / spruce / birch plank | `oak_planks` · `spruce_planks` · `birch_planks` |
-| Chest / ender chest / barrel | `chest` · `ender_chest` · `barrel` |
-| Crafting table / furnace | `crafting_table` · `furnace` · `blast_furnace` · `smoker` |
+| Oak / spruce / birch log | `oak_log` Â· `spruce_log` Â· `birch_log` |
+| Oak / spruce / birch plank | `oak_planks` Â· `spruce_planks` Â· `birch_planks` |
+| Chest / ender chest / barrel | `chest` Â· `ender_chest` Â· `barrel` |
+| Crafting table / furnace | `crafting_table` Â· `furnace` Â· `blast_furnace` Â· `smoker` |
 | Anvil | `anvil` |
 | Enchanting table | `enchanting_table` |
 | Beacon | `beacon` |
 | Scaffolding | `scaffolding` |
-| Torches | `torch` · `soul_torch` |
+| Torches | `torch` Â· `soul_torch` |
 
 **Tools / weapons / armor** (swap material prefix: `wooden_`, `stone_`, `iron_`, `golden_`, `diamond_`, `netherite_`)
 
@@ -275,33 +275,33 @@ Examples:
 | Axe | `diamond_axe` |
 | Shovel | `diamond_shovel` |
 | Hoe | `diamond_hoe` |
-| Bow / crossbow / trident | `bow` · `crossbow` · `trident` |
-| Shield / elytra | `shield` · `elytra` |
-| Helmet / chest / legs / boots | `netherite_helmet` · `netherite_chestplate` · `netherite_leggings` · `netherite_boots` |
+| Bow / crossbow / trident | `bow` Â· `crossbow` Â· `trident` |
+| Shield / elytra | `shield` Â· `elytra` |
+| Helmet / chest / legs / boots | `netherite_helmet` Â· `netherite_chestplate` Â· `netherite_leggings` Â· `netherite_boots` |
 
 **Food / farming**
 
 | Item | Material |
 |------|----------|
-| Bread / steak / golden carrot | `bread` · `cooked_beef` · `golden_carrot` |
-| Golden apple / enchanted | `golden_apple` · `enchanted_golden_apple` |
-| Wheat / carrot / potato | `wheat` · `carrot` · `potato` |
-| Bone meal / bone | `bone_meal` · `bone` |
-| Water / lava bucket | `water_bucket` · `lava_bucket` |
+| Bread / steak / golden carrot | `bread` Â· `cooked_beef` Â· `golden_carrot` |
+| Golden apple / enchanted | `golden_apple` Â· `enchanted_golden_apple` |
+| Wheat / carrot / potato | `wheat` Â· `carrot` Â· `potato` |
+| Bone meal / bone | `bone_meal` Â· `bone` |
+| Water / lava bucket | `water_bucket` Â· `lava_bucket` |
 | Milk bucket | `milk_bucket` |
 
 **Mob drops / misc**
 
 | Item | Material |
 |------|----------|
-| Gunpowder / string / feather | `gunpowder` · `string` · `feather` |
-| Ender pearl / eye | `ender_pearl` · `ender_eye` |
-| Blaze rod / powder | `blaze_rod` · `blaze_powder` |
+| Gunpowder / string / feather | `gunpowder` Â· `string` Â· `feather` |
+| Ender pearl / eye | `ender_pearl` Â· `ender_eye` |
+| Blaze rod / powder | `blaze_rod` Â· `blaze_powder` |
 | Totem of undying | `totem_of_undying` |
-| Name tag / saddle | `name_tag` · `saddle` |
+| Name tag / saddle | `name_tag` Â· `saddle` |
 | Firework rocket | `firework_rocket` |
-| Arrow / tipped | `arrow` · `spectral_arrow` |
-| Spyglass / brush | `spyglass` · `brush` |
+| Arrow / tipped | `arrow` Â· `spectral_arrow` |
+| Spyglass / brush | `spyglass` Â· `brush` |
 | Bundle | `bundle` |
 
 Any other vanilla item id works the same way (for example `cyan_concrete`, `oak_sign`, `music_disc_cat`). If unsure, start typing and use tab-complete.
@@ -312,13 +312,13 @@ Any other vanilla item id works the same way (for example `cyan_concrete`, `oak_
 /item enchant <enchant> [level]
 ```
 
-Examples: `/item enchant sharpness 5` · `/item enchant unbreaking 3` · `/item enchant mending 1`
+Examples: `/item enchant sharpness 5` Â· `/item enchant unbreaking 3` Â· `/item enchant mending 1`
 
 Common enchant ids: `sharpness`, `efficiency`, `fortune`, `silk_touch`, `unbreaking`, `mending`, `protection`, `fire_aspect`, `knockback`, `looting`, `power`, `punch`, `flame`, `infinity`, `fortune`, `respiration`, `aqua_affinity`, `depth_strider`, `soul_speed`, `swift_sneak`, `feather_falling`, `thorns`, `loyalty`, `channeling`, `riptide`, `impaling`, `multishot`, `piercing`, `quick_charge`, `density`, `breach`, `wind_burst`.
 
-Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-enchant-level`, capped by `max-cost` (default: 1 XP level per enchant level, max 30). Example: `/item enchant sharpness 5` costs **5** levels. Set `require-xp: false` to disable, or grant `rihanx.item.enchant.free`.
+Enchant XP cost (config `item.enchant`): `cost = base-cost + level Ã— cost-per-enchant-level`, capped by `max-cost` (default: 1 XP level per enchant level, max 30). Example: `/item enchant sharpness 5` costs **5** levels. Set `require-xp: false` to disable, or grant `rihanx.item.enchant.free`.
 
-### Search — `/rx search` · `/search`
+### Search â€” `/rx search` Â· `/search`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -329,7 +329,7 @@ Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-e
 | `/search spawner [radius]` | `rihanx.search.spawner` | Spawners |
 | `/search village [radius]` | `rihanx.search.village` | Villages |
 
-### Server / performance — `/server` · `/performance` · `/perf`
+### Server / performance â€” `/server` Â· `/performance` Â· `/perf`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -341,7 +341,7 @@ Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-e
 | `/perf chunks` | `rihanx.performance.chunks` | Nearby loaded chunks |
 | `/perf entities` | `rihanx.performance.entities` | Entity breakdown |
 
-### Homes — `/home` · `/sethome` · `/delhome` · `/homes`
+### Homes â€” `/home` Â· `/sethome` Â· `/delhome` Â· `/homes`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -350,9 +350,9 @@ Enchant XP cost (config `item.enchant`): `cost = base-cost + level × cost-per-e
 | `/delhome [name]` | `rihanx.home.delete` | Delete a home |
 | `/homes` | `rihanx.home.list` | List homes |
 
-Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`. Also `/rx home …`.
+Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`. Also `/rx home â€¦`.
 
-### Warps — `/warp` · `/setwarp` · `/delwarp` · `/warps`
+### Warps â€” `/warp` Â· `/setwarp` Â· `/delwarp` Â· `/warps`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -361,7 +361,7 @@ Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`
 | `/delwarp <name>` | `rihanx.warp.delete` | Delete warp |
 | `/warps` | `rihanx.warp.list` | List warps |
 
-### TPA — `/tpa` · `/tpahere` · `/tpaccept` · `/tpdeny` · `/tpcancel`
+### TPA â€” `/tpa` Â· `/tpahere` Â· `/tpaccept` Â· `/tpdeny` Â· `/tpcancel`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -373,16 +373,16 @@ Limits: `homes.max-default` (3), `homes.max-op` (20), or `rihanx.home.limit.<n>`
 
 Config: `tpa.timeout-seconds` (60), `tpa.cooldown-seconds` (5). Vanished targets are hidden unless `rihanx.see.vanished`.
 
-### Private messages — `/msg` · `/tell` · `/w` · `/reply` · `/r`
+### Private messages â€” `/msg` Â· `/tell` Â· `/w` Â· `/reply` Â· `/r`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/msg <player> <message>` | `rihanx.msg` | Send a private message (`/tell` and `/w` are aliases) |
 | `/reply <message>` | `rihanx.reply` | Reply to the last player who messaged you, or who you last messaged (`/r` alias) |
 
-Vanished players cannot be messaged unless the sender has `rihanx.see.vanished`. Also works as `/rx msg …` / `/rx reply …`.
+Vanished players cannot be messaged unless the sender has `rihanx.see.vanished`. Also works as `/rx msg â€¦` / `/rx reply â€¦`.
 
-### AFK — `/afk`
+### AFK â€” `/afk`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -390,7 +390,7 @@ Vanished players cannot be messaged unless the sender has `rihanx.see.vanished`.
 
 AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in the tab list. Moving, interacting, or chatting automatically clears AFK. Also `/rx afk`.
 
-### Spawn — `/spawn` · `/setspawn`
+### Spawn â€” `/spawn` Â· `/setspawn`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -399,7 +399,7 @@ AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in 
 
 `/setspawn` updates both the vanilla world spawn and a warp named `spawn` (visible via `/warps`), so `/spawn`, `/warp spawn`, and respawns all point to the same place. Also `/rx spawn` / `/rx setspawn`.
 
-### Bases — `/base`
+### Bases â€” `/base`
 
 Stand where the **front door / porch** should be, look toward where the house should go, then paste (or open `/base` GUI). You stay at the entrance while it builds, then face inside when done.
 
@@ -408,6 +408,7 @@ Stand where the **front door / porch** should be, look toward where the house sh
 | `/base` | `rihanx.base` | Open the base selection GUI |
 | `/base <name>` | `rihanx.base.build` | Paste a house template facing you |
 | `/base list` | `rihanx.base` | List templates in chat |
+| `/base undo` | `rihanx.base.undo` | Restore terrain from your last paste (stack up to `base.max-undo`) |
 
 Built-in templates (front door faces you). Open the GUI with `/base`:
 
@@ -422,13 +423,13 @@ Built-in templates (front door faces you). Open the GUI with `/base`:
 | `mansion` | Mega | 3 floors, **dual lifts**, 6 suites, indoor + outdoor pools |
 | `resort` | Mega | Mega pool club, **5 cabanas**, bar lounge |
 
-Also `/house`, `/buildbase`, or `/rx base …`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
+Also `/house`, `/buildbase`, or `/rx base â€¦`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
 
-**Lift tip:** stand in the glass water tube — soul sand = up, magma = down.
+**Lift tip:** stand in the glass water tube â€” soul sand = up, magma = down.
 
-Examples: `/base` · `/base bungalow` · `/base villa` · `/base list`
+Examples: `/base` Â· `/base bungalow` Â· `/base villa` Â· `/base list`
 
-### Farms — `/farm`
+### Farms â€” `/farm`
 
 Stand at the **front / collection** side, face into the farm, then open the GUI:
 
@@ -437,6 +438,7 @@ Stand at the **front / collection** side, face into the farm, then open the GUI:
 | `/farm` | `rihanx.farm` | Open farm selection GUI |
 | `/farm <name>` | `rihanx.farm.build` | Paste a farm |
 | `/farm list` | `rihanx.farm` | List farms |
+| `/farm undo` | `rihanx.farm.undo` | Undo your last farm/base paste |
 
 | Farm | Gadgets |
 |------|---------|
@@ -449,9 +451,9 @@ Stand at the **front / collection** side, face into the farm, then open the GUI:
 | `iron` | Water streams, lava kill, hoppers (add villagers + zombie) |
 | `xp` | Dark spawn pads, drop chute, magma + hoppers |
 
-Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm …`.
+Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm â€¦`.
 
-### Kits — `/kit` · `/kits`
+### Kits â€” `/kit` Â· `/kits`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -464,13 +466,13 @@ Definitions in `kits.yml`. Bundled kits (synced on reload when `kits.sync-bundle
 |-----|--------------------|----------|
 | `starter` | Chainmail + stone tools (light enchants), food, bow, basics | 1 hour |
 | `survival` | **Elytra**, enchanted diamond gear/tools (Protection II, Sharpness III, Efficiency III), totem, shulkers, building | 24 hours |
-| `pro` | **Netherite** + elytra, Protection IV / Sharpness V / Efficiency V / Unbreaking III / Mending gear, mace/trident, beacon, totems×5, blocks of ore | **48 hours** |
+| `pro` | **Netherite** + elytra, Protection IV / Sharpness V / Efficiency V / Unbreaking III / Mending gear, mace/trident, beacon, totemsÃ—5, blocks of ore | **48 hours** |
 
-**Cooldowns explained:** `cooldown-seconds` in `kits.yml` is the wait time between claims of that kit, per player. `pro` is set to `172800` seconds = **48 hours** — a player who claims `/kit pro` must wait 2 full days before claiming it again (unless they have `rihanx.bypass.cooldown` or `rihanx.admin`). `starter` = 3600s (1h), `survival` = 86400s (24h).
+**Cooldowns explained:** `cooldown-seconds` in `kits.yml` is the wait time between claims of that kit, per player. `pro` is set to `172800` seconds = **48 hours** â€” a player who claims `/kit pro` must wait 2 full days before claiming it again (unless they have `rihanx.bypass.cooldown` or `rihanx.admin`). `starter` = 3600s (1h), `survival` = 86400s (24h).
 
-Examples: `/kit survival` · `/kit pro`
+Examples: `/kit survival` Â· `/kit pro`
 
-**Delivery:** `/kit` auto-places **colored shulker boxes** (better chests) filled with items — white / lime / purple. No crafting needed. Config `kits.delivery`: `auto` · `shulker` · `inventory`.
+**Delivery:** `/kit` auto-places **colored shulker boxes** (better chests) filled with items â€” white / lime / purple. No crafting needed. Config `kits.delivery`: `auto` Â· `shulker` Â· `inventory`.
 
 #### Enchanted kit gear
 
@@ -485,7 +487,7 @@ Enchant ids and levels use the same names as `/item enchant`. Applied with `meta
 
 #### First-join kit
 
-Config `kits.first-join-kit` (default: `starter`). The first time a brand-new player joins (`hasPlayedBefore() == false`), they're given that kit automatically 1 second (20 ticks) after joining — no command needed. Set it to `""` (blank) to disable.
+Config `kits.first-join-kit` (default: `starter`). The first time a brand-new player joins (`hasPlayedBefore() == false`), they're given that kit automatically 1 second (20 ticks) after joining â€” no command needed. Set it to `""` (blank) to disable.
 
 ### Fly / god persistence
 
@@ -504,7 +506,7 @@ High value next additions if you want them:
 
 ### Do you still need EssentialsX?
 
-For most Minehut survival servers using RihanX: **no — you can remove EssentialsX** if you only used it for homes, warps, TPA, kits, heal/fly/god, back, spawn, chat (`/msg`/`/r`), and AFK. RihanX covers those.
+For most Minehut survival servers using RihanX: **no â€” you can remove EssentialsX** if you only used it for homes, warps, TPA, kits, heal/fly/god, back, spawn, chat (`/msg`/`/r`), and AFK. RihanX covers those.
 
 **Keep EssentialsX** only if you still need features RihanX does not have, for example:
 
@@ -513,9 +515,9 @@ For most Minehut survival servers using RihanX: **no — you can remove Essentia
 - Punishment suite (`/mute`, `/ban`, `/jail`, `/kick` as Essentials commands)
 - Vanish beyond RihanX vanish (e.g. Essentials' cross-plugin vanish hooks)
 
-If you remove EssentialsX: delete its jar, restart, and grant players `rihanx.home` / `rihanx.warp` / `rihanx.tpa` / `rihanx.kit` (or keep default op). That also removes the “out of date” EssentialsX chat spam.
+If you remove EssentialsX: delete its jar, restart, and grant players `rihanx.home` / `rihanx.warp` / `rihanx.tpa` / `rihanx.kit` (or keep default op). That also removes the â€œout of dateâ€ EssentialsX chat spam.
 
-### Protect — `/rx protect` · `/protect` · `/guard`
+### Protect â€” `/rx protect` Â· `/protect` Â· `/guard`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -538,7 +540,7 @@ Flags: `tnt`, `creeper-explosion`, `other-explosion`, `fire-spread`, `fire-destr
 
 Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 
-### Edit — `/rx edit` · `/edit` · `/we`
+### Edit â€” `/rx edit` Â· `/edit` Â· `/we`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -554,9 +556,9 @@ Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 | `/edit copy` / `paste` / `rotate <deg>` | `rihanx.edit.clipboard` | Clipboard |
 | `/edit undo` / `redo` | `rihanx.edit.history` | History |
 
-Limits: `edit.max-blocks` (200000), `edit.max-undo` (10), `edit.confirm-above` (50000 — GUI confirm for large set/clear/replace). Protected regions need membership or `/protect bypass`.
+Limits: `edit.max-blocks` (200000), `edit.max-undo` (10), `edit.confirm-above` (50000 â€” GUI confirm for large set/clear/replace). Protected regions need membership or `/protect bypass`.
 
-### Admin — `/rx admin` · `/admin`
+### Admin â€” `/rx admin` Â· `/admin`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -576,7 +578,7 @@ By default Minecraft can skip night when only some players sleep. RihanX forces 
 - Cancels `TimeSkipEvent` (NIGHT_SKIP) if anyone required is still awake
 - Shows who is still awake in chat
 
-Config (`config.yml` → `sleep`):
+Config (`config.yml` â†’ `sleep`):
 
 | Option | Default | Meaning |
 |--------|---------|---------|
@@ -592,7 +594,7 @@ After changing config: `/admin reload`. Missing keys are merged from the jar def
 
 `/server info` clock is always **IST (`Asia/Kolkata`)**. RihanX forces this on reload.
 
-### EssentialsX “out of date” chat message
+### EssentialsX â€œout of dateâ€ chat message
 
 That red line (`You're N EssentialsX dev build(s) out of date!`) comes from **EssentialsX**, not RihanX. To hide it, in `plugins/Essentials/config.yml` set:
 
@@ -614,11 +616,11 @@ Soft-depend. When PlaceholderAPI is installed:
 
 ## Configuration
 
-- `config.yml` — search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, sleep, homes, tpa, kits (incl. `kits.first-join-kit`), **timezone (`general.timezone`)**, **item.enchant XP**
-- `messages.yml` — every user-facing string (MiniMessage + legacy)
-- `kits.yml` — kit definitions
-- `permissions.yml` — permission node list (plugin.yml is authoritative for Bukkit)
-- `protection.yml` / `regions.yml` / `homes.yml` / `warps.yml` — created at runtime
+- `config.yml` â€” search, teleport, cooldowns, slime, particles, database, cache, performance, protection, edit, sleep, homes, tpa, kits (incl. `kits.first-join-kit`), **timezone (`general.timezone`)**, **item.enchant XP**
+- `messages.yml` â€” every user-facing string (MiniMessage + legacy)
+- `kits.yml` â€” kit definitions
+- `permissions.yml` â€” permission node list (plugin.yml is authoritative for Bukkit)
+- `protection.yml` / `regions.yml` / `homes.yml` / `warps.yml` â€” created at runtime
 
 Optional SQLite back-location storage: set `database.enabled: true`.
 
@@ -628,24 +630,24 @@ Optional SQLite back-location storage: set `database.enabled: true`.
 
 ```text
 com.rihanx
-├── api            Public facade + permission constants
-├── commands       /rx + standalone module router
-│   └── modules    Home, Warp, Tpa, Kit, Chat, Afk, Spawn, Protect, Edit handlers
-├── tabcomplete    Tab completion (both styles)
-├── managers       Config, messages, cooldowns, freeze, vanish, god, back, afk, commands
-├── chat           Private messages (/msg, /r) with vanish + reply tracking
-├── spawn          /spawn + /setspawn (world spawn + "spawn" warp)
-├── base           /base house templates (hut, cottage, bungalow, villa, village)
-├── home / warp / kits / teleport (incl. TPA)
-├── protection     WorldGuard-lite (flags, regions, owners, priority)
-├── edit           WorldEdit-lite (selection, clipboard, history, expand)
-├── placeholders   Soft-depend PlaceholderAPI
-├── slime / world / chunk / player / inventory / items
-├── search         Biome/structure + block searches
-├── performance    TPS / memory / entity reports
-├── gui            Confirm + info GUIs
-├── cache / scheduler / database / models / listeners / utils
-└── RihanX.java    Main plugin
+â”œâ”€â”€ api            Public facade + permission constants
+â”œâ”€â”€ commands       /rx + standalone module router
+â”‚   â””â”€â”€ modules    Home, Warp, Tpa, Kit, Chat, Afk, Spawn, Protect, Edit handlers
+â”œâ”€â”€ tabcomplete    Tab completion (both styles)
+â”œâ”€â”€ managers       Config, messages, cooldowns, freeze, vanish, god, back, afk, commands
+â”œâ”€â”€ chat           Private messages (/msg, /r) with vanish + reply tracking
+â”œâ”€â”€ spawn          /spawn + /setspawn (world spawn + "spawn" warp)
+â”œâ”€â”€ base           /base house templates (hut, cottage, bungalow, villa, village)
+â”œâ”€â”€ home / warp / kits / teleport (incl. TPA)
+â”œâ”€â”€ protection     WorldGuard-lite (flags, regions, owners, priority)
+â”œâ”€â”€ edit           WorldEdit-lite (selection, clipboard, history, expand)
+â”œâ”€â”€ placeholders   Soft-depend PlaceholderAPI
+â”œâ”€â”€ slime / world / chunk / player / inventory / items
+â”œâ”€â”€ search         Biome/structure + block searches
+â”œâ”€â”€ performance    TPS / memory / entity reports
+â”œâ”€â”€ gui            Confirm + info GUIs
+â”œâ”€â”€ cache / scheduler / database / models / listeners / utils
+â””â”€â”€ RihanX.java    Main plugin
 ```
 
 Searches run off-thread via `CompletableFuture` + Bukkit scheduler and support cancellation.
@@ -660,4 +662,4 @@ Public source: https://github.com/im-rihan/RihanX
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT â€” see [LICENSE](LICENSE).

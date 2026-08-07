@@ -187,12 +187,12 @@ commands:
     permission: rihanx.setspawn
   base:
     description: Paste a house / base template (hut, cottage, bungalow, villa, village).
-    usage: /base [hut|cottage|village|bungalow|villa|modern|mansion|resort|list]
+    usage: /base [hut|cottage|village|bungalow|villa|modern|mansion|resort|list|undo]
     permission: rihanx.base
     aliases: [house, buildbase]
   farm:
     description: Paste an automatic farm (wheat, cane, bamboo, melon, nether, animal, cactus).
-    usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list]
+    usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list|undo]
     permission: rihanx.farm
     aliases: [autofarm, farms]
 
@@ -626,11 +626,15 @@ permissions:
       rihanx.base: true
       rihanx.base.build: true
       rihanx.base.list: true
+      rihanx.base.undo: true
   rihanx.base.build:
     description: Paste a base template at your location.
     default: op
   rihanx.base.list:
     description: List base templates.
+    default: op
+  rihanx.base.undo:
+    description: Undo the last base or farm paste.
     default: op
   rihanx.farm:
     description: List and use farm templates.
@@ -641,11 +645,15 @@ permissions:
       rihanx.farm: true
       rihanx.farm.build: true
       rihanx.farm.list: true
+      rihanx.farm.undo: true
   rihanx.farm.build:
     description: Paste a farm template.
     default: op
   rihanx.farm.list:
     description: List farm templates.
+    default: op
+  rihanx.farm.undo:
+    description: Undo the last farm or base paste.
     default: op
   rihanx.msg:
     description: Send private messages.

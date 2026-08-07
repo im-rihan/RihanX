@@ -167,6 +167,10 @@ public final class BlueprintValidator {
             if (!isEnclosedInterior(cells, floor.dx(), floor.dz())) {
                 continue;
             }
+            // Skip outdoor pool / patio decks (no house roof expected)
+            if (isOutdoorAmenity(cells, floor.dx(), floor.dz())) {
+                continue;
+            }
             checked++;
             if (!columnHasRoof(cells, floor.dx(), floor.dz())) {
                 return false;
@@ -206,6 +210,30 @@ public final class BlueprintValidator {
             }
         }
         return wallX && wallZ;
+    }
+
+    /** Outdoor pool/patio — near water or prismarine deck, not under house roof. */
+    private static boolean isOutdoorAmenity(
+            @NotNull Map<Long, BaseTemplates.RelBlock> cells,
+            int x,
+            int z
+    ) {
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                for (int y = -1; y <= 2; y++) {
+                    BaseTemplates.RelBlock n = cells.get(pack(x + dx, y, z + dz));
+                    if (n == null) {
+                        continue;
+                    }
+                    String name = n.material().name();
+                    if (name.contains("PRISMARINE") || name.equals("WATER")
+                            || name.contains("SEA_LANTERN")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private static boolean isWallLike(BaseTemplates.RelBlock block) {

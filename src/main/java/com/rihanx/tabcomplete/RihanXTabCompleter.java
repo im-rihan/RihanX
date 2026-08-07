@@ -470,6 +470,7 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             List<String> options = new ArrayList<>(plugin.getBaseService().listIds());
             options.add("list");
+            options.add("undo");
             return filter(options, args[1]);
         }
         return new ArrayList<>();
@@ -479,6 +480,7 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             List<String> options = new ArrayList<>(plugin.getFarmService().listIds());
             options.add("list");
+            options.add("undo");
             return filter(options, args[1]);
         }
         return new ArrayList<>();

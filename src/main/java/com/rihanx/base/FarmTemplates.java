@@ -546,43 +546,70 @@ public final class FarmTemplates {
     }
 
     /**
-     * Mob XP farm tower — dark spawn floors, water streams, drop chute, magma + hopper kill.
-     * Light-proof with roof; AFK spot at collection.
+     * Mob XP farm — one connected building: AFK house ↔ kill room ↔ drop chute ↔ dark pads.
+     * Hopper chain under magma drains into a double chest under the AFK floor.
      */
     public static @NotNull BaseTemplates.BaseBlueprint xp() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
-        // Collection room
+
+        // ——— Unified ground building: chute (z=0..2) + kill (z=3..5) + AFK (z=6..9) ———
         for (int x = -3; x <= 3; x++) {
-            for (int z = 4; z <= 8; z++) {
+            for (int z = 0; z <= 9; z++) {
+                b.set(x, -2, z, Material.STONE_BRICKS);
                 b.set(x, -1, z, Material.STONE_BRICKS);
-                b.set(x, 0, z, Material.STONE_BRICKS);
-                if (x == -3 || x == 3 || z == 4 || z == 8) {
+                boolean wall = x == -3 || x == 3 || z == 0 || z == 9;
+                if (wall) {
+                    b.set(x, 0, z, Material.STONE_BRICKS);
                     b.set(x, 1, z, Material.STONE_BRICKS);
                     b.set(x, 2, z, Material.STONE_BRICKS);
+                    b.set(x, 3, z, Material.STONE_BRICKS);
+                } else {
+                    b.set(x, 0, z, Material.STONE_BRICKS);
+                    b.set(x, 1, z, Material.AIR);
+                    b.set(x, 2, z, Material.AIR);
+                    b.set(x, 3, z, Material.STONE_BRICK_SLAB);
                 }
             }
         }
-        b.set(0, 1, 4, Material.AIR);
-        b.set(0, 2, 4, Material.AIR);
-        b.door(0, 1, 4, Material.IRON_DOOR, BlockFace.SOUTH);
-        b.set(0, 1, 3, Material.STONE_BUTTON); // open iron door from outside
-        // Magma pad + hoppers
-        for (int x = -1; x <= 1; x++) {
-            for (int z = 5; z <= 6; z++) {
-                b.set(x, 0, z, Material.MAGMA_BLOCK);
-                b.facing(x, -1, z, Material.HOPPER, BlockFace.SOUTH);
+        // Roof over whole ground house
+        for (int x = -3; x <= 3; x++) {
+            for (int z = 0; z <= 9; z++) {
+                b.set(x, 4, z, Material.STONE_BRICKS);
             }
         }
-        b.facing(0, -1, 7, Material.HOPPER, BlockFace.DOWN);
-        b.set(0, -2, 7, Material.CHEST);
-        b.facing(-1, -2, 7, Material.CHEST, BlockFace.SOUTH);
-        b.set(1, -2, 7, Material.BARREL);
 
-        // Drop chute with solid floor funnel into magma room (no void fall)
-        for (int y = 0; y <= 24; y++) {
+        // Front door (player spawns just outside)
+        b.set(0, 1, 9, Material.AIR);
+        b.set(0, 2, 9, Material.AIR);
+        b.door(0, 1, 9, Material.IRON_DOOR, BlockFace.SOUTH);
+        b.facing(0, 2, 10, Material.STONE_BUTTON, BlockFace.SOUTH);
+        b.facing(0, 2, 8, Material.STONE_BUTTON, BlockFace.NORTH);
+
+        // Kill + drop floor = hopper pipeline (items land on hoppers after the fall)
+        // Layout: chute z=1..2 → kill z=3..5 → collector z=6 → chest below
+        for (int z = 1; z <= 5; z++) {
+            b.facing(-1, 0, z, Material.HOPPER, BlockFace.EAST);
+            b.facing(1, 0, z, Material.HOPPER, BlockFace.WEST);
+            b.facing(0, 0, z, Material.HOPPER, BlockFace.SOUTH);
+        }
+        b.facing(0, 0, 6, Material.HOPPER, BlockFace.DOWN);
+        b.facing(-1, 0, 6, Material.HOPPER, BlockFace.EAST);
+        b.facing(1, 0, 6, Material.HOPPER, BlockFace.WEST);
+        b.set(0, -1, 6, Material.CHEST);
+        b.facing(-1, -1, 6, Material.CHEST, BlockFace.SOUTH);
+        b.set(1, -1, 6, Material.BARREL);
+        // Safety bars so AFK player doesn't walk onto the kill hoppers
+        for (int x = -2; x <= 2; x++) {
+            b.set(x, 1, 5, Material.IRON_BARS);
+        }
+        b.set(0, 1, 5, Material.AIR);
+        b.set(0, 2, 5, Material.AIR);
+
+        // Drop chute tower (same footprint as house north end, rises from roof)
+        for (int y = 4; y <= 24; y++) {
             for (int x = -2; x <= 2; x++) {
                 for (int z = 0; z <= 2; z++) {
-                    boolean wall = x == -2 || x == 2 || z == 0 || z == 2 || y == 0;
+                    boolean wall = x == -2 || x == 2 || z == 0 || z == 2;
                     if (wall) {
                         b.set(x, y, z, Material.COBBLESTONE);
                     } else {
@@ -591,19 +618,27 @@ public final class FarmTemplates {
                 }
             }
         }
-        // Floor hoppers under chute → push mobs/items toward magma
+        // Keep chute shaft open down onto hopper floor (z=1..2)
         for (int x = -1; x <= 1; x++) {
-            b.facing(x, 0, 1, Material.HOPPER, BlockFace.SOUTH);
-            b.set(x, 0, 2, Material.AIR);
+            for (int y = 1; y <= 3; y++) {
+                b.set(x, y, 1, Material.AIR);
+                b.set(x, y, 2, Material.AIR);
+            }
         }
-        // Open chute into kill room
-        b.set(0, 1, 3, Material.AIR);
-        b.set(0, 2, 3, Material.AIR);
-        b.set(0, 1, 2, Material.AIR);
-        b.set(-1, 1, 2, Material.AIR);
-        b.set(1, 1, 2, Material.AIR);
 
-        // Spawn pads at top (2 floors)
+        // AFK furniture
+        b.set(-2, 1, 7, Material.CRAFTING_TABLE);
+        b.set(-2, 1, 8, Material.ANVIL);
+        b.set(2, 1, 7, Material.BARREL);
+        b.set(2, 1, 8, Material.CHEST);
+        b.hangingLantern(0, 3, 7, Material.LANTERN, 4);
+
+        // Outside ladder up the chute for maintenance
+        for (int y = 1; y <= 20; y++) {
+            b.facing(-3, y, 1, Material.LADDER, BlockFace.WEST);
+        }
+
+        // Spawn pads at top (2 floors) — attached to chute
         for (int floor = 0; floor < 2; floor++) {
             int y = 20 + floor * 4;
             for (int x = -6; x <= 6; x++) {
@@ -611,33 +646,28 @@ public final class FarmTemplates {
                     b.set(x, y, z, Material.COBBLESTONE);
                     b.set(x, y + 1, z, Material.AIR);
                     b.set(x, y + 2, z, Material.AIR);
-                    b.set(x, y + 3, z, Material.COBBLESTONE); // light-proof roof
+                    b.set(x, y + 3, z, Material.COBBLESTONE);
                 }
             }
-            // Water toward drop
             for (int x = -5; x <= 5; x++) {
                 for (int z = -5; z <= -1; z++) {
                     b.set(x, y + 1, z, Material.WATER);
                 }
             }
-            // Drop holes into chute (keep pads dark — no lanterns on spawn floors)
             for (int x = -1; x <= 1; x++) {
                 b.set(x, y, 1, Material.AIR);
                 b.set(x, y, 0, Material.AIR);
             }
         }
 
-        // AFK / collection lighting only (above head)
-        b.set(0, 4, 6, Material.STONE_BRICKS);
-        b.hangingLantern(0, 3, 6, Material.LANTERN, 4);
-        spawnPad(b, 0, 9);
         spawnPad(b, 0, 10);
-        b.set(-1, 0, 10, Material.CRAFTING_TABLE);
-        b.set(1, 0, 10, Material.ANVIL);
+        spawnPad(b, 0, 11);
+        b.set(-1, 0, 11, Material.CRAFTING_TABLE);
+        b.set(1, 0, 11, Material.BARREL);
         return b.build(
                 "xp",
-                "XP mob farm - dark pads, water, drop chute, magma + hoppers",
-                0, 0, 10
+                "XP mob farm - connected AFK house, magma kill, hopper→chest, dark pads",
+                0, 0, 11
         );
     }
 

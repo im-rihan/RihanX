@@ -1,9 +1,12 @@
 package com.rihanx.base;
 
 import com.rihanx.RihanX;
+import com.rihanx.edit.BlockApplier;
+import com.rihanx.edit.BlockSnapshot;
 import com.rihanx.managers.MessageManager;
 import com.rihanx.protection.ProtectionFlag;
 import com.rihanx.protection.ProtectionService;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,12 +23,16 @@ import org.bukkit.block.data.type.Lantern;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +49,8 @@ public final class BaseService {
     private final @NotNull MessageManager messages;
     private final @NotNull Map<String, BaseTemplates.BaseBlueprint> templates = BaseTemplates.all();
     private final @NotNull Set<UUID> building = ConcurrentHashMap.newKeySet();
+    private final @NotNull Map<UUID, ActivePaste> activePastes = new ConcurrentHashMap<>();
+    private final @NotNull Map<UUID, Deque<PasteSession>> undoStacks = new ConcurrentHashMap<>();
 
     public BaseService(@NotNull RihanX plugin, @NotNull MessageManager messages) {
         this.plugin = plugin;
@@ -149,6 +158,14 @@ public final class BaseService {
 
         // Keep the builder safe at the entrance while the house appears behind them.
         Location entrance = entranceLocation(origin, blueprint, facing, player.getLocation().getYaw());
+        List<BlockSnapshot> before = snapshotBefore(world, changes, entrance);
+        PasteSession session = new PasteSession(
+                world.getUID(),
+                blueprint.id(),
+                kind,
+                List.copyOf(before)
+        );
+
         player.teleport(entrance);
         player.setVelocity(new Vector(0, 0, 0));
         boolean wasFlying = player.isFlying();
@@ -168,13 +185,11 @@ public final class BaseService {
 
         final int[] index = {0};
         final int[] lastPct = {-1};
-        final BukkitTaskHolder holder = new BukkitTaskHolder();
-        holder.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            if (!player.isOnline()) {
-                if (holder.task != null) {
-                    holder.task.cancel();
-                }
-                building.remove(player.getUniqueId());
+        ActivePaste active = new ActivePaste(session, wasFlying, allowFlight, mode);
+        activePastes.put(player.getUniqueId(), active);
+        active.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (active.cancelled || !player.isOnline()) {
+                finishActive(player, active, true);
                 return;
             }
 
@@ -183,6 +198,10 @@ public final class BaseService {
 
             int budget = perTick;
             while (budget-- > 0 && index[0] < changes.size()) {
+                if (active.cancelled) {
+                    finishActive(player, active, true);
+                    return;
+                }
                 BlockChange change = changes.get(index[0]++);
                 // Never overwrite the two blocks the player occupies at the entrance.
                 if (isPlayerOccupied(change.block(), entrance)) {
@@ -201,25 +220,152 @@ public final class BaseService {
             }
 
             if (index[0] >= changes.size()) {
-                if (holder.task != null) {
-                    holder.task.cancel();
-                }
                 // Final entrance clear + stand the player at the door looking inside.
                 clearEntranceColumn(world, entrance);
                 Location done = entranceLocation(origin, blueprint, facing, faceToYaw(opposite(facing)));
                 player.teleport(done);
-                if (mode != GameMode.CREATIVE && mode != GameMode.SPECTATOR) {
-                    player.setFlying(wasFlying);
-                    player.setAllowFlight(allowFlight);
-                }
-                building.remove(player.getUniqueId());
+                finishActive(player, active, false);
                 messages.send(player, kind.equals("farm") ? "farm-done" : "base-done", MessageManager.placeholders(
                         "name", blueprint.id(),
                         "blocks", changes.size()
                 ));
                 messages.send(player, kind.equals("farm") ? "farm-ready-hint" : "base-ready-hint");
+                messages.send(player, kind.equals("farm") ? "farm-undo-hint" : "base-undo-hint");
             }
         }, 1L, 1L);
+    }
+
+    /**
+     * Restores terrain from the last base/farm paste for this player.
+     */
+    public void undo(@NotNull Player player) {
+        UUID id = player.getUniqueId();
+        ActivePaste active = activePastes.get(id);
+        if (active != null) {
+            active.cancelled = true;
+            if (active.task != null) {
+                active.task.cancel();
+            }
+            activePastes.remove(id, active);
+            restoreFlight(player, active);
+            building.remove(id);
+            if (!building.add(id)) {
+                pushUndo(id, active.session);
+                messages.send(player, "base-busy");
+                return;
+            }
+            applyUndo(player, active.session);
+            return;
+        }
+
+        Deque<PasteSession> stack = undoStacks.get(id);
+        if (stack == null || stack.isEmpty()) {
+            messages.send(player, "base-undo-none");
+            return;
+        }
+        if (!building.add(id)) {
+            messages.send(player, "base-busy");
+            return;
+        }
+        PasteSession session = stack.pop();
+        applyUndo(player, session);
+    }
+
+    public boolean hasUndo(@NotNull Player player) {
+        if (activePastes.containsKey(player.getUniqueId())) {
+            return true;
+        }
+        Deque<PasteSession> stack = undoStacks.get(player.getUniqueId());
+        return stack != null && !stack.isEmpty();
+    }
+
+    private void applyUndo(@NotNull Player player, @NotNull PasteSession session) {
+        World world = Bukkit.getWorld(session.worldId());
+        if (world == null) {
+            building.remove(player.getUniqueId());
+            messages.send(player, "base-undo-world-missing");
+            return;
+        }
+
+        messages.send(player, "base-undo-running", MessageManager.placeholders(
+                "name", session.name(),
+                "blocks", session.before().size()
+        ));
+
+        int perTick = Math.max(50, plugin.getConfig().getInt("base.blocks-per-tick", 1200));
+        BlockApplier.applySnapshotsChunked(
+                plugin,
+                world,
+                session.before(),
+                false,
+                perTick,
+                () -> {
+                    building.remove(player.getUniqueId());
+                    String doneKey = session.kind().equals("farm") ? "farm-undo-done" : "base-undo-done";
+                    messages.send(player, doneKey, MessageManager.placeholders(
+                            "name", session.name(),
+                            "blocks", session.before().size()
+                    ));
+                }
+        );
+    }
+
+    private void finishActive(@NotNull Player player, @NotNull ActivePaste active, boolean pushForPartial) {
+        if (active.task != null) {
+            active.task.cancel();
+            active.task = null;
+        }
+        if (!activePastes.remove(player.getUniqueId(), active)) {
+            return;
+        }
+        restoreFlight(player, active);
+        building.remove(player.getUniqueId());
+        if (pushForPartial || !active.cancelled) {
+            pushUndo(player.getUniqueId(), active.session);
+        }
+    }
+
+    private static void restoreFlight(@NotNull Player player, @NotNull ActivePaste active) {
+        if (!player.isOnline()) {
+            return;
+        }
+        if (active.mode != GameMode.CREATIVE && active.mode != GameMode.SPECTATOR) {
+            player.setFlying(active.wasFlying);
+            player.setAllowFlight(active.allowFlight);
+        }
+    }
+
+    private void pushUndo(@NotNull UUID playerId, @NotNull PasteSession session) {
+        int max = Math.max(1, plugin.getConfig().getInt("base.max-undo", 5));
+        Deque<PasteSession> stack = undoStacks.computeIfAbsent(playerId, id -> new ArrayDeque<>());
+        stack.push(session);
+        while (stack.size() > max) {
+            stack.removeLast();
+        }
+    }
+
+    private static @NotNull List<BlockSnapshot> snapshotBefore(
+            @NotNull World world,
+            @NotNull List<BlockChange> changes,
+            @NotNull Location entrance
+    ) {
+        Map<Long, BlockSnapshot> unique = new LinkedHashMap<>(changes.size() + 4);
+        for (BlockChange change : changes) {
+            Block block = change.block();
+            unique.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
+        }
+        int x = entrance.getBlockX();
+        int y = entrance.getBlockY();
+        int z = entrance.getBlockZ();
+        for (int dy = -1; dy <= 1; dy++) {
+            Block block = world.getBlockAt(x, y + dy, z);
+            unique.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
+        }
+        return new ArrayList<>(unique.values());
+    }
+
+    private static long pack(int x, int y, int z) {
+        return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF);
     }
 
     private static boolean isPlayerOccupied(@NotNull Block block, @NotNull Location entrance) {
@@ -402,7 +548,32 @@ public final class BaseService {
     private record BlockChange(@NotNull Block block, @NotNull BlockData data, int priority) {
     }
 
-    private static final class BukkitTaskHolder {
-        org.bukkit.scheduler.BukkitTask task;
+    private record PasteSession(
+            @NotNull UUID worldId,
+            @NotNull String name,
+            @NotNull String kind,
+            @NotNull List<BlockSnapshot> before
+    ) {
+    }
+
+    private static final class ActivePaste {
+        final @NotNull PasteSession session;
+        final boolean wasFlying;
+        final boolean allowFlight;
+        final @NotNull GameMode mode;
+        volatile boolean cancelled;
+        @Nullable BukkitTask task;
+
+        ActivePaste(
+                @NotNull PasteSession session,
+                boolean wasFlying,
+                boolean allowFlight,
+                @NotNull GameMode mode
+        ) {
+            this.session = session;
+            this.wasFlying = wasFlying;
+            this.allowFlight = allowFlight;
+            this.mode = mode;
+        }
     }
 }

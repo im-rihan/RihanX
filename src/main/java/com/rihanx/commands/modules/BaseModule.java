@@ -48,6 +48,14 @@ public final class BaseModule {
             return true;
         }
 
+        if (args[0].equalsIgnoreCase("undo")) {
+            if (!CommandSupport.checkPerm(player, PermissionNodes.BASE_UNDO, messages)) {
+                return true;
+            }
+            bases.undo(player);
+            return true;
+        }
+
         String name = args[0].toLowerCase(Locale.ROOT);
         if (!CommandSupport.checkPerm(player, PermissionNodes.BASE_BUILD, messages)) {
             return true;
