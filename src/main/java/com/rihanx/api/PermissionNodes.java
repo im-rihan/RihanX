@@ -170,6 +170,27 @@ public final class PermissionNodes {
     public static final String FARM_LIST = FARM + ".list";
     public static final String FARM_UNDO = FARM + ".undo";
 
+    public static final String BRIDGE = ROOT + ".bridge";
+    public static final String BRIDGE_ALL = BRIDGE + ".*";
+    public static final String BRIDGE_BUILD = BRIDGE + ".build";
+    public static final String BRIDGE_UNDO = BRIDGE + ".undo";
+
+    public static final String BUILD = ROOT + ".build";
+    public static final String BUILD_ALL = BUILD + ".*";
+    public static final String BUILD_UNDO = BUILD + ".undo";
+    public static final String BUILD_PLATFORM = BUILD + ".platform";
+    public static final String BUILD_WALL = BUILD + ".wall";
+    public static final String BUILD_PILLAR = BUILD + ".pillar";
+    public static final String BUILD_CYL = BUILD + ".cyl";
+    public static final String BUILD_SPHERE = BUILD + ".sphere";
+    public static final String BUILD_TUNNEL = BUILD + ".tunnel";
+    public static final String BUILD_FLATTEN = BUILD + ".flatten";
+    public static final String BUILD_DRAIN = BUILD + ".drain";
+    public static final String BUILD_BRIDGE = BUILD + ".bridge";
+    public static final String BUILD_PYRAMID = BUILD + ".pyramid";
+    public static final String BUILD_STAIRS = BUILD + ".stairs";
+    public static final String BUILD_STACK = BUILD + ".stack";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

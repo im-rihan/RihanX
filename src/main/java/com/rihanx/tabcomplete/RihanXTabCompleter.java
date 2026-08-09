@@ -4,6 +4,7 @@ import com.rihanx.RihanX;
 import com.rihanx.api.PermissionNodes;
 import com.rihanx.commands.RihanXCommand;
 import com.rihanx.utils.BiomeUtil;
+import com.rihanx.utils.MaterialUtil;
 import com.rihanx.utils.PermissionUtil;
 import com.rihanx.utils.PlayerUtil;
 import com.rihanx.utils.StructureUtil;
@@ -31,7 +32,15 @@ public final class RihanXTabCompleter implements TabCompleter {
     private static final List<String> MODULES = List.of(
             "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
             "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
-            "msg", "reply", "afk", "spawn", "setspawn", "base", "farm", "admin"
+            "msg", "reply", "afk", "spawn", "setspawn", "base", "farm", "bridge", "build",
+            "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere", "tunnel",
+            "flatten", "drain", "pyramid", "stairs", "stack", "admin"
+    );
+
+    private static final List<String> BUILD_TOOLS = List.of(
+            "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere",
+            "tunnel", "flatten", "drain", "bridge", "pyramid", "hpyramid", "stairs",
+            "stack", "undo", "help"
     );
 
     private static final Set<String> TP_PLAYER_SUBS = Set.of("player", "here", "home");
@@ -106,6 +115,10 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "msg", "reply" -> completeMsg(module, prefixed);
             case "base" -> completeBase(prefixed);
             case "farm" -> completeFarm(prefixed);
+            case "bridge" -> completeBridge(prefixed);
+            case "build", "platform", "wall", "pillar", "tower", "cyl", "hcyl",
+                 "sphere", "hsphere", "tunnel", "flatten", "drain",
+                 "pyramid", "hpyramid", "stairs", "stack" -> completeBuild(module, prefixed);
             case "afk", "spawn", "setspawn" -> new ArrayList<>();
             case "admin" -> completeAdmin(prefixed);
             default -> new ArrayList<>();
@@ -372,7 +385,7 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (args.length == 2) {
             return filter(List.of(
                     "wand", "pos1", "pos2", "size", "count", "set", "replace", "walls", "outline",
-                    "hollow", "clear", "copy", "paste", "rotate", "expand", "contract", "undo", "redo"
+                    "hollow", "clear", "copy", "paste", "rotate", "expand", "contract", "stack", "undo", "redo"
             ), args[1]);
         }
         if (args.length == 3) {
@@ -386,15 +399,20 @@ public final class RihanXTabCompleter implements TabCompleter {
             if (sub.equals("rotate")) {
                 return filter(List.of("90", "180", "270"), args[2]);
             }
-            if (sub.equals("expand") || sub.equals("contract")) {
-                return filter(List.of("1", "5", "10", "16", "32"), args[2]);
+            if (sub.equals("expand") || sub.equals("contract") || sub.equals("stack")) {
+                return filter(List.of("1", "2", "3", "5", "10", "16", "32"), args[2]);
             }
         }
         if (args.length == 4 && args[1].equalsIgnoreCase("replace")) {
-            return filter(com.rihanx.utils.MaterialUtil.suggestions(args[3]), args[3]);
+            return filter(MaterialUtil.suggestions(args[3]), args[3]);
         }
         if (args.length == 4 && (args[1].equalsIgnoreCase("expand") || args[1].equalsIgnoreCase("contract"))) {
             return filter(EDIT_DIRECTIONS, args[3]);
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("stack")) {
+            List<String> dirs = new ArrayList<>(EDIT_DIRECTIONS);
+            dirs.add("forward");
+            return filter(dirs, args[3]);
         }
         return new ArrayList<>();
     }
@@ -482,6 +500,85 @@ public final class RihanXTabCompleter implements TabCompleter {
             options.add("list");
             options.add("undo");
             return filter(options, args[1]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeBridge(@NotNull String[] args) {
+        return completeBuildToolArgs("bridge", args, 1);
+    }
+
+    private @NotNull List<String> completeBuild(@NotNull String module, @NotNull String[] args) {
+        // /rx build <tool> …  or  /platform …
+        if (module.equals("build")) {
+            if (args.length == 2) {
+                return filter(BUILD_TOOLS, args[1]);
+            }
+            if (args.length >= 3) {
+                return completeBuildToolArgs(args[1].toLowerCase(Locale.ROOT), args, 2);
+            }
+            return new ArrayList<>();
+        }
+        return completeBuildToolArgs(module, args, 1);
+    }
+
+    private @NotNull List<String> completeBuildToolArgs(
+            @NotNull String tool,
+            @NotNull String[] args,
+            int firstArgIndex
+    ) {
+        int relative = args.length - firstArgIndex;
+        if (relative < 1) {
+            return new ArrayList<>();
+        }
+        String partial = args[args.length - 1];
+        if (relative == 1) {
+            List<String> options = new ArrayList<>(List.of("undo", "help"));
+            switch (tool) {
+                case "platform" -> {
+                    options.addAll(List.of("3", "5", "7", "9", "11"));
+                    options.addAll(MaterialUtil.suggestions(partial));
+                }
+                case "wall" -> options.addAll(List.of("8", "16", "32", "stone_bricks", "cobblestone"));
+                case "pillar", "tower" -> options.addAll(List.of("8", "16", "32", "-8", "stone"));
+                case "cyl", "hcyl", "cylinder", "hcylinder" -> options.addAll(List.of("3", "5", "8", "10"));
+                case "sphere", "hsphere" -> options.addAll(List.of("3", "5", "8", "10"));
+                case "tunnel" -> options.addAll(List.of("8", "16", "32", "stone", "none"));
+                case "flatten", "level", "drain" -> options.addAll(List.of("4", "8", "16", "32"));
+                case "bridge" -> {
+                    options.addAll(List.of("8", "16", "32", "64"));
+                    options.addAll(List.of("oak_planks", "spruce_planks", "stone_bricks"));
+                }
+                case "pyramid", "hpyramid" -> options.addAll(List.of("3", "5", "8", "10", "sandstone", "stone_bricks"));
+                case "stairs", "stair" -> options.addAll(List.of("8", "12", "16", "oak_stairs", "stone_brick_stairs"));
+                case "stack" -> options.addAll(List.of("2", "3", "5", "10", "forward", "up", "north", "south", "east", "west"));
+                default -> {
+                }
+            }
+            return filter(options, partial);
+        }
+        if (relative == 2) {
+            List<String> options = new ArrayList<>();
+            switch (tool) {
+                case "platform", "pillar", "tower", "sphere", "hsphere", "pyramid", "hpyramid" ->
+                        options.addAll(MaterialUtil.suggestions(partial));
+                case "wall", "cyl", "hcyl", "bridge", "stairs", "stair" -> {
+                    options.addAll(List.of("1", "3", "4", "5", "7", "8", "16"));
+                    options.addAll(MaterialUtil.suggestions(partial));
+                }
+                case "tunnel" -> {
+                    options.addAll(List.of("3", "5", "7"));
+                    options.addAll(MaterialUtil.suggestions(partial));
+                }
+                case "stack" -> options.addAll(List.of(
+                        "forward", "up", "down", "north", "south", "east", "west"
+                ));
+                default -> options.addAll(MaterialUtil.suggestions(partial));
+            }
+            return filter(options, partial);
+        }
+        if (relative >= 3) {
+            return filter(MaterialUtil.suggestions(partial), partial);
         }
         return new ArrayList<>();
     }

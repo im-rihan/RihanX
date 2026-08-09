@@ -5,6 +5,8 @@ import com.rihanx.api.PermissionNodes;
 import com.rihanx.commands.modules.AfkModule;
 import com.rihanx.commands.modules.FarmModule;
 import com.rihanx.commands.modules.BaseModule;
+import com.rihanx.commands.modules.BridgeModule;
+import com.rihanx.commands.modules.BuildModule;
 import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
@@ -53,7 +55,10 @@ public final class RihanXCommand implements CommandExecutor {
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
             "kit", "kits",
             "msg", "reply", "afk", "spawn", "setspawn",
-            "base", "farm"
+            "base", "farm", "bridge", "build",
+            "platform", "wall", "pillar", "tower", "cyl", "hcyl",
+            "sphere", "hsphere", "tunnel", "flatten", "drain",
+            "pyramid", "hpyramid", "stairs", "stack"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -73,6 +78,8 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull SpawnModule spawnModule;
     private final @NotNull BaseModule baseModule;
     private final @NotNull FarmModule farmModule;
+    private final @NotNull BridgeModule bridgeModule;
+    private final @NotNull BuildModule buildModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
@@ -87,6 +94,8 @@ public final class RihanXCommand implements CommandExecutor {
         this.spawnModule = new SpawnModule(plugin);
         this.baseModule = new BaseModule(plugin);
         this.farmModule = new FarmModule(plugin);
+        this.bridgeModule = new BridgeModule(plugin);
+        this.buildModule = new BuildModule(plugin);
     }
 
     @Override
@@ -153,6 +162,11 @@ public final class RihanXCommand implements CommandExecutor {
             case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
             case "base" -> baseModule.handle(sender, module, subArgs, messages);
             case "farm" -> farmModule.handle(sender, module, subArgs, messages);
+            case "bridge" -> bridgeModule.handle(sender, module, subArgs, messages);
+            case "build", "platform", "wall", "pillar", "tower", "cyl", "hcyl",
+                 "sphere", "hsphere", "tunnel", "flatten", "drain",
+                 "pyramid", "hpyramid", "stairs", "stack" ->
+                    buildModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -236,6 +250,8 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "kit", "Kits");
         sendHelpLine(messages, sender, "base", "House / base templates");
         sendHelpLine(messages, sender, "farm", "Auto farms with hoppers & gadgets");
+        sendHelpLine(messages, sender, "bridge", "Build a bridge (always undoable)");
+        sendHelpLine(messages, sender, "build", "Builder tools (platform, wall, cyl, undo…)");
         sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");
         sendHelpLine(messages, sender, "afk", "Toggle AFK status");
         sendHelpLine(messages, sender, "spawn", "Teleport to spawn");

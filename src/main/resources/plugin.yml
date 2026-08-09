@@ -195,6 +195,79 @@ commands:
     usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list|undo]
     permission: rihanx.farm
     aliases: [autofarm, farms]
+  bridge:
+    description: Build a bridge in the direction you face (always undoable).
+    usage: /bridge [length] [width] [material] | /bridge undo
+    permission: rihanx.bridge
+    aliases: [rxbridge, buildbridge]
+  build:
+    description: Builder tools hub (platform, wall, cyl, sphere, tunnel, flatten, drain, undo).
+    usage: /build <platform|wall|pillar|cyl|hcyl|sphere|hsphere|tunnel|flatten|drain|bridge|undo> …
+    permission: rihanx.build
+    aliases: [rxbuild]
+  platform:
+    description: Build a flat platform under you (always undoable).
+    usage: /platform [size] [material] | /platform undo
+    permission: rihanx.build.platform
+    aliases: [pad]
+  wall:
+    description: Build a wall in front of you (always undoable).
+    usage: /wall [length] [height] [material] | /wall undo
+    permission: rihanx.build.wall
+  pillar:
+    description: Build a pillar up/down from your feet (always undoable).
+    usage: /pillar [height] [material] | /pillar undo
+    permission: rihanx.build.pillar
+    aliases: [tower]
+  cyl:
+    description: Build a cylinder at your feet (always undoable).
+    usage: /cyl <radius> [height] [material] | /cyl undo
+    permission: rihanx.build.cyl
+    aliases: [cylinder]
+  hcyl:
+    description: Build a hollow cylinder at your feet (always undoable).
+    usage: /hcyl <radius> [height] [material] | /hcyl undo
+    permission: rihanx.build.cyl
+    aliases: [hcylinder]
+  sphere:
+    description: Build a sphere at your position (always undoable).
+    usage: /sphere <radius> [material] | /sphere undo
+    permission: rihanx.build.sphere
+  hsphere:
+    description: Build a hollow sphere at your position (always undoable).
+    usage: /hsphere <radius> [material] | /hsphere undo
+    permission: rihanx.build.sphere
+  tunnel:
+    description: Dig a tunnel forward (always undoable).
+    usage: /tunnel [length] [width] [height] [lining] | /tunnel undo
+    permission: rihanx.build.tunnel
+  flatten:
+    description: Flatten terrain in a radius to your Y (always undoable).
+    usage: /flatten [radius] | /flatten undo
+    permission: rihanx.build.flatten
+    aliases: [level]
+  drain:
+    description: Drain water/lava in a radius (always undoable).
+    usage: /drain [radius] | /drain undo
+    permission: rihanx.build.drain
+  pyramid:
+    description: Build a pyramid at your feet (always undoable).
+    usage: /pyramid <size> [material] | /pyramid undo
+    permission: rihanx.build.pyramid
+  hpyramid:
+    description: Build a hollow pyramid at your feet (always undoable).
+    usage: /hpyramid <size> [material] | /hpyramid undo
+    permission: rihanx.build.pyramid
+  stairs:
+    description: Build a staircase forward/up (always undoable).
+    usage: /stairs [length] [width] [material] | /stairs undo
+    permission: rihanx.build.stairs
+    aliases: [stair]
+  stack:
+    description: Repeat your edit selection in a direction (always undoable).
+    usage: /stack <count> [direction]
+    permission: rihanx.build.stack
+    aliases: [rxstack]
 
 permissions:
   rihanx.*:
@@ -222,6 +295,8 @@ permissions:
       rihanx.kit.*: true
       rihanx.base.*: true
       rihanx.farm.*: true
+      rihanx.bridge.*: true
+      rihanx.build.*: true
       rihanx.msg: true
       rihanx.reply: true
       rihanx.afk: true
@@ -654,6 +729,80 @@ permissions:
     default: op
   rihanx.farm.undo:
     description: Undo the last farm or base paste.
+    default: op
+  rihanx.bridge:
+    description: Use bridge tools.
+    default: op
+  rihanx.bridge.*:
+    default: op
+    children:
+      rihanx.bridge: true
+      rihanx.bridge.build: true
+      rihanx.bridge.undo: true
+  rihanx.bridge.build:
+    description: Build a bridge in the facing direction.
+    default: op
+  rihanx.bridge.undo:
+    description: Undo the last bridge / builder tool action.
+    default: op
+  rihanx.build:
+    description: Use aim-and-build tools.
+    default: op
+  rihanx.build.*:
+    default: op
+    children:
+      rihanx.build: true
+      rihanx.build.undo: true
+      rihanx.build.platform: true
+      rihanx.build.wall: true
+      rihanx.build.pillar: true
+      rihanx.build.cyl: true
+      rihanx.build.sphere: true
+      rihanx.build.tunnel: true
+      rihanx.build.flatten: true
+      rihanx.build.drain: true
+      rihanx.build.bridge: true
+      rihanx.build.pyramid: true
+      rihanx.build.stairs: true
+      rihanx.build.stack: true
+  rihanx.build.undo:
+    description: Undo the last builder tool action.
+    default: op
+  rihanx.build.platform:
+    description: Build platforms.
+    default: op
+  rihanx.build.wall:
+    description: Build walls.
+    default: op
+  rihanx.build.pillar:
+    description: Build pillars/towers.
+    default: op
+  rihanx.build.cyl:
+    description: Build cylinders.
+    default: op
+  rihanx.build.sphere:
+    description: Build spheres.
+    default: op
+  rihanx.build.tunnel:
+    description: Dig tunnels.
+    default: op
+  rihanx.build.flatten:
+    description: Flatten terrain.
+    default: op
+  rihanx.build.drain:
+    description: Drain water/lava.
+    default: op
+  rihanx.build.bridge:
+    description: Build bridges via /build bridge.
+    default: op
+  rihanx.build.pyramid:
+    description: Build pyramids.
+    default: op
+  rihanx.build.stairs:
+    description: Build staircases.
+    default: op
+  rihanx.build.stack:
+    description: Stack an edit selection.
     default: op
   rihanx.msg:
     description: Send private messages.

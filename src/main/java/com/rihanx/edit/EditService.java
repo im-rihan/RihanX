@@ -418,6 +418,163 @@ public final class EditService {
         }
     }
 
+    /**
+     * Repeat the current selection {@code count} times in {@code direction}
+     * (default: the direction the player faces). Always records undo.
+     */
+    public void stack(@NotNull Player player, int count, @Nullable String directionArg) {
+        Cuboid cuboid = requireSelection(player);
+        if (cuboid == null) {
+            return;
+        }
+        int maxCount = Math.max(1, plugin.getConfig().getInt("edit.max-stack", 50));
+        if (count < 1 || count > maxCount) {
+            messages.send(player, "edit-stack-count-invalid", MessageManager.placeholders(
+                    "min", 1,
+                    "max", maxCount
+            ));
+            return;
+        }
+        long copies = (long) count * cuboid.volume();
+        if (copies > getMaxBlocks()) {
+            messages.send(player, "edit-too-large", MessageManager.placeholders(
+                    "volume", copies,
+                    "max", getMaxBlocks()
+            ));
+            return;
+        }
+
+        int sizeX = cuboid.getMaxX() - cuboid.getMinX() + 1;
+        int sizeY = cuboid.getMaxY() - cuboid.getMinY() + 1;
+        int sizeZ = cuboid.getMaxZ() - cuboid.getMinZ() + 1;
+        int[] step = stackStep(player, directionArg, sizeX, sizeY, sizeZ);
+        if (step == null) {
+            return;
+        }
+
+        World world = cuboid.getWorld();
+        List<BlockSnapshot> before = new ArrayList<>();
+        List<BlockSnapshot> after = new ArrayList<>();
+
+        // Collect source blocks (including air so gaps copy correctly like WE stack)
+        List<Clipboard.RelativeBlock> source = new ArrayList<>();
+        int ox = cuboid.getMinX();
+        int oy = cuboid.getMinY();
+        int oz = cuboid.getMinZ();
+        for (Block block : cuboid) {
+            source.add(new Clipboard.RelativeBlock(
+                    block.getX() - ox,
+                    block.getY() - oy,
+                    block.getZ() - oz,
+                    block.getBlockData()
+            ));
+        }
+
+        for (int n = 1; n <= count; n++) {
+            int offX = step[0] * n;
+            int offY = step[1] * n;
+            int offZ = step[2] * n;
+            for (Clipboard.RelativeBlock rel : source) {
+                int x = ox + rel.dx() + offX;
+                int y = oy + rel.dy() + offY;
+                int z = oz + rel.dz() + offZ;
+                Block dest = world.getBlockAt(x, y, z);
+                if (!canEditBlock(player, dest)) {
+                    messages.send(player, "edit-protected-deny");
+                    return;
+                }
+                if (dest.getBlockData().matches(rel.data())) {
+                    continue;
+                }
+                before.add(BlockSnapshot.from(dest));
+                after.add(new BlockSnapshot(x, y, z, rel.data()));
+            }
+        }
+
+        if (before.isEmpty()) {
+            messages.send(player, "edit-stack-nothing");
+            return;
+        }
+        if (!beginEdit(player)) {
+            return;
+        }
+
+        messages.send(player, "edit-stack-working", MessageManager.placeholders(
+                "count", count,
+                "blocks", before.size()
+        ));
+
+        final int[] index = {0};
+        int perTick = getBlocksPerTick();
+        final BukkitTask[] holder = new BukkitTask[1];
+        List<BlockSnapshot> afterFinal = after;
+        List<BlockSnapshot> beforeFinal = before;
+        holder[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            int budget = perTick;
+            while (budget-- > 0 && index[0] < afterFinal.size()) {
+                BlockSnapshot snap = afterFinal.get(index[0]++);
+                snap.apply(world, usePhysics());
+            }
+            if (index[0] >= afterFinal.size()) {
+                if (holder[0] != null) {
+                    holder[0].cancel();
+                }
+                activeEdits.remove(player.getUniqueId());
+                EditHistory.EditSession session = new EditHistory.EditSession(beforeFinal, afterFinal);
+                history.push(player.getUniqueId(), session);
+                // Shared with builder undo stack
+                plugin.getBuildToolService().recordExternalUndo(
+                        player.getUniqueId(),
+                        world.getUID(),
+                        "stack",
+                        beforeFinal,
+                        afterFinal
+                );
+                messages.send(player, "edit-stack-done", MessageManager.placeholders(
+                        "count", count,
+                        "blocks", beforeFinal.size()
+                ));
+            }
+        }, 1L, 1L);
+        if (holder[0] != null) {
+            activeEdits.put(player.getUniqueId(), holder[0]);
+        }
+    }
+
+    private int @Nullable [] stackStep(
+            @NotNull Player player,
+            @Nullable String directionArg,
+            int sizeX,
+            int sizeY,
+            int sizeZ
+    ) {
+        String dir = directionArg == null || directionArg.isBlank()
+                ? "forward"
+                : directionArg.toLowerCase(java.util.Locale.ROOT);
+        return switch (dir) {
+            case "up", "u" -> new int[]{0, sizeY, 0};
+            case "down", "d" -> new int[]{0, -sizeY, 0};
+            case "north", "n" -> new int[]{0, 0, -sizeZ};
+            case "south", "s" -> new int[]{0, 0, sizeZ};
+            case "east", "e" -> new int[]{sizeX, 0, 0};
+            case "west", "w" -> new int[]{-sizeX, 0, 0};
+            case "forward", "me", "facing" -> {
+                org.bukkit.block.BlockFace face = com.rihanx.build.BuildShapes.yawToFace(player.getLocation().getYaw());
+                yield switch (face) {
+                    case NORTH -> new int[]{0, 0, -sizeZ};
+                    case SOUTH -> new int[]{0, 0, sizeZ};
+                    case EAST -> new int[]{sizeX, 0, 0};
+                    case WEST -> new int[]{-sizeX, 0, 0};
+                    default -> new int[]{0, 0, sizeZ};
+                };
+            }
+            default -> {
+                messages.send(player, "invalid-argument", MessageManager.placeholders("input", dir));
+                yield null;
+            }
+        };
+    }
+
     public void rotate(@NotNull Player player, int degrees) {
         Clipboard clipboard = clipboards.get(player.getUniqueId());
         if (clipboard == null) {
@@ -430,6 +587,13 @@ public final class EditService {
         }
         clipboards.put(player.getUniqueId(), clipboard.rotateY(degrees));
         messages.send(player, "edit-rotate-done", MessageManager.placeholders("degrees", degrees));
+    }
+
+    /**
+     * Records an external edit (e.g. bridge) so {@code /edit undo} can reverse it.
+     */
+    public void recordHistory(@NotNull UUID playerId, @NotNull EditHistory.EditSession session) {
+        history.push(playerId, session);
     }
 
     public void undo(@NotNull Player player) {

@@ -3,6 +3,8 @@ package com.rihanx;
 import com.rihanx.api.RihanXAPI;
 import com.rihanx.base.BaseService;
 import com.rihanx.base.FarmService;
+import com.rihanx.bridge.BridgeService;
+import com.rihanx.build.BuildToolService;
 import com.rihanx.cache.SearchCache;
 import com.rihanx.chat.ChatService;
 import com.rihanx.chunk.ChunkService;
@@ -77,6 +79,8 @@ public final class RihanX extends JavaPlugin {
     private KitService kitService;
     private BaseService baseService;
     private FarmService farmService;
+    private BridgeService bridgeService;
+    private BuildToolService buildToolService;
     private SlimeService slimeService;
     private WorldService worldService;
     private FindService findService;
@@ -144,6 +148,8 @@ public final class RihanX extends JavaPlugin {
         this.selectionManager = new SelectionManager();
         this.protectionService = new ProtectionService(this, messageManager, selectionManager);
         this.editService = new EditService(this, messageManager, selectionManager, protectionService);
+        this.buildToolService = new BuildToolService(this, messageManager);
+        this.bridgeService = new BridgeService(this);
         this.guiManager = new GuiManager(this);
 
         this.api = new RihanXAPI(
@@ -346,6 +352,14 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull FarmService getFarmService() {
         return farmService;
+    }
+
+    public @NotNull BridgeService getBridgeService() {
+        return bridgeService;
+    }
+
+    public @NotNull BuildToolService getBuildToolService() {
+        return buildToolService;
     }
 
     public @NotNull SlimeService getSlimeService() {

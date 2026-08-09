@@ -425,11 +425,26 @@ Built-in templates (front door faces you). Open the GUI with `/base`:
 
 Also `/house`, `/buildbase`, or `/rx base â€¦`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
 
-**Lift tip:** stand in the glass water tube â€” soul sand = up, magma = down.
+**Lift tip:** stand in the glass water tube — soul sand = up, magma = down.
 
-Examples: `/base` Â· `/base bungalow` Â· `/base villa` Â· `/base list`
+**How to use**
+1. Stand on flat ground where the **front door** should appear.
+2. Look toward the empty space where the house should build.
+3. Run `/base` (pick from GUI) or `/base villa`.
+4. Wait for the build to finish — you stay at the entrance.
+5. Wrong place? `/base undo` restores the old terrain.
 
-### Farms â€” `/farm`
+**Examples**
+```text
+/base                 # open GUI and click a house
+/base list            # chat list of templates
+/base hut             # small starter cabin
+/base bungalow        # luxury house with pool
+/base mansion         # large multi-floor build
+/base undo            # remove the last house paste
+```
+
+### Farms — `/farm`
 
 Stand at the **front / collection** side, face into the farm, then open the GUI:
 
@@ -451,9 +466,27 @@ Stand at the **front / collection** side, face into the farm, then open the GUI:
 | `iron` | Water streams, lava kill, hoppers (add villagers + zombie) |
 | `xp` | Dark spawn pads, drop chute, magma + hoppers |
 
-Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm â€¦`.
+Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm …`.
 
-### Kits â€” `/kit` Â· `/kits`
+**How to use**
+1. Clear a flat area (or flatten first with `/flatten 16`).
+2. Stand where the **entrance / chest side** should be.
+3. Look into the space the farm will fill.
+4. `/farm` → pick a type, or `/farm wheat`.
+5. Mistake? `/farm undo`.
+
+**Examples**
+```text
+/farm                 # open farm GUI
+/farm list
+/farm wheat           # starter crop farm with hoppers
+/farm cane            # sugar cane auto farm
+/farm iron            # iron farm frame (add villagers + zombie)
+/farm xp              # XP farm building
+/farm undo
+```
+
+### Kits — `/kit` · `/kits`
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -466,13 +499,19 @@ Definitions in `kits.yml`. Bundled kits (synced on reload when `kits.sync-bundle
 |-----|--------------------|----------|
 | `starter` | Chainmail + stone tools (light enchants), food, bow, basics | 1 hour |
 | `survival` | **Elytra**, enchanted diamond gear/tools (Protection II, Sharpness III, Efficiency III), totem, shulkers, building | 24 hours |
-| `pro` | **Netherite** + elytra, Protection IV / Sharpness V / Efficiency V / Unbreaking III / Mending gear, mace/trident, beacon, totemsÃ—5, blocks of ore | **48 hours** |
+| `pro` | **Netherite** + elytra, Protection IV / Sharpness V / Efficiency V / Unbreaking III / Mending gear, mace/trident, beacon, totems×5, blocks of ore | **48 hours** |
 
-**Cooldowns explained:** `cooldown-seconds` in `kits.yml` is the wait time between claims of that kit, per player. `pro` is set to `172800` seconds = **48 hours** â€” a player who claims `/kit pro` must wait 2 full days before claiming it again (unless they have `rihanx.bypass.cooldown` or `rihanx.admin`). `starter` = 3600s (1h), `survival` = 86400s (24h).
+**Cooldowns explained:** `cooldown-seconds` in `kits.yml` is the wait time between claims of that kit, per player. `pro` is set to `172800` seconds = **48 hours** — a player who claims `/kit pro` must wait 2 full days before claiming it again (unless they have `rihanx.bypass.cooldown` or `rihanx.admin`). `starter` = 3600s (1h), `survival` = 86400s (24h).
 
-Examples: `/kit survival` Â· `/kit pro`
+**Delivery:** `/kit` auto-places **colored shulker boxes** filled with items — white / lime / purple. Config `kits.delivery`: `auto` · `shulker` · `inventory`.
 
-**Delivery:** `/kit` auto-places **colored shulker boxes** (better chests) filled with items â€” white / lime / purple. No crafting needed. Config `kits.delivery`: `auto` Â· `shulker` Â· `inventory`.
+**Examples**
+```text
+/kits                 # see available kits + cooldowns
+/kit starter          # beginner gear
+/kit survival         # diamond + elytra kit
+/kit pro              # netherite kit (long cooldown)
+```
 
 #### Enchanted kit gear
 
@@ -487,7 +526,142 @@ Enchant ids and levels use the same names as `/item enchant`. Applied with `meta
 
 #### First-join kit
 
-Config `kits.first-join-kit` (default: `starter`). The first time a brand-new player joins (`hasPlayedBefore() == false`), they're given that kit automatically 1 second (20 ticks) after joining â€” no command needed. Set it to `""` (blank) to disable.
+Config `kits.first-join-kit` (default: `starter`). The first time a brand-new player joins (`hasPlayedBefore() == false`), they're given that kit automatically 1 second (20 ticks) after joining — no command needed. Set it to `""` (blank) to disable.
+
+### Bridge — `/bridge`
+
+Face the direction you want to cross, then build a walkway (deck + optional railings). **Every bridge is always undoable.**
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/bridge` | `rihanx.bridge.build` | Build with defaults (length/width/material from config) |
+| `/bridge <length> [width] [material]` | `rihanx.bridge.build` | Custom size / material |
+| `/bridge undo` | `rihanx.bridge.undo` | Restore terrain from your last bridge (stack: `bridge.max-undo`) |
+
+Also `/rxbridge`, `/buildbridge`, or `/rx bridge …`. Config: `bridge.*` (defaults, max size, railings, blocks-per-tick). Undo is also recorded in `/edit` history.
+
+**How to use**
+1. Stand on one side of a gap (river, canyon, etc.).
+2. Look straight across toward the other side.
+3. `/bridge 32` (or pick length/width/material).
+4. Walk across. Hate it? `/bridge undo`.
+
+**Examples**
+```text
+/bridge                           # default length/width (config)
+/bridge 32                        # 32 blocks long
+/bridge 24 5                      # 24 long, 5 wide
+/bridge 40 3 stone_bricks         # stone bridge with railings
+/bridge 16 3 oak_planks
+/bridge undo
+```
+
+### Builder tools — `/build` · `/platform` · `/wall` · `/cyl` …
+
+Aim-and-build utilities (same style as `/bridge`). Stand where you want the shape, face a direction when needed, then run the command. **Every action always records undo.**
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/platform [size] [material]` | `rihanx.build.platform` | Flat pad under you |
+| `/wall [length] [height] [material]` | `rihanx.build.wall` | Vertical wall in front |
+| `/pillar [height] [material]` | `rihanx.build.pillar` | Column up (negative = down) |
+| `/cyl <r> [h] [material]` / `/hcyl` | `rihanx.build.cyl` | Solid / hollow cylinder |
+| `/sphere <r> [material]` / `/hsphere` | `rihanx.build.sphere` | Solid / hollow sphere |
+| `/tunnel [l] [w] [h] [lining]` | `rihanx.build.tunnel` | Dig corridor forward |
+| `/flatten [radius]` | `rihanx.build.flatten` | Level ground to your Y |
+| `/drain [radius]` | `rihanx.build.drain` | Clear water/lava |
+| `/pyramid <size> [material]` / `/hpyramid` | `rihanx.build.pyramid` | Solid / hollow pyramid |
+| `/stairs [length] [width] [material]` | `rihanx.build.stairs` | Staircase forward/up |
+| `/stack <count> [dir]` / `/edit stack` | `rihanx.build.stack` | Repeat selection (needs pos1/pos2) |
+| `/build undo` (also `/platform undo`, …) | `rihanx.build.undo` | Restore last builder action |
+
+Also `/rx build <tool> …`. Config: `build.*`. Shared undo stack with `/bridge`. History also feeds `/edit undo`.
+
+**Quick start**
+1. Stand where the shape should appear (your feet = origin).
+2. For walls / tunnels / stairs / bridges: **look** the way the build should go.
+3. Run the command. Wrong result? `/build undo` (works for any of these tools).
+
+**Examples by tool**
+```text
+# Flat pad under you (good spawn platform / roof)
+/platform
+/platform 9
+/platform 11 stone
+/platform 7 glass
+
+# Wall in the direction you face
+/wall
+/wall 20 6
+/wall 32 4 stone_bricks
+
+# Pillar up from your feet (use negative height to dig down)
+/pillar 16
+/pillar 24 quartz_pillar
+/pillar -10                  # dig a 10-block shaft down
+
+# Cylinder / hollow cylinder (tower, well, silo)
+/cyl 5                       # radius 5, height 1 (disk)
+/cyl 6 12 stone              # solid tower
+/hcyl 8 20 glass             # hollow glass tube
+
+# Sphere / hollow sphere
+/sphere 5
+/sphere 8 white_concrete
+/hsphere 10 glass
+
+# Dig a corridor forward (optional lining material)
+/tunnel
+/tunnel 32
+/tunnel 40 3 3
+/tunnel 40 5 4 stone         # lined tunnel
+
+# Terrain helpers
+/flatten 12                  # flat ground in radius 12 at your Y
+/drain 16                    # clear nearby water/lava
+
+# Pyramid / hollow pyramid
+/pyramid 5
+/pyramid 8 sandstone
+/hpyramid 6 stone_bricks
+
+# Staircase forward and up (look the climb direction)
+/stairs
+/stairs 12
+/stairs 16 3 oak_stairs
+/stairs 20 5 stone_brick_stairs
+
+# Undo last builder/bridge action
+/build undo
+/platform undo
+/stairs undo
+```
+
+**Stack example** (repeat a selection — great for hallways / fences)
+```text
+/edit wand                   # get the golden axe
+# Left-click one corner (pos1), right-click the opposite corner (pos2)
+/edit size                   # check selection size
+/stack 5 forward             # paste the selection 5 times the way you face
+/stack 3 up                  # stack upward (elevators / towers)
+/edit stack 10 north         # same via /edit
+/build undo                  # undo the stack
+```
+
+**Common builds**
+```text
+# Skybase pad then a glass dome
+/platform 15 stone
+/hsphere 8 glass
+
+# Mountain road
+/flatten 8
+/bridge 48 5 cobblestone
+
+# Castle tower
+/hcyl 5 24 stone_bricks
+/stairs 24 3 stone_brick_stairs
+```
 
 ### Fly / god persistence
 
@@ -540,7 +714,9 @@ Flags: `tnt`, `creeper-explosion`, `other-explosion`, `fire-spread`, `fire-destr
 
 Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 
-### Edit â€” `/rx edit` Â· `/edit` Â· `/we`
+### Edit — `/rx edit` · `/edit` · `/we`
+
+WorldEdit-lite selection tools. Use the wand to pick two corners, then fill / copy / stack.
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -553,12 +729,37 @@ Data: `plugins/RihanX/protection.yml` + `regions.yml`.
 | `/edit walls \| outline \| hollow <material>` | `rihanx.edit` | Shell fills |
 | `/edit clear` | `rihanx.edit` | Set to air |
 | `/edit expand \| contract <n> [dir]` | `rihanx.edit` | Grow/shrink selection |
-| `/edit copy` / `paste` / `rotate <deg>` | `rihanx.edit.clipboard` | Clipboard |
+| `/edit copy` / `paste` / `rotate` / `stack` | `rihanx.edit.clipboard` | Clipboard + stack |
 | `/edit undo` / `redo` | `rihanx.edit.history` | History |
 
-Limits: `edit.max-blocks` (200000), `edit.max-undo` (10), `edit.confirm-above` (50000 â€” GUI confirm for large set/clear/replace). Protected regions need membership or `/protect bypass`.
+Limits: `edit.max-blocks` (200000), `edit.max-undo` (10), `edit.max-stack` (50), `edit.confirm-above` (50000 — GUI confirm for large set/clear/replace). Protected regions need membership or `/protect bypass`.
 
-### Admin â€” `/rx admin` Â· `/admin`
+**How to use**
+1. `/edit wand` — get the golden axe.
+2. **Left-click** a block = pos1, **right-click** another = pos2.
+3. Run a fill / copy / stack command.
+4. `/edit undo` if you need to revert.
+
+**Examples**
+```text
+/edit wand
+/edit pos1                   # or left-click with the wand
+/edit pos2                   # or right-click with the wand
+/edit size
+/edit set stone              # fill the box with stone
+/edit replace dirt grass_block
+/edit walls oak_planks       # only the outer walls
+/edit clear                  # set selection to air
+/edit copy
+# walk to a new spot
+/edit paste
+/edit rotate 90
+/edit stack 5 forward        # or /stack 5 forward
+/edit undo
+/edit redo
+```
+
+### Admin — `/rx admin` · `/admin`
 
 | Command | Permission | Description |
 |---------|------------|-------------|

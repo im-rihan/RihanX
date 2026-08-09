@@ -124,6 +124,7 @@ edit:
   blocks-per-tick: 4000
   # Ask for GUI confirm when selection volume exceeds this
   confirm-above: 50000
+  max-stack: 50
 
 # Night only becomes day when every required online player is sleeping
 sleep:
@@ -165,3 +166,76 @@ base:
   # How many pastes each player can undo (newest first)
   max-undo: 5
 
+
+bridge:
+  default-length: 16
+  default-width: 3
+  default-material: oak_planks
+  max-length: 128
+  max-width: 15
+  # How many bridge builds each player can undo (newest first)
+  max-undo: 10
+  blocks-per-tick: 2000
+  # Place fences/walls along both edges
+  railings: true
+
+build:
+  blocks-per-tick: 2000
+  max-undo: 10
+  platform:
+    default-size: 5
+    max-size: 31
+    default-material: stone
+  wall:
+    default-length: 16
+    default-height: 4
+    max-length: 128
+    max-height: 64
+    default-material: stone_bricks
+  pillar:
+    default-height: 16
+    max-height: 64
+    default-material: stone
+  cyl:
+    default-radius: 5
+    default-height: 1
+    max-radius: 32
+    max-height: 64
+    default-material: stone
+  sphere:
+    default-radius: 5
+    max-radius: 32
+    default-material: stone
+  tunnel:
+    default-length: 16
+    default-width: 3
+    default-height: 3
+    max-length: 128
+    max-width: 15
+    max-height: 15
+    default-lining: false
+    default-material: stone
+  flatten:
+    default-radius: 8
+    max-radius: 64
+    default-material: grass_block
+  drain:
+    default-radius: 8
+    max-radius: 64
+  pyramid:
+    default-size: 5
+    max-size: 32
+    default-material: sandstone
+  stairs:
+    default-length: 8
+    default-width: 3
+    max-length: 64
+    max-width: 15
+    default-material: oak_stairs
+  bridge:
+    default-length: 16
+    default-width: 3
+    default-material: oak_planks
+    max-length: 128
+    max-width: 15
+    railings: true

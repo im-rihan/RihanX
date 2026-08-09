@@ -41,7 +41,7 @@ public final class EditModule {
         }
         if (args.length == 0) {
             CommandSupport.usage(messages, sender,
-                    "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|expand|contract|undo|redo>");
+                    "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|expand|contract|stack|undo|redo>");
             return true;
         }
         EditService edit = plugin.getEditService();
@@ -140,6 +140,20 @@ public final class EditModule {
                 String direction = args.length >= 3 ? args[2] : "all";
                 edit.contract(player, amount, direction);
             }
+            case "stack" -> {
+                if (!CommandSupport.checkOpPerm(player, PermissionNodes.EDIT_CLIPBOARD, messages)) return true;
+                if (args.length < 2) {
+                    CommandSupport.usage(messages, sender, "/rx edit stack <count> [direction]");
+                    return true;
+                }
+                Integer count = NumberUtil.parseInt(args[1]);
+                if (count == null) {
+                    CommandSupport.invalidNumber(sender, messages, args[1]);
+                    return true;
+                }
+                String direction = args.length >= 3 ? args[2] : "forward";
+                edit.stack(player, count, direction);
+            }
             case "undo" -> {
                 if (!CommandSupport.checkOpPerm(player, PermissionNodes.EDIT_HISTORY, messages)) return true;
                 edit.undo(player);
@@ -149,7 +163,7 @@ public final class EditModule {
                 edit.redo(player);
             }
             default -> CommandSupport.usage(messages, sender,
-                    "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|expand|contract|undo|redo>");
+                    "/rx edit <wand|pos1|pos2|size|count|set|replace|walls|outline|hollow|clear|copy|paste|rotate|expand|contract|stack|undo|redo>");
         }
         return true;
     }
