@@ -170,8 +170,8 @@ public final class StationService {
 
         int maxDist = Math.max(16, plugin.getConfig().getInt("station.max-rail-distance", 512));
         int poweredEvery = Math.max(2, plugin.getConfig().getInt("station.powered-every", 4));
-        int joinLen = Math.max(0, plugin.getConfig().getInt("station.rail-join-length", 8));
-        int exitLen = Math.max(1, plugin.getConfig().getInt("station.rail-exit-length", 3));
+        int joinLen = Math.max(1, plugin.getConfig().getInt("station.rail-join-length", 12));
+        int exitLen = Math.max(1, plugin.getConfig().getInt("station.rail-exit-length", 4));
 
         int x1 = (int) Math.floor(portalA.x());
         int y1 = (int) Math.floor(portalA.y());
@@ -179,20 +179,28 @@ public final class StationService {
         int x2 = (int) Math.floor(portalB.x());
         int y2 = (int) Math.floor(portalB.y());
         int z2 = (int) Math.floor(portalB.z());
+        int dx = x2 - x1;
+        int dz = z2 - z1;
 
-        // Join each station's platform rails, exit out the front toward the other stop, then L-link.
-        RailPathLogic.Plan plan = RailPathLogic.planStationLink(
-                x1, y1, z1, portalA.yaw(),
-                x2, y2, z2, portalB.yaw(),
-                maxDist, poweredEvery, joinLen, exitLen
-        );
-        if (plan.result() == RailPathLogic.PlanResult.TOO_FAR) {
+        if (Math.abs(dx) + Math.abs(dz) > maxDist) {
             messages.send(player, "station-rail-too-far", MessageManager.placeholders(
                     "distance", RailPathLogic.horizontalDistance(x1, z1, x2, z2),
                     "max", maxDist
             ));
             return;
         }
+
+        // Snap join tips onto each station's built platform rails when present (works on /plain pads).
+        RailPathLogic.SpurEnds spurA = snapSpurToPlatform(
+                world, x1, y1, z1, portalA.yaw(), dx, dz, joinLen, exitLen
+        );
+        RailPathLogic.SpurEnds spurB = snapSpurToPlatform(
+                world, x2, y2, z2, portalB.yaw(), -dx, -dz, joinLen, exitLen
+        );
+
+        RailPathLogic.Plan plan = RailPathLogic.planPlatformToPlatform(
+                spurA, spurB, x1, z1, x2, z2, poweredEvery
+        );
         if (plan.result() != RailPathLogic.PlanResult.OK) {
             messages.send(player, "station-rail-skipped");
             return;
@@ -222,6 +230,55 @@ public final class StationService {
                     "blocks", placements.size()
             ));
         }
+    }
+
+    /**
+     * Prefer joining onto existing station rails found by walking into the platform;
+     * fall back to yaw-based offsets when no rails are scanned (e.g. empty world tests).
+     */
+    private static @NotNull RailPathLogic.SpurEnds snapSpurToPlatform(
+            @NotNull World world,
+            int padX, int padY, int padZ,
+            float yaw,
+            int dxToDest, int dzToDest,
+            int joinLen, int exitLen
+    ) {
+        RailPathLogic.SpurEnds fallback = RailPathLogic.spurEnds(
+                padX, padY, padZ, yaw, dxToDest, dzToDest, joinLen, exitLen
+        );
+        RailPathLogic.Cardinal front = RailPathLogic.yawToCardinal(yaw);
+        RailPathLogic.Cardinal into = front.opposite();
+
+        int foundX = fallback.joinX();
+        int foundY = fallback.joinY();
+        int foundZ = fallback.joinZ();
+        boolean found = false;
+        int maxScan = Math.max(joinLen, 16);
+        // Walk into the platform and keep the deepest rail so the spur joins the station track,
+        // not just the block next to the gold plate (common failure on /plain builds).
+        for (int i = 1; i <= maxScan; i++) {
+            int x = padX + into.dx * i;
+            int z = padZ + into.dz * i;
+            for (int dy = -1; dy <= 2; dy++) {
+                Material type = world.getBlockAt(x, padY + dy, z).getType();
+                if (type.name().endsWith("RAIL")) {
+                    foundX = x;
+                    foundY = padY + dy - 1; // bed under the rail
+                    foundZ = z;
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        RailPathLogic.Cardinal exitDir = RailPathLogic.pickExit(front, dxToDest, dzToDest);
+        int exit = Math.max(1, exitLen);
+        return new RailPathLogic.SpurEnds(
+                foundX, foundY, foundZ,
+                padX + exitDir.dx * exit,
+                found ? foundY : padY,
+                padZ + exitDir.dz * exit
+        );
     }
 
     public void deleteStop(@NotNull Player player, @NotNull String rawName) {

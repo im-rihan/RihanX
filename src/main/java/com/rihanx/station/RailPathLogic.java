@@ -9,10 +9,10 @@ import java.util.Map;
 
 /**
  * Pure geometry for an axis-aligned (manhattan) railway between two stops.
- * Rails cannot run diagonally, so the path goes along X then Z (or Z then X).
  * <p>
- * Station links also build short join/exit spurs using each stop's facing so both
- * station platforms connect to the long path (not only the destination end).
+ * Station links always join along each station's platform track axis (from yaw),
+ * then exit toward the other stop, then L-link the exits. That keeps both
+ * built station platforms connected even when stations sit on a flat plain.
  */
 public final class RailPathLogic {
 
@@ -42,22 +42,21 @@ public final class RailPathLogic {
         }
     }
 
-    /** Cardinal facing from player/portal yaw (same rules as build tools). */
     public enum Cardinal {
         SOUTH(0, 1),
         WEST(-1, 0),
         NORTH(0, -1),
         EAST(1, 0);
 
-        final int dx;
-        final int dz;
+        public final int dx;
+        public final int dz;
 
         Cardinal(int dx, int dz) {
             this.dx = dx;
             this.dz = dz;
         }
 
-        @NotNull Cardinal opposite() {
+        public @NotNull Cardinal opposite() {
             return switch (this) {
                 case SOUTH -> NORTH;
                 case NORTH -> SOUTH;
@@ -65,6 +64,13 @@ public final class RailPathLogic {
                 case WEST -> EAST;
             };
         }
+    }
+
+    /** One station's join (into platform) and exit (toward peer) tips. */
+    public record SpurEnds(
+            int joinX, int joinY, int joinZ,
+            int exitX, int exitY, int exitZ
+    ) {
     }
 
     private RailPathLogic() {
@@ -85,19 +91,52 @@ public final class RailPathLogic {
     }
 
     /**
-     * Pick exit direction from a station: prefer the structure front if it points
-     * toward the destination; otherwise leave out the back.
+     * Leave toward the peer: use the platform front when it faces the destination,
+     * the back when the peer is behind, or the sideways cardinal when the peer is
+     * perpendicular to the track (common for stations on the same plain).
      */
     public static @NotNull Cardinal pickExit(@NotNull Cardinal front, int dxToDest, int dzToDest) {
-        int dot = front.dx * dxToDest + front.dz * dzToDest;
-        return dot >= 0 ? front : front.opposite();
+        int along = front.dx * dxToDest + front.dz * dzToDest;
+        if (along > 0) {
+            return front;
+        }
+        if (along < 0) {
+            return front.opposite();
+        }
+        // Perpendicular to track axis — exit sideways toward the peer.
+        if (Math.abs(dxToDest) >= Math.abs(dzToDest)) {
+            return dxToDest >= 0 ? Cardinal.EAST : Cardinal.WEST;
+        }
+        return dzToDest >= 0 ? Cardinal.SOUTH : Cardinal.NORTH;
     }
 
     /**
-     * Plan a railway from stop A to stop B (pad cells), with station join/exit spurs.
-     *
-     * @param joinLen  blocks from each pad back into the station (meet platform rails)
-     * @param exitLen  blocks from each pad out toward the other stop before the long path
+     * Compute join tip (into platform along track axis) and exit tip (toward peer).
+     * Join always uses opposite(front) so it lands on the built station rails.
+     */
+    public static @NotNull SpurEnds spurEnds(
+            int padX, int padY, int padZ,
+            float yaw,
+            int dxToDest, int dzToDest,
+            int joinLen, int exitLen
+    ) {
+        Cardinal front = yawToCardinal(yaw);
+        Cardinal joinDir = front.opposite();
+        Cardinal exitDir = pickExit(front, dxToDest, dzToDest);
+        int join = Math.max(1, joinLen);
+        int exit = Math.max(1, exitLen);
+        return new SpurEnds(
+                padX + joinDir.dx * join,
+                padY,
+                padZ + joinDir.dz * join,
+                padX + exitDir.dx * exit,
+                padY,
+                padZ + exitDir.dz * exit
+        );
+    }
+
+    /**
+     * Plan rails that join both station platforms, then connect exit-to-exit.
      */
     public static @NotNull Plan planStationLink(
             int x1, int y1, int z1, float yaw1,
@@ -117,62 +156,72 @@ public final class RailPathLogic {
             return Plan.fail(PlanResult.TOO_FAR);
         }
 
-        int join = Math.max(0, joinLen);
-        int exit = Math.max(1, exitLen);
-        Cardinal front1 = yawToCardinal(yaw1);
-        Cardinal front2 = yawToCardinal(yaw2);
-        Cardinal exit1 = pickExit(front1, dx, dz);
-        Cardinal exit2 = pickExit(front2, -dx, -dz);
-        Cardinal join1 = exit1.opposite();
-        Cardinal join2 = exit2.opposite();
+        SpurEnds a = spurEnds(x1, y1, z1, yaw1, dx, dz, joinLen, exitLen);
+        SpurEnds b = spurEnds(x2, y2, z2, yaw2, -dx, -dz, joinLen, exitLen);
+        return planPlatformToPlatform(a, b, x1, z1, x2, z2, poweredEvery);
+    }
 
-        int ex1x = x1 + exit1.dx * exit;
-        int ex1z = z1 + exit1.dz * exit;
-        int ex2x = x2 + exit2.dx * exit;
-        int ex2z = z2 + exit2.dz * exit;
-
-        boolean preferXFirst = Math.abs(ex2x - ex1x) >= Math.abs(ex2z - ex1z);
-        List<int[]> middle = centerline(ex1x, y1, ex1z, ex2x, y2, ex2z, preferXFirst);
+    /**
+     * Same as {@link #planStationLink} but with explicit bed Y / tips (e.g. snapped to world rails).
+     */
+    public static @NotNull Plan planPlatformToPlatform(
+            @NotNull SpurEnds a,
+            @NotNull SpurEnds b,
+            int pad1X, int pad1Z,
+            int pad2X, int pad2Z,
+            int poweredEvery
+    ) {
+        boolean preferXFirst = Math.abs(b.exitX() - a.exitX()) >= Math.abs(b.exitZ() - a.exitZ());
+        List<int[]> middle = centerline(
+                a.exitX(), a.exitY(), a.exitZ(),
+                b.exitX(), b.exitY(), b.exitZ(),
+                preferXFirst
+        );
         if (middle.size() < 2) {
             return Plan.fail(PlanResult.TOO_SHORT);
         }
 
-        // Ordered centerline: join1 → pad1 (skipped) → exit1 → middle → exit2 → pad2 (skipped) → join2
         List<int[]> center = new ArrayList<>();
-        for (int i = join; i >= 1; i--) {
-            center.add(new int[]{x1 + join1.dx * i, y1, z1 + join1.dz * i});
-        }
-        for (int i = 1; i <= exit; i++) {
-            int y = interpolateY(y1, y1, i, exit); // flat at A until middle
-            center.add(new int[]{x1 + exit1.dx * i, y, z1 + exit1.dz * i});
-        }
-        // middle includes both exits — skip duplicate exits
+        // A: deep join → toward pad → exit (skip exact pad cell)
+        appendLine(center, a.joinX(), a.joinY(), a.joinZ(), pad1X, a.joinY(), pad1Z, true);
+        appendLine(center, pad1X, a.exitY(), pad1Z, a.exitX(), a.exitY(), a.exitZ(), true);
+        // Middle between exits (skip duplicate tips)
         for (int i = 1; i < middle.size() - 1; i++) {
             center.add(middle.get(i));
         }
-        for (int i = exit; i >= 1; i--) {
-            center.add(new int[]{x2 + exit2.dx * i, y2, z2 + exit2.dz * i});
-        }
-        for (int i = 1; i <= join; i++) {
-            center.add(new int[]{x2 + join2.dx * i, y2, z2 + join2.dz * i});
-        }
+        // B: exit → toward pad → deep join
+        appendLine(center, b.exitX(), b.exitY(), b.exitZ(), pad2X, b.exitY(), pad2Z, true);
+        appendLine(center, pad2X, b.joinY(), pad2Z, b.joinX(), b.joinY(), b.joinZ(), true);
 
-        // Deduplicate while preserving order
         Map<Long, int[]> unique = new LinkedHashMap<>();
         for (int[] p : center) {
+            // Never place track on the gold-plate pad cells themselves
+            if ((p[0] == pad1X && p[2] == pad1Z) || (p[0] == pad2X && p[2] == pad2Z)) {
+                continue;
+            }
             unique.putIfAbsent(pack(p[0], p[1], p[2]), p);
         }
         List<int[]> track = new ArrayList<>(unique.values());
         if (track.isEmpty()) {
             return Plan.fail(PlanResult.TOO_SHORT);
         }
-
         return cellsAlong(track, poweredEvery);
     }
 
-    /**
-     * Plan a railway from stop A to stop B (legacy: pad-to-pad with margin, no facing).
-     */
+    /** Inclusive axis-aligned line; skips the start cell when {@code skipStart}. */
+    static void appendLine(
+            @NotNull List<int[]> out,
+            int x1, int y1, int z1,
+            int x2, int y2, int z2,
+            boolean skipStart
+    ) {
+        List<int[]> line = centerline(x1, y1, z1, x2, y2, z2, Math.abs(x2 - x1) >= Math.abs(z2 - z1));
+        int from = skipStart ? 1 : 0;
+        for (int i = from; i < line.size(); i++) {
+            out.add(line.get(i));
+        }
+    }
+
     public static @NotNull Plan plan(
             int x1, int y1, int z1,
             int x2, int y2, int z2,
@@ -234,8 +283,11 @@ public final class RailPathLogic {
         int dx = Math.abs(x2 - x1);
         int dz = Math.abs(z2 - z1);
         int steps = dx + dz;
-        List<int[]> points = new ArrayList<>(steps + 1);
+        List<int[]> points = new ArrayList<>(Math.max(1, steps + 1));
         points.add(new int[]{x1, y1, z1});
+        if (steps == 0) {
+            return points;
+        }
 
         int x = x1;
         int y = y1;

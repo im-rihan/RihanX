@@ -170,8 +170,10 @@ base:
 station:
   # Skip pad cells; join back into each station platform, then exit toward the other stop
   rail-margin: 1
-  rail-join-length: 8
-  rail-exit-length: 3
+  # How far back into each station platform to join existing rails
+  rail-join-length: 12
+  # How far out from the pad toward the other station before the long path
+  rail-exit-length: 4
   powered-every: 4
   max-rail-distance: 512
   rail-link: true
