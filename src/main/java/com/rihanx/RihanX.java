@@ -3,6 +3,7 @@ package com.rihanx;
 import com.rihanx.api.RihanXAPI;
 import com.rihanx.base.BaseService;
 import com.rihanx.base.FarmService;
+import com.rihanx.base.StationService;
 import com.rihanx.bridge.BridgeService;
 import com.rihanx.build.BuildToolService;
 import com.rihanx.cache.SearchCache;
@@ -37,6 +38,8 @@ import com.rihanx.managers.VanishManager;
 import com.rihanx.performance.PerformanceService;
 import com.rihanx.placeholders.RihanXPlaceholders;
 import com.rihanx.player.PlayerService;
+import com.rihanx.portal.PortalListener;
+import com.rihanx.portal.PortalService;
 import com.rihanx.protection.ProtectionListener;
 import com.rihanx.protection.ProtectionService;
 import com.rihanx.scheduler.AsyncTaskTracker;
@@ -79,6 +82,8 @@ public final class RihanX extends JavaPlugin {
     private KitService kitService;
     private BaseService baseService;
     private FarmService farmService;
+    private StationService stationService;
+    private PortalService portalService;
     private BridgeService bridgeService;
     private BuildToolService buildToolService;
     private SlimeService slimeService;
@@ -135,6 +140,8 @@ public final class RihanX extends JavaPlugin {
         this.kitService = new KitService(this, messageManager);
         this.baseService = new BaseService(this, messageManager);
         this.farmService = new FarmService(this, messageManager);
+        this.stationService = new StationService(this, messageManager);
+        this.portalService = new PortalService(this, messageManager, teleportManager);
         this.chatService = new ChatService(messageManager, vanishManager);
         this.afkManager = new AfkManager();
         this.spawnService = new SpawnService(messageManager, teleportManager, warpService);
@@ -190,6 +197,7 @@ public final class RihanX extends JavaPlugin {
         );
         getServer().getPluginManager().registerEvents(new FreezeListener(freezeManager, messageManager), this);
         getServer().getPluginManager().registerEvents(new TeleportListener(teleportManager, messageManager, configManager), this);
+        getServer().getPluginManager().registerEvents(new PortalListener(portalService), this);
         getServer().getPluginManager().registerEvents(new ProtectionListener(protectionService), this);
         getServer().getPluginManager().registerEvents(new WandListener(protectionService, editService), this);
         getServer().getPluginManager().registerEvents(new AfkListener(afkManager, messageManager), this);
@@ -260,6 +268,9 @@ public final class RihanX extends JavaPlugin {
         }
         if (warpService != null) {
             warpService.reload();
+        }
+        if (portalService != null) {
+            portalService.reload();
         }
         if (protectionService != null) {
             protectionService.reload();
@@ -352,6 +363,14 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull FarmService getFarmService() {
         return farmService;
+    }
+
+    public @NotNull StationService getStationService() {
+        return stationService;
+    }
+
+    public @NotNull PortalService getPortalService() {
+        return portalService;
     }
 
     public @NotNull BridgeService getBridgeService() {

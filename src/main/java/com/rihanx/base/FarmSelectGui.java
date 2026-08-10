@@ -44,7 +44,8 @@ public final class FarmSelectGui implements InventoryHolder, Listener {
         ENTRIES.put("cocoa", new MenuEntry(Material.COCOA_BEANS, 15, "<gold><bold>Cocoa</bold></gold>",
                 List.of("<gray>Jungle logs · hoppers</gray>")));
         ENTRIES.put("kelp", new MenuEntry(Material.KELP, 16, "<aqua><bold>Kelp</bold></aqua>",
-                List.of("<gray>Glass tank · hoppers</gray>")));
+                List.of("<gray>Glass aquarium holds water</gray>",
+                        "<gray>Pistons break tips · items float → hoppers</gray>")));
         ENTRIES.put("mushroom", new MenuEntry(Material.RED_MUSHROOM, 19, "<red><bold>Mushroom</bold></red>",
                 List.of("<gray>Mycelium hut · hoppers</gray>")));
         ENTRIES.put("nether", new MenuEntry(Material.NETHER_WART, 20, "<dark_red><bold>Nether Wart</bold></dark_red>",
@@ -54,9 +55,10 @@ public final class FarmSelectGui implements InventoryHolder, Listener {
         ENTRIES.put("cactus", new MenuEntry(Material.CACTUS, 22, "<green><bold>Cactus</bold></green>",
                 List.of("<gray>Break fences · hoppers</gray>")));
         ENTRIES.put("iron", new MenuEntry(Material.IRON_INGOT, 23, "<white><bold>Iron Farm</bold></white>",
-                List.of("<gray>Water · lava kill · hoppers</gray>", "<yellow>Add villagers + zombie after</yellow>")));
+                List.of("<gray>Open deck · lava blade · magma alcove</gray>",
+                        "<yellow>Add 3 villagers/pod + nametag zombie</yellow>")));
         ENTRIES.put("xp", new MenuEntry(Material.EXPERIENCE_BOTTLE, 24, "<light_purple><bold>XP Farm</bold></light_purple>",
-                List.of("<gray>Dark pads · drop · magma · hoppers</gray>")));
+                List.of("<gray>Dark roofed pads · 2×2 drop shaft · one-hit XP</gray>")));
     }
 
     private final @NotNull RihanX plugin;

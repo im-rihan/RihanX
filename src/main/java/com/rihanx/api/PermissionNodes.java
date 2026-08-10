@@ -170,6 +170,21 @@ public final class PermissionNodes {
     public static final String FARM_LIST = FARM + ".list";
     public static final String FARM_UNDO = FARM + ".undo";
 
+    public static final String PORTAL = ROOT + ".portal";
+    public static final String PORTAL_ALL = PORTAL + ".*";
+    public static final String PORTAL_CREATE = PORTAL + ".create";
+    public static final String PORTAL_LINK = PORTAL + ".link";
+    public static final String PORTAL_DELETE = PORTAL + ".delete";
+    public static final String PORTAL_LIST = PORTAL + ".list";
+    public static final String PORTAL_TP = PORTAL + ".tp";
+
+    public static final String STATION = ROOT + ".station";
+    public static final String STATION_ALL = STATION + ".*";
+    public static final String STATION_BUILD = STATION + ".build";
+    public static final String STATION_LIST = STATION + ".list";
+    public static final String STATION_UNDO = STATION + ".undo";
+    public static final String STATION_LINK = STATION + ".link";
+
     public static final String BRIDGE = ROOT + ".bridge";
     public static final String BRIDGE_ALL = BRIDGE + ".*";
     public static final String BRIDGE_BUILD = BRIDGE + ".build";

@@ -16,6 +16,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.block.data.type.Door;
@@ -112,6 +113,36 @@ public final class BaseService {
         }
     }
 
+    /**
+     * Place absolute world blocks with undo (no teleport). Used for station rail links.
+     *
+     * @return false if the player is already building or placements were empty / denied
+     */
+    public boolean pasteAbsolute(
+            @NotNull Player player,
+            @NotNull String kind,
+            @NotNull String name,
+            @NotNull List<AbsolutePlacement> placements
+    ) {
+        if (placements.isEmpty()) {
+            return false;
+        }
+        if (!building.add(player.getUniqueId())) {
+            messages.send(player, "base-busy");
+            return false;
+        }
+        try {
+            return startAbsolutePaste(player, kind, name, placements);
+        } catch (RuntimeException ex) {
+            building.remove(player.getUniqueId());
+            throw ex;
+        }
+    }
+
+    /** World-space block for {@link #pasteAbsolute}. */
+    public record AbsolutePlacement(int x, int y, int z, @NotNull Material material) {
+    }
+
     private void startPaste(
             @NotNull Player player,
             @NotNull BaseTemplates.BaseBlueprint blueprint,
@@ -177,8 +208,7 @@ public final class BaseService {
         }
 
         int perTick = Math.max(50, plugin.getConfig().getInt("base.blocks-per-tick", 1200));
-        String buildingKey = kind.equals("farm") ? "farm-building" : "base-building";
-        messages.send(player, buildingKey, MessageManager.placeholders(
+        messages.send(player, kindMessage(kind, "building"), MessageManager.placeholders(
                 "name", blueprint.id(),
                 "blocks", changes.size()
         ));
@@ -225,14 +255,102 @@ public final class BaseService {
                 Location done = entranceLocation(origin, blueprint, facing, faceToYaw(opposite(facing)));
                 player.teleport(done);
                 finishActive(player, active, false);
-                messages.send(player, kind.equals("farm") ? "farm-done" : "base-done", MessageManager.placeholders(
+                messages.send(player, kindMessage(kind, "done"), MessageManager.placeholders(
                         "name", blueprint.id(),
                         "blocks", changes.size()
                 ));
-                messages.send(player, kind.equals("farm") ? "farm-ready-hint" : "base-ready-hint");
-                messages.send(player, kind.equals("farm") ? "farm-undo-hint" : "base-undo-hint");
+                messages.send(player, kindMessage(kind, "ready-hint"));
+                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp").contains(blueprint.id())) {
+                    messages.send(player, "farm-" + blueprint.id() + "-hint");
+                }
+                messages.send(player, kindMessage(kind, "undo-hint"));
             }
         }, 1L, 1L);
+    }
+
+    private boolean startAbsolutePaste(
+            @NotNull Player player,
+            @NotNull String kind,
+            @NotNull String name,
+            @NotNull List<AbsolutePlacement> placements
+    ) {
+        World world = player.getWorld();
+        ProtectionService protection = plugin.getProtectionService();
+        boolean bypass = protection.hasBypass(player);
+
+        // Last write wins per cell; higher layers (rails) overwrite if planned twice.
+        Map<Long, AbsolutePlacement> unique = new LinkedHashMap<>(placements.size());
+        for (AbsolutePlacement placement : placements) {
+            if (placement.y() < world.getMinHeight() || placement.y() >= world.getMaxHeight()) {
+                continue;
+            }
+            unique.put(pack(placement.x(), placement.y(), placement.z()), placement);
+        }
+
+        List<BlockChange> changes = new ArrayList<>(unique.size());
+        for (AbsolutePlacement placement : unique.values()) {
+            Block block = world.getBlockAt(placement.x(), placement.y(), placement.z());
+            if (!bypass && (!protection.isAllowed(player, block.getLocation(), ProtectionFlag.BUILD)
+                    || !protection.isAllowed(player, block.getLocation(), ProtectionFlag.PLACE))) {
+                building.remove(player.getUniqueId());
+                messages.send(player, "base-protected-deny");
+                return false;
+            }
+            changes.add(new BlockChange(block, placement.material().createBlockData(), pastePriority(placement.material())));
+        }
+        if (changes.isEmpty()) {
+            building.remove(player.getUniqueId());
+            return false;
+        }
+
+        changes.sort(Comparator
+                .comparingInt(BlockChange::priority)
+                .thenComparingInt(c -> c.block().getY())
+                .thenComparingInt(c -> c.block().getZ())
+                .thenComparingInt(c -> c.block().getX()));
+
+        List<BlockSnapshot> before = new ArrayList<>(changes.size());
+        Map<Long, BlockSnapshot> seen = new LinkedHashMap<>(changes.size());
+        for (BlockChange change : changes) {
+            Block block = change.block();
+            seen.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
+        }
+        before.addAll(seen.values());
+
+        PasteSession session = new PasteSession(world.getUID(), name, kind, List.copyOf(before));
+        int perTick = Math.max(50, plugin.getConfig().getInt("base.blocks-per-tick", 1200));
+        messages.send(player, kindMessage(kind, "building"), MessageManager.placeholders(
+                "name", name,
+                "blocks", changes.size()
+        ));
+
+        final int[] index = {0};
+        ActivePaste active = new ActivePaste(session, player.isFlying(), player.getAllowFlight(), player.getGameMode());
+        activePastes.put(player.getUniqueId(), active);
+        active.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (active.cancelled || !player.isOnline()) {
+                finishActive(player, active, true);
+                return;
+            }
+            int budget = perTick;
+            while (budget-- > 0 && index[0] < changes.size()) {
+                if (active.cancelled) {
+                    finishActive(player, active, true);
+                    return;
+                }
+                BlockChange change = changes.get(index[0]++);
+                change.block().setBlockData(change.data(), false);
+            }
+            if (index[0] >= changes.size()) {
+                finishActive(player, active, false);
+                messages.send(player, kindMessage(kind, "done"), MessageManager.placeholders(
+                        "name", name,
+                        "blocks", changes.size()
+                ));
+                messages.send(player, kindMessage(kind, "undo-hint"));
+            }
+        }, 1L, 1L);
+        return true;
     }
 
     /**
@@ -301,13 +419,22 @@ public final class BaseService {
                 perTick,
                 () -> {
                     building.remove(player.getUniqueId());
-                    String doneKey = session.kind().equals("farm") ? "farm-undo-done" : "base-undo-done";
+                    String doneKey = kindMessage(session.kind(), "undo-done");
                     messages.send(player, doneKey, MessageManager.placeholders(
                             "name", session.name(),
                             "blocks", session.before().size()
                     ));
                 }
         );
+    }
+
+    private static @NotNull String kindMessage(@NotNull String kind, @NotNull String suffix) {
+        String prefix = switch (kind) {
+            case "farm" -> "farm";
+            case "station" -> "station";
+            default -> "base";
+        };
+        return prefix + "-" + suffix;
     }
 
     private void finishActive(@NotNull Player player, @NotNull ActivePaste active, boolean pushForPartial) {
@@ -425,8 +552,16 @@ public final class BaseService {
             @NotNull BlockFace structureFacing
     ) {
         Material material = rel.material();
-        if (material == Material.AIR || material == Material.WATER) {
+        if (material == Material.AIR) {
             return material.createBlockData();
+        }
+        // Still water/lava sources (level 0) — flowing levels get washed away by ticks
+        if (material == Material.WATER || material == Material.LAVA) {
+            BlockData fluid = material.createBlockData();
+            if (fluid instanceof Levelled levelled) {
+                levelled.setLevel(0);
+            }
+            return fluid;
         }
 
         BlockData data = material.createBlockData();
@@ -459,6 +594,25 @@ public final class BaseService {
                 slab.setType(rel.slabType());
             }
             return slab;
+        }
+        // Open trapdoors (lava blades, item pass-through) — facing = hinge side attachment
+        if (data instanceof org.bukkit.block.data.type.TrapDoor trapDoor && worldFacing != null) {
+            if (trapDoor.getFaces().contains(worldFacing)) {
+                trapDoor.setFacing(worldFacing);
+            }
+            trapDoor.setOpen(true);
+            trapDoor.setHalf(Bisected.Half.TOP);
+            return trapDoor;
+        }
+        // Buttons / levers need wall attachment + facing or they won't power doors
+        if (worldFacing != null
+                && (material.name().endsWith("_BUTTON") || material == Material.LEVER)
+                && data instanceof org.bukkit.block.data.FaceAttachable attachable) {
+            attachable.setAttachedFace(org.bukkit.block.data.FaceAttachable.AttachedFace.WALL);
+            if (data instanceof Directional directional && directional.getFaces().contains(worldFacing)) {
+                directional.setFacing(worldFacing);
+            }
+            return data;
         }
         if (data instanceof Directional directional && worldFacing != null) {
             if (directional.getFaces().contains(worldFacing)) {

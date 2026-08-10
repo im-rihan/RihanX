@@ -32,13 +32,13 @@ public final class RihanXTabCompleter implements TabCompleter {
     private static final List<String> MODULES = List.of(
             "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
             "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
-            "msg", "reply", "afk", "spawn", "setspawn", "base", "farm", "bridge", "build",
+            "msg", "reply", "afk", "spawn", "setspawn", "base", "farm", "station", "portal", "bridge", "build",
             "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere", "tunnel",
-            "flatten", "drain", "pyramid", "stairs", "stack", "admin"
+            "flatten", "drain", "plain", "clearland", "clearpad", "plot", "pyramid", "stairs", "stack", "admin"
     );
 
     private static final List<String> BUILD_TOOLS = List.of(
-            "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere",
+            "platform", "plain", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere",
             "tunnel", "flatten", "drain", "bridge", "pyramid", "hpyramid", "stairs",
             "stack", "undo", "help"
     );
@@ -115,9 +115,12 @@ public final class RihanXTabCompleter implements TabCompleter {
             case "msg", "reply" -> completeMsg(module, prefixed);
             case "base" -> completeBase(prefixed);
             case "farm" -> completeFarm(prefixed);
+            case "station", "train", "railway" -> completeStation(prefixed);
+            case "portal", "portals" -> completePortal(prefixed);
             case "bridge" -> completeBridge(prefixed);
             case "build", "platform", "wall", "pillar", "tower", "cyl", "hcyl",
                  "sphere", "hsphere", "tunnel", "flatten", "drain",
+                 "plain", "clearland", "clearpad", "plot",
                  "pyramid", "hpyramid", "stairs", "stack" -> completeBuild(module, prefixed);
             case "afk", "spawn", "setspawn" -> new ArrayList<>();
             case "admin" -> completeAdmin(prefixed);
@@ -504,6 +507,58 @@ public final class RihanXTabCompleter implements TabCompleter {
         return new ArrayList<>();
     }
 
+    private @NotNull List<String> completeStation(@NotNull String[] args) {
+        if (args.length == 2) {
+            List<String> options = new ArrayList<>(plugin.getStationService().listIds());
+            options.addAll(List.of("build", "set", "link", "delete", "stops", "list", "undo", "help"));
+            return filter(options, args[1]);
+        }
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("build") || sub.equals("paste")) {
+                return filter(plugin.getStationService().listIds(), args[2]);
+            }
+            if (sub.equals("set") || sub.equals("register") || sub.equals("add")
+                    || sub.equals("delete") || sub.equals("del") || sub.equals("remove") || sub.equals("unlink")) {
+                return filter(plugin.getPortalService().getStore().list(), args[2]);
+            }
+            if (sub.equals("link")) {
+                return filter(plugin.getPortalService().getStore().list(), args[2]);
+            }
+            // /station <template> [stopName]
+            if (plugin.getStationService().listIds().contains(sub)) {
+                return new ArrayList<>();
+            }
+        }
+        if (args.length == 4) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("link") || sub.equals("build") || sub.equals("paste")) {
+                if (sub.equals("link")) {
+                    return filter(plugin.getPortalService().getStore().list(), args[3]);
+                }
+                return new ArrayList<>();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completePortal(@NotNull String[] args) {
+        if (args.length == 2) {
+            return filter(List.of("create", "link", "delete", "list", "tp", "help"), args[1]);
+        }
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("delete") || sub.equals("del") || sub.equals("tp") || sub.equals("teleport")
+                    || sub.equals("link") || sub.equals("use")) {
+                return filter(plugin.getPortalService().getStore().list(), args[2]);
+            }
+        }
+        if (args.length == 4 && args[1].equalsIgnoreCase("link")) {
+            return filter(plugin.getPortalService().getStore().list(), args[3]);
+        }
+        return new ArrayList<>();
+    }
+
     private @NotNull List<String> completeBridge(@NotNull String[] args) {
         return completeBuildToolArgs("bridge", args, 1);
     }
@@ -535,16 +590,20 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (relative == 1) {
             List<String> options = new ArrayList<>(List.of("undo", "help"));
             switch (tool) {
-                case "platform" -> {
-                    options.addAll(List.of("3", "5", "7", "9", "11"));
+                case "platform", "pad" -> {
+                    options.addAll(List.of("8", "16", "24", "32", "48", "64"));
                     options.addAll(MaterialUtil.suggestions(partial));
+                }
+                case "plain", "clearland", "clearpad", "plot" -> {
+                    options.addAll(List.of("16", "24", "32", "48", "64", "96"));
+                    options.addAll(List.of("grass_block", "stone", "dirt", "smooth_stone"));
                 }
                 case "wall" -> options.addAll(List.of("8", "16", "32", "stone_bricks", "cobblestone"));
                 case "pillar", "tower" -> options.addAll(List.of("8", "16", "32", "-8", "stone"));
                 case "cyl", "hcyl", "cylinder", "hcylinder" -> options.addAll(List.of("3", "5", "8", "10"));
                 case "sphere", "hsphere" -> options.addAll(List.of("3", "5", "8", "10"));
                 case "tunnel" -> options.addAll(List.of("8", "16", "32", "stone", "none"));
-                case "flatten", "level", "drain" -> options.addAll(List.of("4", "8", "16", "32"));
+                case "flatten", "level", "drain" -> options.addAll(List.of("8", "16", "32", "48", "64"));
                 case "bridge" -> {
                     options.addAll(List.of("8", "16", "32", "64"));
                     options.addAll(List.of("oak_planks", "spruce_planks", "stone_bricks"));
@@ -560,7 +619,8 @@ public final class RihanXTabCompleter implements TabCompleter {
         if (relative == 2) {
             List<String> options = new ArrayList<>();
             switch (tool) {
-                case "platform", "pillar", "tower", "sphere", "hsphere", "pyramid", "hpyramid" ->
+                case "platform", "plain", "clearland", "clearpad", "plot", "pillar", "tower",
+                     "sphere", "hsphere", "pyramid", "hpyramid" ->
                         options.addAll(MaterialUtil.suggestions(partial));
                 case "wall", "cyl", "hcyl", "bridge", "stairs", "stair" -> {
                     options.addAll(List.of("1", "3", "4", "5", "7", "8", "16"));

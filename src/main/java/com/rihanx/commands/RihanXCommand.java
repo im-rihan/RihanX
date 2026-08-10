@@ -11,8 +11,10 @@ import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
 import com.rihanx.commands.modules.KitModule;
+import com.rihanx.commands.modules.PortalModule;
 import com.rihanx.commands.modules.ProtectModule;
 import com.rihanx.commands.modules.SpawnModule;
+import com.rihanx.commands.modules.StationModule;
 import com.rihanx.commands.modules.TpaModule;
 import com.rihanx.commands.modules.WarpModule;
 import com.rihanx.managers.CooldownManager;
@@ -55,9 +57,10 @@ public final class RihanXCommand implements CommandExecutor {
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
             "kit", "kits",
             "msg", "reply", "afk", "spawn", "setspawn",
-            "base", "farm", "bridge", "build",
+            "base", "farm", "station", "train", "railway", "portal", "portals", "bridge", "build",
             "platform", "wall", "pillar", "tower", "cyl", "hcyl",
             "sphere", "hsphere", "tunnel", "flatten", "drain",
+            "plain", "clearland", "clearpad", "plot",
             "pyramid", "hpyramid", "stairs", "stack"
     );
 
@@ -78,6 +81,8 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull SpawnModule spawnModule;
     private final @NotNull BaseModule baseModule;
     private final @NotNull FarmModule farmModule;
+    private final @NotNull StationModule stationModule;
+    private final @NotNull PortalModule portalModule;
     private final @NotNull BridgeModule bridgeModule;
     private final @NotNull BuildModule buildModule;
 
@@ -94,6 +99,8 @@ public final class RihanXCommand implements CommandExecutor {
         this.spawnModule = new SpawnModule(plugin);
         this.baseModule = new BaseModule(plugin);
         this.farmModule = new FarmModule(plugin);
+        this.stationModule = new StationModule(plugin);
+        this.portalModule = new PortalModule(plugin);
         this.bridgeModule = new BridgeModule(plugin);
         this.buildModule = new BuildModule(plugin);
     }
@@ -162,9 +169,12 @@ public final class RihanXCommand implements CommandExecutor {
             case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
             case "base" -> baseModule.handle(sender, module, subArgs, messages);
             case "farm" -> farmModule.handle(sender, module, subArgs, messages);
+            case "station", "train", "railway" -> stationModule.handle(sender, module, subArgs, messages);
+            case "portal", "portals" -> portalModule.handle(sender, module, subArgs, messages);
             case "bridge" -> bridgeModule.handle(sender, module, subArgs, messages);
             case "build", "platform", "wall", "pillar", "tower", "cyl", "hcyl",
                  "sphere", "hsphere", "tunnel", "flatten", "drain",
+                 "plain", "clearland", "clearpad", "plot",
                  "pyramid", "hpyramid", "stairs", "stack" ->
                     buildModule.handle(sender, module, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
@@ -220,6 +230,8 @@ public final class RihanXCommand implements CommandExecutor {
             case "kits" -> module;
             case "tell", "w" -> "msg";
             case "r" -> "reply";
+            case "train", "railway" -> "station";
+            case "portals" -> "portal";
             default -> module;
         };
     }
@@ -250,6 +262,8 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "kit", "Kits");
         sendHelpLine(messages, sender, "base", "House / base templates");
         sendHelpLine(messages, sender, "farm", "Auto farms with hoppers & gadgets");
+        sendHelpLine(messages, sender, "station", "Train stations & railways");
+        sendHelpLine(messages, sender, "portal", "Linked teleport portals");
         sendHelpLine(messages, sender, "bridge", "Build a bridge (always undoable)");
         sendHelpLine(messages, sender, "build", "Builder tools (platform, wall, cyl, undo…)");
         sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");

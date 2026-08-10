@@ -131,7 +131,106 @@ public final class BlueprintValidator {
         if (!hasStorage) {
             errors.add("missing-storage");
         }
+        errors.addAll(validateHopperOutputsReachStorage(blueprint));
+        errors.addAll(validateObserverPistonCircuits(blueprint));
         return errors;
+    }
+
+    /**
+     * Every observer used for auto-harvest must have redstone dust on its output face
+     * (same Y, one block behind) so the pulse can reach the piston — no torch/button required.
+     */
+    public static @NotNull Set<String> validateObserverPistonCircuits(
+            @NotNull BaseTemplates.BaseBlueprint blueprint
+    ) {
+        Set<String> errors = new HashSet<>();
+        Map<Long, BaseTemplates.RelBlock> cells = new HashMap<>();
+        for (BaseTemplates.RelBlock block : blueprint.blocks()) {
+            cells.put(pack(block.dx(), block.dy(), block.dz()), block);
+        }
+        boolean anyObserver = false;
+        for (BaseTemplates.RelBlock block : cells.values()) {
+            if (block.material() != Material.OBSERVER) {
+                continue;
+            }
+            anyObserver = true;
+            BlockFace face = block.facing() == null ? BlockFace.NORTH : block.facing();
+            BlockFace out = face.getOppositeFace();
+            int ox = block.dx() + out.getModX();
+            int oy = block.dy() + out.getModY();
+            int oz = block.dz() + out.getModZ();
+            BaseTemplates.RelBlock dust = cells.get(pack(ox, oy, oz));
+            if (dust == null || dust.material() != Material.REDSTONE_WIRE) {
+                errors.add("observer-no-dust-output@" + block.dx() + "," + block.dy() + "," + block.dz()
+                        + "->" + out.name());
+            }
+            // Prefer a piston facing the same way under/near the observer (classic on-top layout)
+            BaseTemplates.RelBlock under = cells.get(pack(block.dx(), block.dy() - 1, block.dz()));
+            if (under == null || under.material() != Material.PISTON
+                    || under.facing() != face) {
+                errors.add("observer-piston-stack@" + block.dx() + "," + block.dz());
+            }
+        }
+        if (anyObserver) {
+            boolean hasPiston = cells.values().stream().anyMatch(b -> b.material() == Material.PISTON);
+            if (!hasPiston) {
+                errors.add("observer-without-piston");
+            }
+        }
+        return errors;
+    }
+
+    /**
+     * Every hopper must either point into another hopper, or point into / down onto a chest or barrel.
+     */
+    public static @NotNull Set<String> validateHopperOutputsReachStorage(
+            @NotNull BaseTemplates.BaseBlueprint blueprint
+    ) {
+        Set<String> errors = new HashSet<>();
+        Map<Long, BaseTemplates.RelBlock> cells = new HashMap<>();
+        for (BaseTemplates.RelBlock block : blueprint.blocks()) {
+            cells.put(pack(block.dx(), block.dy(), block.dz()), block);
+        }
+        for (BaseTemplates.RelBlock block : cells.values()) {
+            if (block.material() != Material.HOPPER) {
+                continue;
+            }
+            BlockFace face = block.facing() == null ? BlockFace.DOWN : block.facing();
+            if (!hopperOutputConnected(cells, block.dx(), block.dy(), block.dz(), face, 0)) {
+                errors.add("hopper-dead-end@" + block.dx() + "," + block.dy() + "," + block.dz()
+                        + "->" + face.name());
+            }
+        }
+        return errors;
+    }
+
+    private static boolean hopperOutputConnected(
+            @NotNull Map<Long, BaseTemplates.RelBlock> cells,
+            int x,
+            int y,
+            int z,
+            @NotNull BlockFace face,
+            int depth
+    ) {
+        if (depth > 48) {
+            return false;
+        }
+        int tx = x + face.getModX();
+        int ty = y + face.getModY();
+        int tz = z + face.getModZ();
+        BaseTemplates.RelBlock target = cells.get(pack(tx, ty, tz));
+        if (target == null) {
+            return false;
+        }
+        if (target.material() == Material.CHEST || target.material() == Material.BARREL
+                || target.material() == Material.TRAPPED_CHEST) {
+            return true;
+        }
+        if (target.material() == Material.HOPPER) {
+            BlockFace next = target.facing() == null ? BlockFace.DOWN : target.facing();
+            return hopperOutputConnected(cells, tx, ty, tz, next, depth + 1);
+        }
+        return false;
     }
 
     /**

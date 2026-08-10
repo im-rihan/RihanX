@@ -94,14 +94,26 @@ public final class BuildShapes {
             int size,
             @NotNull BlockData data
     ) {
+        return clearedPlatform(world, cx, cy, cz, size, 0, data);
+    }
+
+    /**
+     * Square platform at {@code cy} with air cleared above for {@code clearHeight} blocks
+     * (removes trees, hills, leftover builds so you get a plain build pad).
+     */
+    public static @NotNull Map<Long, PlannedBlock> clearedPlatform(
+            @NotNull World world,
+            int cx,
+            int cy,
+            int cz,
+            int size,
+            int clearHeight,
+            @NotNull BlockData floor
+    ) {
         Map<Long, PlannedBlock> planned = new LinkedHashMap<>();
-        int half = size / 2;
-        int min = -half;
-        int max = size % 2 == 0 ? half - 1 : half;
-        for (int dx = min; dx <= max; dx++) {
-            for (int dz = min; dz <= max; dz++) {
-                plan(planned, world, cx + dx, cy, cz + dz, data);
-            }
+        BlockData air = Material.AIR.createBlockData();
+        for (ClearPadLogic.Cell cell : ClearPadLogic.square(cx, cy, cz, size, clearHeight)) {
+            plan(planned, world, cell.x(), cell.y(), cell.z(), cell.floor() ? floor : air);
         }
         return planned;
     }
@@ -307,8 +319,7 @@ public final class BuildShapes {
     }
 
     /**
-     * Flatten: for each column in radius, set the topmost solid (or target Y) so ground is flat at targetY.
-     * Fills air below targetY with fill material; clears solids above targetY down to targetY+1 air/headroom.
+     * Flatten: solid floor at targetY in a disk, plus air cleared above so the area is a plain.
      */
     public static @NotNull Map<Long, PlannedBlock> flatten(
             @NotNull World world,
@@ -318,22 +329,22 @@ public final class BuildShapes {
             int radius,
             @NotNull BlockData fill
     ) {
+        return flatten(world, cx, targetY, cz, radius, 3, fill);
+    }
+
+    public static @NotNull Map<Long, PlannedBlock> flatten(
+            @NotNull World world,
+            int cx,
+            int targetY,
+            int cz,
+            int radius,
+            int clearHeight,
+            @NotNull BlockData fill
+    ) {
         Map<Long, PlannedBlock> planned = new LinkedHashMap<>();
         BlockData air = Material.AIR.createBlockData();
-        int r2 = radius * radius;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                if (dx * dx + dz * dz > r2) {
-                    continue;
-                }
-                int x = cx + dx;
-                int z = cz + dz;
-                plan(planned, world, x, targetY, z, fill);
-                // Clear a few blocks above for walkability
-                for (int y = 1; y <= 3; y++) {
-                    plan(planned, world, x, targetY + y, z, air);
-                }
-            }
+        for (ClearPadLogic.Cell cell : ClearPadLogic.disk(cx, targetY, cz, radius, clearHeight)) {
+            plan(planned, world, cell.x(), cell.y(), cell.z(), cell.floor() ? fill : air);
         }
         return planned;
     }

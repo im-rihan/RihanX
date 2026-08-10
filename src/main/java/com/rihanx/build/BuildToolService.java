@@ -45,28 +45,66 @@ public final class BuildToolService {
     }
 
     public void platform(@NotNull Player player, @Nullable Integer sizeArg, @Nullable String materialArg) {
-        int max = cfgInt("build.platform.max-size", "bridge.max-width", 31);
-        int size = sizeArg != null ? sizeArg : cfgInt("build.platform.default-size", null, 5);
+        int max = cfgInt("build.platform.max-size", "bridge.max-width", 96);
+        int size = sizeArg != null ? sizeArg : cfgInt("build.platform.default-size", null, 16);
         if (!inRange(player, size, 1, max, "build-size-invalid")) {
             return;
         }
-        Material material = resolveMaterial(player, materialArg, "build.platform.default-material", "stone");
+        Material material = resolveMaterial(player, materialArg, "build.platform.default-material", "grass_block");
         if (material == null) {
             return;
         }
+        int clearHeight = Math.max(0, cfgInt("build.platform.clear-height", "build.clear-height", 48));
         Location feet = player.getLocation().getBlock().getLocation();
-        Map<Long, PlannedBlock> planned = BuildShapes.platform(
+        Map<Long, PlannedBlock> planned = BuildShapes.clearedPlatform(
                 player.getWorld(),
                 feet.getBlockX(),
                 feet.getBlockY() - 1,
                 feet.getBlockZ(),
                 size,
+                clearHeight,
                 material.createBlockData()
         );
         apply(player, "platform", planned, MessageManager.placeholders(
                 "size", size,
                 "material", MaterialUtil.key(material),
+                "clear", clearHeight,
                 "tool", "platform"
+        ));
+    }
+
+    /**
+     * Large cleared plain / build pad — same as platform with optional larger defaults.
+     */
+    public void plain(@NotNull Player player, @Nullable Integer sizeArg, @Nullable String materialArg) {
+        // Prefer plain.* then fall back to platform.*
+        int max = cfgInt("build.plain.max-size", "build.platform.max-size", 96);
+        int size = sizeArg != null
+                ? sizeArg
+                : cfgInt("build.plain.default-size", "build.platform.default-size", 32);
+        if (!inRange(player, size, 1, max, "build-size-invalid")) {
+            return;
+        }
+        Material material = resolveMaterial(player, materialArg, "build.plain.default-material", "grass_block");
+        if (material == null) {
+            return;
+        }
+        int clearHeight = Math.max(0, cfgInt("build.plain.clear-height", "build.platform.clear-height", 64));
+        Location feet = player.getLocation().getBlock().getLocation();
+        Map<Long, PlannedBlock> planned = BuildShapes.clearedPlatform(
+                player.getWorld(),
+                feet.getBlockX(),
+                feet.getBlockY() - 1,
+                feet.getBlockZ(),
+                size,
+                clearHeight,
+                material.createBlockData()
+        );
+        apply(player, "plain", planned, MessageManager.placeholders(
+                "size", size,
+                "material", MaterialUtil.key(material),
+                "clear", clearHeight,
+                "tool", "plain"
         ));
     }
 
@@ -266,8 +304,8 @@ public final class BuildToolService {
     }
 
     public void flatten(@NotNull Player player, @Nullable Integer radiusArg) {
-        int maxR = cfgInt("build.flatten.max-radius", null, 64);
-        int radius = radiusArg != null ? radiusArg : cfgInt("build.flatten.default-radius", null, 8);
+        int maxR = cfgInt("build.flatten.max-radius", null, 96);
+        int radius = radiusArg != null ? radiusArg : cfgInt("build.flatten.default-radius", null, 16);
         if (!inRange(player, radius, 1, maxR, "build-radius-invalid")) {
             return;
         }
@@ -275,6 +313,7 @@ public final class BuildToolService {
         if (material == null) {
             return;
         }
+        int clearHeight = Math.max(0, cfgInt("build.flatten.clear-height", "build.clear-height", 48));
         Location feet = player.getLocation().getBlock().getLocation();
         Map<Long, PlannedBlock> planned = BuildShapes.flatten(
                 player.getWorld(),
@@ -282,11 +321,13 @@ public final class BuildToolService {
                 feet.getBlockY() - 1,
                 feet.getBlockZ(),
                 radius,
+                clearHeight,
                 material.createBlockData()
         );
         apply(player, "flatten", planned, MessageManager.placeholders(
                 "radius", radius,
                 "material", MaterialUtil.key(material),
+                "clear", clearHeight,
                 "tool", "flatten"
         ));
     }

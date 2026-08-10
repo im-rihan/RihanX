@@ -166,6 +166,16 @@ base:
   # How many pastes each player can undo (newest first)
   max-undo: 5
 
+# Train stations — /station link builds a powered rail path between stops
+station:
+  # Skip pad cells; join back into each station platform, then exit toward the other stop
+  rail-margin: 1
+  rail-join-length: 8
+  rail-exit-length: 3
+  powered-every: 4
+  max-rail-distance: 512
+  rail-link: true
+
 
 bridge:
   default-length: 16
@@ -183,9 +193,16 @@ build:
   blocks-per-tick: 2000
   max-undo: 10
   platform:
-    default-size: 5
-    max-size: 31
-    default-material: stone
+    default-size: 16
+    max-size: 96
+    default-material: grass_block
+    # Blocks of air cleared above the floor (trees, hills, leftover builds)
+    clear-height: 48
+  plain:
+    default-size: 32
+    max-size: 96
+    default-material: grass_block
+    clear-height: 64
   wall:
     default-length: 16
     default-height: 4
@@ -216,9 +233,10 @@ build:
     default-lining: false
     default-material: stone
   flatten:
-    default-radius: 8
-    max-radius: 64
+    default-radius: 16
+    max-radius: 96
     default-material: grass_block
+    clear-height: 48
   drain:
     default-radius: 8
     max-radius: 64

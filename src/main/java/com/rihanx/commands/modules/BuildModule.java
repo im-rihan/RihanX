@@ -92,6 +92,20 @@ public final class BuildModule {
                 build.platform(player, size, material);
                 yield true;
             }
+            case "plain", "clearland", "clearpad", "plot" -> {
+                if (!CommandSupport.checkPerm(player, PermissionNodes.BUILD_PLATFORM, messages)) {
+                    yield true;
+                }
+                Integer size = args.length >= 1 ? NumberUtil.parseInt(args[0]) : null;
+                String material = null;
+                if (size != null && args.length >= 2) {
+                    material = args[1];
+                } else if (size == null && args.length >= 1) {
+                    material = args[0];
+                }
+                build.plain(player, size, material);
+                yield true;
+            }
             case "wall" -> {
                 if (!CommandSupport.checkPerm(player, PermissionNodes.BUILD_WALL, messages)) {
                     yield true;

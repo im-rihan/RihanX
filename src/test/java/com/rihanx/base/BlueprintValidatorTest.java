@@ -28,6 +28,172 @@ class BlueprintValidatorTest {
     }
 
     @Test
+    void ironFarmHasDryDeckLavaTrapdoorsAndPodFloors() {
+        BaseTemplates.BaseBlueprint iron = FarmTemplates.all().get("iron");
+        boolean hasLava = false;
+        boolean hasMagma = false;
+        boolean hasSign = false;
+        boolean hasTrapdoor = false;
+        boolean hasPodFloor = false;
+        boolean floodedDeck = false;
+        boolean hasCenterHole = false;
+        boolean hasDeckRoof = false;
+        for (BaseTemplates.RelBlock block : iron.blocks()) {
+            if (block.material() == org.bukkit.Material.LAVA) {
+                hasLava = true;
+            }
+            if (block.material() == org.bukkit.Material.MAGMA_BLOCK) {
+                hasMagma = true;
+            }
+            if (block.material().name().contains("SIGN")) {
+                hasSign = true;
+            }
+            if (block.material().name().contains("TRAPDOOR")) {
+                hasTrapdoor = true;
+            }
+            if (block.dx() == -9 && block.dy() == 8 && block.material() == org.bukkit.Material.STONE_BRICKS) {
+                hasPodFloor = true;
+            }
+            if (block.dx() == 0 && block.dz() == 0 && block.dy() == 8
+                    && block.material() == org.bukkit.Material.AIR) {
+                hasCenterHole = true;
+            }
+            // Spawn deck should stay open to sky (no roof slab over center platform)
+            if (block.dy() == 12 && Math.abs(block.dx()) <= 5 && Math.abs(block.dz()) <= 5
+                    && block.material().name().contains("SLAB")) {
+                hasDeckRoof = true;
+            }
+            if (block.dy() == 8 && Math.abs(block.dx()) <= 4 && Math.abs(block.dz()) <= 4
+                    && block.material() == org.bukkit.Material.WATER) {
+                floodedDeck = true;
+            }
+        }
+        assertTrue(hasLava, "iron farm needs lava kill");
+        assertTrue(hasMagma, "iron farm needs visible magma on the kill floor");
+        assertTrue(hasSign, "iron farm needs water-break signs above the lava");
+        assertTrue(hasTrapdoor, "iron farm needs open trapdoors under lava");
+        assertTrue(hasPodFloor, "iron farm villager pods need floors");
+        assertTrue(hasCenterHole, "iron farm needs center drop hole");
+        assertFalse(floodedDeck, "iron farm spawn deck must not be flooded");
+        assertFalse(hasDeckRoof, "iron spawn deck should be open-sky (no roof)");
+    }
+
+    @Test
+    void mineStationHasDescendingTunnelAndOutpost() {
+        BaseTemplates.BaseBlueprint mine = StationTemplates.all().get("mine");
+        assertTrue(mine.blocks().size() > 200, "mine station should be substantial");
+        boolean deepTunnel = mine.blocks().stream()
+                .anyMatch(b -> b.dz() > 30 && b.dy() < -5 && b.material().name().contains("RAIL"));
+        boolean hasChest = mine.blocks().stream()
+                .anyMatch(b -> b.material() == org.bukkit.Material.CHEST);
+        boolean hasFurnace = mine.blocks().stream()
+                .anyMatch(b -> b.material() == org.bukkit.Material.FURNACE
+                        || b.material() == org.bukkit.Material.BLAST_FURNACE);
+        assertTrue(deepTunnel, "mine station needs a descending rail tunnel");
+        assertTrue(hasChest, "mine outpost needs chests");
+        assertTrue(hasFurnace, "mine outpost needs furnaces");
+    }
+
+    @Test
+    void xpFarmHasContinuousDropShaftAndDarkRoof() {
+        BaseTemplates.BaseBlueprint xp = FarmTemplates.all().get("xp");
+        boolean hasButton = false;
+        boolean darkRoof = false;
+        int shaftAir = 0;
+        for (BaseTemplates.RelBlock block : xp.blocks()) {
+            if (block.material().name().endsWith("_BUTTON")) {
+                hasButton = true;
+                assertTrue(Math.abs(block.dx()) >= 1, "XP door buttons must be on wall beside door");
+            }
+            // Continuous shaft cells
+            if ((block.dx() == -1 || block.dx() == 0)
+                    && (block.dz() == 1 || block.dz() == 2)
+                    && block.dy() >= 2 && block.dy() <= 24
+                    && block.material() == org.bukkit.Material.AIR) {
+                shaftAir++;
+            }
+            if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE) {
+                darkRoof = true;
+            }
+        }
+        assertTrue(hasButton, "xp farm needs door buttons");
+        assertTrue(shaftAir >= 40, "xp farm needs continuous drop shaft air, got " + shaftAir);
+        assertTrue(darkRoof, "xp spawn floors need solid dark roofs (not open sky)");
+    }
+
+    @Test
+    void caneAndBambooPistonsFaceCrops() {
+        for (String id : List.of("cane", "bamboo", "kelp")) {
+            BaseTemplates.BaseBlueprint bp = FarmTemplates.all().get(id);
+            Set<String> circuitErrors = BlueprintValidator.validateObserverPistonCircuits(bp);
+            assertTrue(circuitErrors.isEmpty(), () -> id + " circuit: " + circuitErrors);
+            boolean hopperSouth = bp.blocks().stream().anyMatch(b ->
+                    b.material() == org.bukkit.Material.HOPPER
+                            && b.facing() == org.bukkit.block.BlockFace.SOUTH);
+            assertTrue(hopperSouth, id + " needs hoppers facing south toward storage");
+        }
+    }
+
+    @Test
+    void everyFarmHopperChainAndObserverCircuitValid() {
+        for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : FarmTemplates.all().entrySet()) {
+            Set<String> hoppers = BlueprintValidator.validateHopperOutputsReachStorage(entry.getValue());
+            assertTrue(hoppers.isEmpty(), () -> entry.getKey() + " hoppers: " + hoppers);
+            Set<String> circuits = BlueprintValidator.validateObserverPistonCircuits(entry.getValue());
+            assertTrue(circuits.isEmpty(), () -> entry.getKey() + " circuits: " + circuits);
+            boolean hasChest = entry.getValue().blocks().stream()
+                    .anyMatch(b -> b.material() == org.bukkit.Material.CHEST
+                            || b.material() == org.bukkit.Material.BARREL);
+            assertTrue(hasChest, entry.getKey() + " needs chest/barrel storage");
+        }
+    }
+
+    @Test
+    void cropFarmsHaveWaterCrossOrCollectionTowardSouth() {
+        for (String id : List.of("wheat", "potato", "melon", "cocoa", "mushroom", "cactus", "nether")) {
+            BaseTemplates.BaseBlueprint bp = FarmTemplates.all().get(id);
+            Set<String> errors = BlueprintValidator.validateFarm(bp);
+            assertTrue(errors.isEmpty(), () -> id + " failed: " + errors);
+            long southHoppers = bp.blocks().stream()
+                    .filter(b -> b.material() == org.bukkit.Material.HOPPER
+                            && b.facing() == org.bukkit.block.BlockFace.SOUTH)
+                    .count();
+            long anyHoppers = bp.blocks().stream()
+                    .filter(b -> b.material() == org.bukkit.Material.HOPPER)
+                    .count();
+            assertTrue(anyHoppers >= 3, id + " should have multiple hoppers, got " + anyHoppers);
+            assertTrue(southHoppers >= 1 || id.equals("wheat") || id.equals("potato"),
+                    id + " should drain toward +Z/chest (south-facing hoppers)");
+        }
+    }
+
+    @Test
+    void everyStationBlueprintIsValid() {
+        Map<String, BaseTemplates.BaseBlueprint> stations = StationTemplates.all();
+        assertEquals(6, stations.size(), "expected 6 station templates");
+        for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : stations.entrySet()) {
+            Set<String> errors = BlueprintValidator.validate(entry.getValue());
+            assertTrue(errors.isEmpty(), () -> entry.getKey() + " failed: " + errors);
+            boolean hasRail = entry.getValue().blocks().stream()
+                    .anyMatch(b -> b.material().name().contains("RAIL"));
+            assertTrue(hasRail, entry.getKey() + " should include rails");
+        }
+    }
+
+    @Test
+    void passengerStationsIncludeLinkPressurePlate() {
+        for (String id : List.of("station", "depot", "terminal", "mine")) {
+            BaseTemplates.BaseBlueprint bp = StationTemplates.all().get(id);
+            boolean hasPlate = bp.blocks().stream()
+                    .anyMatch(b -> b.material() == org.bukkit.Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
+            boolean hasDeepslate = bp.blocks().stream()
+                    .anyMatch(b -> b.material() == org.bukkit.Material.POLISHED_DEEPSLATE);
+            assertTrue(hasPlate, id + " needs a gold pressure plate link pad");
+            assertTrue(hasDeepslate, id + " needs polished deepslate under the link pad");
+        }
+    }
+
+    @Test
     void everyHomeBlueprintIsValid() {
         for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : BaseTemplates.all().entrySet()) {
             Set<String> errors = BlueprintValidator.validate(entry.getValue());

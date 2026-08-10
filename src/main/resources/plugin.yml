@@ -191,25 +191,40 @@ commands:
     permission: rihanx.base
     aliases: [house, buildbase]
   farm:
-    description: Paste an automatic farm (wheat, cane, bamboo, melon, nether, animal, cactus).
+    description: Paste an automatic farm (wheat, cane, bamboo, melon, nether, animal, cactus, iron, xp).
     usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list|undo]
     permission: rihanx.farm
     aliases: [autofarm, farms]
+  station:
+    description: Paste train stations/railways and link stops together.
+    usage: /station [build <template> [stop]|set <stop>|link <a> <b>|stops|list|undo]
+    permission: rihanx.station
+    aliases: [train, railway, stations]
+  portal:
+    description: Create and link teleport portals between two locations.
+    usage: /portal <create|link|delete|list|tp> …
+    permission: rihanx.portal
+    aliases: [portals, rxportal]
   bridge:
     description: Build a bridge in the direction you face (always undoable).
     usage: /bridge [length] [width] [material] | /bridge undo
     permission: rihanx.bridge
     aliases: [rxbridge, buildbridge]
   build:
-    description: Builder tools hub (platform, wall, cyl, sphere, tunnel, flatten, drain, undo).
-    usage: /build <platform|wall|pillar|cyl|hcyl|sphere|hsphere|tunnel|flatten|drain|bridge|undo> …
+    description: Builder tools hub (platform, plain, wall, cyl, sphere, tunnel, flatten, drain, undo).
+    usage: /build <platform|plain|wall|pillar|cyl|hcyl|sphere|hsphere|tunnel|flatten|drain|bridge|undo> …
     permission: rihanx.build
     aliases: [rxbuild]
   platform:
-    description: Build a flat platform under you (always undoable).
+    description: Build a cleared flat platform under you (removes trees/builds above; undoable).
     usage: /platform [size] [material] | /platform undo
     permission: rihanx.build.platform
     aliases: [pad]
+  plain:
+    description: Create a large cleared plain / build pad (clears everything above; undoable).
+    usage: /plain [size] [material] | /plain undo
+    permission: rihanx.build.platform
+    aliases: [clearland, clearpad, plot]
   wall:
     description: Build a wall in front of you (always undoable).
     usage: /wall [length] [height] [material] | /wall undo
@@ -242,7 +257,7 @@ commands:
     usage: /tunnel [length] [width] [height] [lining] | /tunnel undo
     permission: rihanx.build.tunnel
   flatten:
-    description: Flatten terrain in a radius to your Y (always undoable).
+    description: Flatten a circular area to your Y and clear above (always undoable).
     usage: /flatten [radius] | /flatten undo
     permission: rihanx.build.flatten
     aliases: [level]
@@ -729,6 +744,56 @@ permissions:
     default: op
   rihanx.farm.undo:
     description: Undo the last farm or base paste.
+    default: op
+  rihanx.station:
+    description: List and use train station / railway templates.
+    default: op
+  rihanx.station.*:
+    default: op
+    children:
+      rihanx.station: true
+      rihanx.station.build: true
+      rihanx.station.list: true
+      rihanx.station.undo: true
+      rihanx.station.link: true
+  rihanx.station.build:
+    description: Paste a station or railway template.
+    default: op
+  rihanx.station.list:
+    description: List station templates and stops.
+    default: op
+  rihanx.station.undo:
+    description: Undo the last station / base / farm paste.
+    default: op
+  rihanx.station.link:
+    description: Register and link station stops (teleport pads).
+    default: op
+  rihanx.portal:
+    description: Use linked teleport portals.
+    default: op
+  rihanx.portal.*:
+    default: op
+    children:
+      rihanx.portal: true
+      rihanx.portal.create: true
+      rihanx.portal.link: true
+      rihanx.portal.delete: true
+      rihanx.portal.list: true
+      rihanx.portal.tp: true
+  rihanx.portal.create:
+    description: Create a portal pad at your feet.
+    default: op
+  rihanx.portal.link:
+    description: Link two portals together.
+    default: op
+  rihanx.portal.delete:
+    description: Delete a portal.
+    default: op
+  rihanx.portal.list:
+    description: List portals.
+    default: op
+  rihanx.portal.tp:
+    description: Teleport to a portal by name.
     default: op
   rihanx.bridge:
     description: Use bridge tools.
