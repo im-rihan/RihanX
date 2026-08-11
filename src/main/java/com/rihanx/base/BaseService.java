@@ -272,7 +272,7 @@ public final class BaseService {
                 if (regionName != null && "base".equals(kind)) {
                     messages.send(player, "base-protected", MessageManager.placeholders("name", regionName));
                 }
-                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp").contains(blueprint.id())) {
+                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato").contains(blueprint.id())) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
                 }
                 messages.send(player, kindMessage(kind, "undo-hint"));

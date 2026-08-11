@@ -99,8 +99,9 @@ class BlueprintValidatorTest {
         BaseTemplates.BaseBlueprint xp = FarmTemplates.all().get("xp");
         boolean hasButton = false;
         boolean darkRoof = false;
-        boolean hasMagma = false;
-        boolean hasSignUpper = false;
+        boolean hasMagmaLanding = false;
+        boolean hasSign = false;
+        boolean hasSlabOnLanding = false;
         int shaftAir = 0;
         int waterSources = 0;
         for (BaseTemplates.RelBlock block : xp.blocks()) {
@@ -108,35 +109,45 @@ class BlueprintValidatorTest {
                 hasButton = true;
                 assertTrue(Math.abs(block.dx()) >= 1, "XP door buttons must be on wall beside door");
             }
-            // Continuous shaft through both floors (y=2..31)
+            // Continuous shaft through deck (y=1..26)
             if ((block.dx() == -1 || block.dx() == 0)
-                    && (block.dz() == 1 || block.dz() == 2)
-                    && block.dy() >= 2 && block.dy() <= 31
+                    && (block.dz() == -1 || block.dz() == 0)
+                    && block.dy() >= 1 && block.dy() <= 26
                     && block.material() == org.bukkit.Material.AIR) {
                 shaftAir++;
             }
             if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE
-                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 1 && block.dz() <= 2)) {
+                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= -1 && block.dz() <= 0)) {
                 darkRoof = true;
             }
-            if (block.material() == org.bukkit.Material.MAGMA_BLOCK) {
-                hasMagma = true;
+            // Magma is the landing — not unreachable trim beside slabs
+            if (block.material() == org.bukkit.Material.MAGMA_BLOCK
+                    && (block.dx() == -1 || block.dx() == 0)
+                    && (block.dz() == -1 || block.dz() == 0)
+                    && block.dy() == 0) {
+                hasMagmaLanding = true;
             }
-            if (block.material().name().contains("SIGN") && block.dy() == 27) {
-                hasSignUpper = true;
+            if (block.material().name().contains("SLAB")
+                    && (block.dx() == -1 || block.dx() == 0)
+                    && (block.dz() == -1 || block.dz() == 0)
+                    && block.dy() == 1) {
+                hasSlabOnLanding = true;
             }
-            if (block.material() == org.bukkit.Material.WATER && (block.dy() == 25 || block.dy() == 29)) {
+            if (block.material().name().contains("SIGN") && (block.dy() == 23 || block.dy() == 22)) {
+                hasSign = true;
+            }
+            if (block.material() == org.bukkit.Material.WATER && block.dy() == 24) {
                 waterSources++;
             }
         }
         assertTrue(hasButton, "xp farm needs door buttons");
-        assertTrue(shaftAir >= 80, "xp farm needs continuous drop shaft through both floors, got " + shaftAir);
-        assertTrue(darkRoof, "xp spawn floors need solid dark roofs (not open sky)");
-        assertTrue(hasMagma, "xp kill chamber needs magma burn platform trim");
-        assertTrue(hasSignUpper, "xp Floor B needs water-break signs");
-        // Sources only at channel ends (not flooding every channel cell)
-        assertTrue(waterSources > 0 && waterSources <= 20,
-                "xp water should be end-sources only, got " + waterSources);
+        assertTrue(shaftAir >= 80, "xp farm needs continuous drop shaft, got " + shaftAir);
+        assertTrue(darkRoof, "xp spawn deck needs solid dark roof");
+        assertTrue(hasMagmaLanding, "xp kill landing must be magma (mobs fall onto it)");
+        assertFalse(hasSlabOnLanding, "xp landing must not use slabs that block magma");
+        assertTrue(hasSign, "xp hole needs water-break signs");
+        assertTrue(waterSources > 0 && waterSources <= 12,
+                "xp water should be trench-end sources only, got " + waterSources);
     }
 
     @Test
