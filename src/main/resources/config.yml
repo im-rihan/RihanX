@@ -165,6 +165,10 @@ base:
   blocks-per-tick: 1200
   # How many pastes each player can undo (newest first)
   max-undo: 5
+  # Auto-claim a protected region around every /base paste (owner can still build)
+  auto-protect: true
+  # Extra blocks around the house bounds for the protected region
+  protect-padding: 2
 
 # Train stations — /station link builds a powered rail path between stops
 station:

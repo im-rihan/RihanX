@@ -33,6 +33,11 @@ public final class BaseTemplates {
         map.put("mansion", LuxuryBaseTemplates.mansion());
         map.put("modern", LuxuryBaseTemplates.modern());
         map.put("resort", LuxuryBaseTemplates.resort());
+        // GrabCraft-inspired advanced estates
+        map.put("estate", LuxuryBaseTemplates.estate());
+        map.put("chateau", LuxuryBaseTemplates.chateau());
+        map.put("skyvilla", LuxuryBaseTemplates.skyvilla());
+        map.put("palace", LuxuryBaseTemplates.palace());
         return map;
     }
 

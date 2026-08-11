@@ -520,7 +520,11 @@ public final class RihanXTabCompleter implements TabCompleter {
             }
             if (sub.equals("set") || sub.equals("register") || sub.equals("add")
                     || sub.equals("delete") || sub.equals("del") || sub.equals("remove") || sub.equals("unlink")) {
-                return filter(plugin.getPortalService().getStore().list(), args[2]);
+                List<String> names = new ArrayList<>(plugin.getPortalService().getStore().list());
+                if (sub.equals("delete") || sub.equals("del") || sub.equals("remove") || sub.equals("unlink")) {
+                    names.add("all");
+                }
+                return filter(names, args[2]);
             }
             if (sub.equals("link")) {
                 return filter(plugin.getPortalService().getStore().list(), args[2]);

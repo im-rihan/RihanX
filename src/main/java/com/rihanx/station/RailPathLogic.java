@@ -1,6 +1,7 @@
 package com.rihanx.station;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,6 +14,9 @@ import java.util.Map;
  * Station links always join along each station's platform track axis (from yaw),
  * then exit toward the other stop, then L-link the exits. That keeps both
  * built station platforms connected even when stations sit on a flat plain.
+ * <p>
+ * Pad cells (gold plates) are never overwritten; when join and exit meet at a
+ * pad, rails detour around the pad so carts never face a diagonal gap at a turn.
  */
 public final class RailPathLogic {
 
@@ -62,6 +66,14 @@ public final class RailPathLogic {
                 case NORTH -> SOUTH;
                 case EAST -> WEST;
                 case WEST -> EAST;
+            };
+        }
+
+        /** Perpendicular for pad detours (prefer EAST/SOUTH). */
+        public @NotNull Cardinal side() {
+            return switch (this) {
+                case NORTH, SOUTH -> EAST;
+                case EAST, WEST -> SOUTH;
             };
         }
     }
@@ -182,16 +194,18 @@ public final class RailPathLogic {
         }
 
         List<int[]> center = new ArrayList<>();
-        // A: deep join → toward pad → exit (skip exact pad cell)
-        appendLine(center, a.joinX(), a.joinY(), a.joinZ(), pad1X, a.joinY(), pad1Z, true);
+        // A: deep join → approach pad → bridge around pad → exit tip
+        appendLine(center, a.joinX(), a.joinY(), a.joinZ(), pad1X, a.joinY(), pad1Z, false);
+        injectPadBridge(center, pad1X, a.joinY(), pad1Z, a);
         appendLine(center, pad1X, a.exitY(), pad1Z, a.exitX(), a.exitY(), a.exitZ(), true);
         // Middle between exits (skip duplicate tips)
         for (int i = 1; i < middle.size() - 1; i++) {
             center.add(middle.get(i));
         }
-        // B: exit → toward pad → deep join
+        // B: exit → toward pad → bridge → deep join
         appendLine(center, b.exitX(), b.exitY(), b.exitZ(), pad2X, b.exitY(), pad2Z, true);
-        appendLine(center, pad2X, b.joinY(), pad2Z, b.joinX(), b.joinY(), b.joinZ(), true);
+        injectPadBridge(center, pad2X, b.joinY(), pad2Z, b);
+        appendLine(center, pad2X, b.joinY(), pad2Z, b.joinX(), b.joinY(), b.joinZ(), false);
 
         Map<Long, int[]> unique = new LinkedHashMap<>();
         for (int[] p : center) {
@@ -206,6 +220,70 @@ public final class RailPathLogic {
             return Plan.fail(PlanResult.TOO_SHORT);
         }
         return cellsAlong(track, poweredEvery);
+    }
+
+    /**
+     * Orthogonally connect join-approach and exit-approach around a stripped pad.
+     * Without this, sideways exits leave a diagonal gap that vanilla rails cannot join.
+     */
+    static void injectPadBridge(
+            @NotNull List<int[]> out,
+            int padX, int padY, int padZ,
+            @NotNull SpurEnds spur
+    ) {
+        Cardinal joinFromPad = toward(padX, padZ, spur.joinX(), spur.joinZ());
+        Cardinal exitFromPad = toward(padX, padZ, spur.exitX(), spur.exitZ());
+        if (joinFromPad == null || exitFromPad == null) {
+            return;
+        }
+        if (joinFromPad == exitFromPad) {
+            return;
+        }
+        if (joinFromPad == exitFromPad.opposite()) {
+            // Collinear through pad: detour one block to the side (3-cell U-turn).
+            Cardinal side = joinFromPad.side();
+            out.add(new int[]{
+                    padX + joinFromPad.dx + side.dx, padY, padZ + joinFromPad.dz + side.dz
+            });
+            out.add(new int[]{padX + side.dx, padY, padZ + side.dz});
+            out.add(new int[]{
+                    padX + exitFromPad.dx + side.dx, padY, padZ + exitFromPad.dz + side.dz
+            });
+            return;
+        }
+        // Perpendicular (typical plain link): one corner cell outside the pad.
+        out.add(new int[]{
+                padX + joinFromPad.dx + exitFromPad.dx,
+                padY,
+                padZ + joinFromPad.dz + exitFromPad.dz
+        });
+    }
+
+    /** Cardinal from (fromX,fromZ) toward (toX,toZ) on a single axis, or null if diagonal/same. */
+    static @Nullable Cardinal toward(int fromX, int fromZ, int toX, int toZ) {
+        int dx = Integer.signum(toX - fromX);
+        int dz = Integer.signum(toZ - fromZ);
+        if (dx == 0 && dz == 0) {
+            return null;
+        }
+        if (dx != 0 && dz != 0) {
+            // Prefer the larger axis; if equal, prefer X.
+            if (Math.abs(toX - fromX) >= Math.abs(toZ - fromZ)) {
+                dz = 0;
+            } else {
+                dx = 0;
+            }
+        }
+        if (dx > 0) {
+            return Cardinal.EAST;
+        }
+        if (dx < 0) {
+            return Cardinal.WEST;
+        }
+        if (dz > 0) {
+            return Cardinal.SOUTH;
+        }
+        return Cardinal.NORTH;
     }
 
     /** Inclusive axis-aligned line; skips the start cell when {@code skipStart}. */
@@ -259,16 +337,33 @@ public final class RailPathLogic {
             int x = p[0];
             int y = p[1];
             int z = p[2];
-            boolean powered = (i % every) == 0;
-            Layer under = powered
-                    ? Layer.REDSTONE
-                    : (i % 8 == 0 ? Layer.GLOW : Layer.SUPPORT);
+            // Powered rails cannot curve — never boost a corner / direction-change cell.
+            boolean powered = (i % every) == 0 && !isCorner(track, i);
+            Layer under = i % 8 == 0 ? Layer.GLOW : Layer.SUPPORT;
             cells.add(new Cell(x, y - 1, z, under));
-            cells.add(new Cell(x, y, z, Layer.BED));
+            cells.add(new Cell(x, y, z, powered ? Layer.REDSTONE : Layer.BED));
             cells.add(new Cell(x, y + 1, z, powered ? Layer.POWERED : Layer.RAIL));
             cells.add(new Cell(x, y + 2, z, Layer.CLEAR));
         }
         return new Plan(PlanResult.OK, List.copyOf(cells), track.size());
+    }
+
+    /** True when the path turns at this index (prev→cur→next changes horizontal direction). */
+    static boolean isCorner(@NotNull List<int[]> track, int i) {
+        if (i <= 0 || i >= track.size() - 1) {
+            return false;
+        }
+        int[] prev = track.get(i - 1);
+        int[] cur = track.get(i);
+        int[] next = track.get(i + 1);
+        int dx1 = Integer.signum(cur[0] - prev[0]);
+        int dz1 = Integer.signum(cur[2] - prev[2]);
+        int dx2 = Integer.signum(next[0] - cur[0]);
+        int dz2 = Integer.signum(next[2] - cur[2]);
+        if ((dx1 == 0 && dz1 == 0) || (dx2 == 0 && dz2 == 0)) {
+            return false;
+        }
+        return dx1 != dx2 || dz1 != dz2;
     }
 
     public static int horizontalDistance(int x1, int z1, int x2, int z2) {

@@ -25,6 +25,7 @@ public final class StationTemplates {
         map.put("rail", rail());
         map.put("terminal", terminal());
         map.put("mine", mine());
+        AdvancedStationTemplates.register(map);
         return map;
     }
 
@@ -39,24 +40,22 @@ public final class StationTemplates {
                 b.set(x, 0, z, Material.SMOOTH_STONE);
             }
         }
-        // Track bed + rails down the center
+        // Track bed + rails: powered rail sits on redstone block (wiki: power from the block below).
+        // Alternate left/right powered so both outer tracks boost; every POWERED_RAIL gets its own redstone.
         for (int z = -2; z <= 8; z++) {
             b.set(-1, 0, z, Material.GRAVEL);
             b.set(0, 0, z, Material.GRAVEL);
             b.set(1, 0, z, Material.GRAVEL);
             b.set(0, 1, z, Material.RAIL);
             if ((z & 1) == 0) {
+                b.set(-1, 0, z, Material.REDSTONE_BLOCK);
                 b.set(-1, 1, z, Material.POWERED_RAIL);
                 b.set(1, 1, z, Material.RAIL);
             } else {
+                b.set(1, 0, z, Material.REDSTONE_BLOCK);
                 b.set(-1, 1, z, Material.RAIL);
                 b.set(1, 1, z, Material.POWERED_RAIL);
             }
-        }
-        // Redstone under every other powered rail
-        for (int z = -2; z <= 8; z += 2) {
-            b.set(-1, -1, z, Material.REDSTONE_BLOCK);
-            b.set(1, -1, z, Material.REDSTONE_BLOCK);
         }
 
         // Waiting pavilion on +X side
@@ -88,6 +87,18 @@ public final class StationTemplates {
             b.set(4, 1, z, Material.OAK_FENCE);
         }
         b.set(0, 1, -2, Material.AIR); // keep rail clear
+        // Side throat so plain links (sideways exits) join without a diagonal gap
+        b.set(1, 0, 7, Material.GRAVEL);
+        b.set(1, 1, 7, Material.RAIL);
+        for (int x = 2; x <= 4; x++) {
+            if ((x & 1) == 0) {
+                b.set(x, 0, 7, Material.REDSTONE_BLOCK);
+                b.set(x, 1, 7, Material.POWERED_RAIL);
+            } else {
+                b.set(x, 0, 7, Material.GRAVEL);
+                b.set(x, 1, 7, Material.RAIL);
+            }
+        }
         spawnPad(b, 0, 10);
         spawnPad(b, 0, 11);
         linkPad(b, 2, 10);
@@ -106,10 +117,12 @@ public final class StationTemplates {
             }
         }
         for (int z = -3; z <= 10; z++) {
-            b.set(0, 0, z, Material.GRAVEL);
-            b.set(0, 1, z, z % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
             if (z % 2 == 0) {
-                b.set(0, -1, z, Material.REDSTONE_BLOCK);
+                b.set(0, 0, z, Material.REDSTONE_BLOCK);
+                b.set(0, 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, 0, z, Material.GRAVEL);
+                b.set(0, 1, z, Material.RAIL);
             }
         }
         // Depot shed
@@ -165,10 +178,11 @@ public final class StationTemplates {
             b.set(0, 1, i, Material.RAIL);
             b.set(i, 1, 0, Material.RAIL);
             if (Math.abs(i) >= 2 && (i & 1) == 0) {
+                // Powered rail directly on redstone block
+                b.set(0, 0, i, Material.REDSTONE_BLOCK);
                 b.set(0, 1, i, Material.POWERED_RAIL);
-                b.set(0, -1, i, Material.REDSTONE_BLOCK);
+                b.set(i, 0, 0, Material.REDSTONE_BLOCK);
                 b.set(i, 1, 0, Material.POWERED_RAIL);
-                b.set(i, -1, 0, Material.REDSTONE_BLOCK);
             }
         }
         // Crossing center
@@ -194,9 +208,11 @@ public final class StationTemplates {
                 b.set(x, -1, z, Material.STONE);
                 b.set(x, 0, z, Material.GRAVEL);
             }
-            b.set(0, 1, z, z % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
             if (z % 2 == 0) {
-                b.set(0, -1, z, Material.REDSTONE_BLOCK);
+                b.set(0, 0, z, Material.REDSTONE_BLOCK);
+                b.set(0, 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, 1, z, Material.RAIL);
             }
             if (z % 4 == 0) {
                 b.set(-2, 0, z, Material.OAK_FENCE);
@@ -221,10 +237,12 @@ public final class StationTemplates {
             }
         }
         for (int z = -2; z <= 8; z++) {
-            b.set(0, 0, z, Material.GRAVEL);
-            b.set(0, 1, z, z % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
             if (z % 2 == 0) {
-                b.set(0, -1, z, Material.REDSTONE_BLOCK);
+                b.set(0, 0, z, Material.REDSTONE_BLOCK);
+                b.set(0, 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, 0, z, Material.GRAVEL);
+                b.set(0, 1, z, Material.RAIL);
             }
         }
         // Buffer stop
@@ -273,10 +291,12 @@ public final class StationTemplates {
             }
         }
         for (int z = -2; z <= 6; z++) {
-            b.set(0, 0, z, Material.GRAVEL);
-            b.set(0, 1, z, z % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
             if (z % 2 == 0) {
-                b.set(0, -1, z, Material.REDSTONE_BLOCK);
+                b.set(0, 0, z, Material.REDSTONE_BLOCK);
+                b.set(0, 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, 0, z, Material.GRAVEL);
+                b.set(0, 1, z, Material.RAIL);
             }
         }
         // Waiting shed
@@ -317,9 +337,11 @@ public final class StationTemplates {
                     }
                 }
             }
-            b.set(0, y + 1, z, i % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
             if (i % 2 == 0) {
-                b.set(0, y - 1, z, Material.REDSTONE_BLOCK);
+                b.set(0, y, z, Material.REDSTONE_BLOCK);
+                b.set(0, y + 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, y + 1, z, Material.RAIL);
             }
             if (i % 6 == 0) {
                 b.facing(-1, y + 1, z, Material.WALL_TORCH, BlockFace.EAST);
@@ -349,10 +371,15 @@ public final class StationTemplates {
                 b.set(x, endY + dy, endZ, Material.AIR);
             }
         }
-        // Rails into chamber + buffer
+        // Rails into chamber + buffer (powered rail on redstone — was missing power here)
         for (int z = endZ; z <= endZ + 4; z++) {
-            b.set(0, endY, z, Material.GRAVEL);
-            b.set(0, endY + 1, z, z % 2 == 0 ? Material.POWERED_RAIL : Material.RAIL);
+            if (z % 2 == 0) {
+                b.set(0, endY, z, Material.REDSTONE_BLOCK);
+                b.set(0, endY + 1, z, Material.POWERED_RAIL);
+            } else {
+                b.set(0, endY, z, Material.GRAVEL);
+                b.set(0, endY + 1, z, Material.RAIL);
+            }
         }
         b.set(-1, endY + 1, endZ + 5, Material.IRON_BLOCK);
         b.set(0, endY + 1, endZ + 5, Material.IRON_BLOCK);

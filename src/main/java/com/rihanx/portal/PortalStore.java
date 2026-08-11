@@ -130,6 +130,17 @@ public final class PortalStore {
         return true;
     }
 
+    /** Remove every portal / station stop. Returns how many were deleted. */
+    public int clearAll() {
+        int count = portals.size();
+        if (count == 0) {
+            return 0;
+        }
+        portals.clear();
+        save();
+        return count;
+    }
+
     public boolean has(@NotNull String name) {
         return portals.containsKey(normalize(name));
     }

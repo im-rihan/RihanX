@@ -422,8 +422,14 @@ Built-in templates (front door faces you). Open the GUI with `/base`:
 | `modern` | Luxury | Glass/concrete, lift, 5 beds, **rooftop pool** |
 | `mansion` | Mega | 3 floors, **dual lifts**, 6 suites, indoor + outdoor pools |
 | `resort` | Mega | Mega pool club, **5 cabanas**, bar lounge |
+| `estate` | Advanced | GrabCraft-style mega estate — library, **8 suites**, court + roof pools |
+| `chateau` | Advanced | Fantasy chateau — **turrets**, great hall, lift, 6 suites, pool |
+| `skyvilla` | Advanced | Modernist glass villa — balcony, garden + roof pools |
+| `palace` | Advanced | Grand palace — **courtyard fountain**, gold trim, dual lifts, 8 suites |
 
 Also `/house`, `/buildbase`, or `/rx base …`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
+
+Advanced bases take cues from [GrabCraft](https://www.grabcraft.com/) amenity layouts (huge mansions, modernist villas) but are original procedural builds — not copies of GrabCraft blueprints. Need a very flat open plot for `estate` / `palace`.
 
 **Lift tip:** stand in the glass water tube — soul sand = up, magma = down.
 
@@ -441,6 +447,8 @@ Also `/house`, `/buildbase`, or `/rx base …`. Large builds ask for confirm. Sp
 /base hut             # small starter cabin
 /base bungalow        # luxury house with pool
 /base mansion         # large multi-floor build
+/base estate          # GrabCraft-style mega estate
+/base palace          # grand palace with courtyard fountain
 /base undo            # remove the last house paste
 ```
 
@@ -523,16 +531,21 @@ Paste stations, then **link two stops**. Linking:
 | `/station link <a> <b>` | `rihanx.station.link` | Link pads **and** build rails between them |
 | `/station stops` | `rihanx.station.list` | List stops and their links |
 | `/station delete <stop>` | `rihanx.station.link` | Remove a stop |
+| `/station delete all` | `rihanx.station.link` | Remove **all** stops (not buildings/rails) |
 | `/station undo` | `rihanx.station.undo` | Undo last paste / rail build |
 
 | Template | What you get |
 |----------|----------------|
-| `station` | Platform, powered rails, waiting pavilion, link pad |
+| `station` | Platform, powered rails, waiting pavilion, side throat, link pad |
 | `depot` | Storage shed, track, minecart bay, link pad |
 | `crossing` | 4-way rail crossing with signal lamps |
 | `rail` | ~25 block powered railway segment |
 | `terminal` | End-of-line buffers + ticket booth, link pad |
 | `mine` | Surface stop + **descending rail tunnel** to a mining outpost (chests, furnaces) |
+| `kingdom` | **Advanced** (GrabCraft Dark Kingdom vibe) — dual track, andesite hall, side throat |
+| `western` | **Advanced** (GrabCraft Western vibe) — spruce porch house, powered track |
+| `adacia` | **Advanced** (GrabCraft Adacia vibe) — compact dark oak stop |
+| `yard` | **Advanced** railyard — 3 tracks, east/west throats for plain links |
 
 ```text
 /station station hometown

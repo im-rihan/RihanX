@@ -4,8 +4,10 @@ import com.rihanx.RihanX;
 import com.rihanx.edit.BlockApplier;
 import com.rihanx.edit.BlockSnapshot;
 import com.rihanx.managers.MessageManager;
+import com.rihanx.protection.FlagValue;
 import com.rihanx.protection.ProtectionFlag;
 import com.rihanx.protection.ProtectionService;
+import com.rihanx.protection.Region;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -194,7 +196,8 @@ public final class BaseService {
                 world.getUID(),
                 blueprint.id(),
                 kind,
-                List.copyOf(before)
+                List.copyOf(before),
+                null
         );
 
         player.teleport(entrance);
@@ -223,8 +226,8 @@ public final class BaseService {
                 return;
             }
 
-            // Keep entrance clear so the player is never sealed in a wall mid-build.
-            clearEntranceColumn(world, entrance);
+            // Keep spawn pad clear so the player is never sealed mid-build.
+            protectSpawnPad(world, entrance);
 
             int budget = perTick;
             while (budget-- > 0 && index[0] < changes.size()) {
@@ -233,8 +236,8 @@ public final class BaseService {
                     return;
                 }
                 BlockChange change = changes.get(index[0]++);
-                // Never overwrite the two blocks the player occupies at the entrance.
-                if (isPlayerOccupied(change.block(), entrance)) {
+                // Never overwrite the spawn pad (3×3 feet/head).
+                if (isSpawnPadOccupied(change.block(), entrance)) {
                     continue;
                 }
                 change.block().setBlockData(change.data(), false);
@@ -250,16 +253,25 @@ public final class BaseService {
             }
 
             if (index[0] >= changes.size()) {
-                // Final entrance clear + stand the player at the door looking inside.
-                clearEntranceColumn(world, entrance);
+                protectSpawnPad(world, entrance);
+                activateBubbleLifts(world, changes);
+                refreshRails(world, changes);
+                String regionName = claimBaseRegion(player, world, blueprint, changes, entrance, kind);
                 Location done = entranceLocation(origin, blueprint, facing, faceToYaw(opposite(facing)));
                 player.teleport(done);
+                // Replace session with region name for undo cleanup
+                active.session = new PasteSession(
+                        session.worldId(), session.name(), session.kind(), session.before(), regionName
+                );
                 finishActive(player, active, false);
                 messages.send(player, kindMessage(kind, "done"), MessageManager.placeholders(
                         "name", blueprint.id(),
                         "blocks", changes.size()
                 ));
                 messages.send(player, kindMessage(kind, "ready-hint"));
+                if (regionName != null && "base".equals(kind)) {
+                    messages.send(player, "base-protected", MessageManager.placeholders("name", regionName));
+                }
                 if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp").contains(blueprint.id())) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
                 }
@@ -317,7 +329,7 @@ public final class BaseService {
         }
         before.addAll(seen.values());
 
-        PasteSession session = new PasteSession(world.getUID(), name, kind, List.copyOf(before));
+        PasteSession session = new PasteSession(world.getUID(), name, kind, List.copyOf(before), null);
         int perTick = Math.max(50, plugin.getConfig().getInt("base.blocks-per-tick", 1200));
         messages.send(player, kindMessage(kind, "building"), MessageManager.placeholders(
                 "name", name,
@@ -342,6 +354,8 @@ public final class BaseService {
                 change.block().setBlockData(change.data(), false);
             }
             if (index[0] >= changes.size()) {
+                activateBubbleLifts(world, changes);
+                refreshRails(world, changes);
                 finishActive(player, active, false);
                 messages.send(player, kindMessage(kind, "done"), MessageManager.placeholders(
                         "name", name,
@@ -403,6 +417,10 @@ public final class BaseService {
             building.remove(player.getUniqueId());
             messages.send(player, "base-undo-world-missing");
             return;
+        }
+
+        if (session.regionName() != null) {
+            plugin.getProtectionService().getRegions().remove(world.getName(), session.regionName());
         }
 
         messages.send(player, "base-undo-running", MessageManager.placeholders(
@@ -476,17 +494,21 @@ public final class BaseService {
             @NotNull List<BlockChange> changes,
             @NotNull Location entrance
     ) {
-        Map<Long, BlockSnapshot> unique = new LinkedHashMap<>(changes.size() + 4);
+        Map<Long, BlockSnapshot> unique = new LinkedHashMap<>(changes.size() + 32);
         for (BlockChange change : changes) {
             Block block = change.block();
             unique.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
         }
-        int x = entrance.getBlockX();
-        int y = entrance.getBlockY();
-        int z = entrance.getBlockZ();
-        for (int dy = -1; dy <= 1; dy++) {
-            Block block = world.getBlockAt(x, y + dy, z);
-            unique.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
+        int cx = entrance.getBlockX();
+        int cy = entrance.getBlockY();
+        int cz = entrance.getBlockZ();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    Block block = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                    unique.putIfAbsent(pack(block.getX(), block.getY(), block.getZ()), BlockSnapshot.from(block));
+                }
+            }
         }
         return new ArrayList<>(unique.values());
     }
@@ -495,25 +517,176 @@ public final class BaseService {
         return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF);
     }
 
-    private static boolean isPlayerOccupied(@NotNull Block block, @NotNull Location entrance) {
-        int x = entrance.getBlockX();
-        int y = entrance.getBlockY();
-        int z = entrance.getBlockZ();
-        return block.getX() == x && block.getZ() == z
-                && (block.getY() == y || block.getY() == y + 1);
+    /** True when the block is in the protected 3×3 spawn pad (feet or head). */
+    private static boolean isSpawnPadOccupied(@NotNull Block block, @NotNull Location entrance) {
+        int cx = entrance.getBlockX();
+        int cy = entrance.getBlockY();
+        int cz = entrance.getBlockZ();
+        int dx = Math.abs(block.getX() - cx);
+        int dz = Math.abs(block.getZ() - cz);
+        if (dx > 1 || dz > 1) {
+            return false;
+        }
+        int y = block.getY();
+        return y == cy || y == cy + 1;
     }
 
-    private static void clearEntranceColumn(@NotNull World world, @NotNull Location entrance) {
-        int x = entrance.getBlockX();
-        int y = entrance.getBlockY();
-        int z = entrance.getBlockZ();
-        world.getBlockAt(x, y, z).setType(Material.AIR, false);
-        world.getBlockAt(x, y + 1, z).setType(Material.AIR, false);
-        // Solid standable floor under feet
-        Block floor = world.getBlockAt(x, y - 1, z);
-        if (!floor.getType().isSolid()) {
-            floor.setType(Material.SMOOTH_STONE, false);
+    /** Keep a 3×3 spawn pad clear with solid floor under every cell. */
+    private static void protectSpawnPad(@NotNull World world, @NotNull Location entrance) {
+        int cx = entrance.getBlockX();
+        int cy = entrance.getBlockY();
+        int cz = entrance.getBlockZ();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int x = cx + dx;
+                int z = cz + dz;
+                world.getBlockAt(x, cy, z).setType(Material.AIR, false);
+                world.getBlockAt(x, cy + 1, z).setType(Material.AIR, false);
+                Block floor = world.getBlockAt(x, cy - 1, z);
+                if (!floor.getType().isSolid()) {
+                    floor.setType(dx == 0 && dz == 0 ? Material.DIRT_PATH : Material.SMOOTH_STONE, false);
+                }
+            }
         }
+    }
+
+    /**
+     * Re-place rails with physics so vanilla updates {@code RailShape} at curves / joins.
+     * Silent paste leaves default north-south shapes, which look connected then fail after turns.
+     */
+    private static void refreshRails(@NotNull World world, @NotNull List<BlockChange> changes) {
+        List<BlockChange> rails = new ArrayList<>();
+        for (BlockChange change : changes) {
+            if (change.data().getMaterial().name().endsWith("RAIL")) {
+                rails.add(change);
+            }
+        }
+        for (BlockChange change : rails) {
+            change.block().setType(Material.AIR, false);
+        }
+        for (BlockChange change : rails) {
+            change.block().setType(change.data().getMaterial(), true);
+        }
+        // Second pass after all neighbors exist so curves/joins finalize.
+        for (BlockChange change : rails) {
+            Block block = change.block();
+            Material want = change.data().getMaterial();
+            if (block.getType() != want) {
+                block.setType(want, true);
+            } else {
+                block.setBlockData(block.getBlockData(), true);
+            }
+        }
+    }
+
+    /**
+     * Re-apply water sources above soul sand / magma so bubble columns form after silent paste.
+     * Critical on Bedrock (via Geyser) and when physics were suppressed during build.
+     */
+    private static void activateBubbleLifts(@NotNull World world, @NotNull List<BlockChange> changes) {
+        for (BlockChange change : changes) {
+            Material planned = change.data().getMaterial();
+            if (planned != Material.SOUL_SAND && planned != Material.MAGMA_BLOCK) {
+                continue;
+            }
+            Block base = change.block();
+            // Ensure base block is correct with physics so the column can form
+            if (base.getType() != planned) {
+                base.setType(planned, false);
+            }
+            int x = base.getX();
+            int z = base.getZ();
+            for (int y = base.getY() + 1; y < world.getMaxHeight(); y++) {
+                Block above = world.getBlockAt(x, y, z);
+                Material type = above.getType();
+                if (type != Material.WATER && type != Material.BUBBLE_COLUMN && type != Material.KELP
+                        && type != Material.KELP_PLANT) {
+                    break;
+                }
+                BlockData water = Material.WATER.createBlockData();
+                if (water instanceof Levelled levelled) {
+                    levelled.setLevel(0);
+                }
+                above.setBlockData(water, true);
+            }
+            // Nudge the bubble base so the column recalculates
+            Material keep = base.getType();
+            base.setType(Material.STONE, false);
+            base.setType(keep, true);
+        }
+    }
+
+    /**
+     * Auto-claim a protected region around a pasted base so strangers cannot break it.
+     * Owner (builder) remains able to build via member bypass.
+     */
+    private @Nullable String claimBaseRegion(
+            @NotNull Player player,
+            @NotNull World world,
+            @NotNull BaseTemplates.BaseBlueprint blueprint,
+            @NotNull List<BlockChange> changes,
+            @NotNull Location entrance,
+            @NotNull String kind
+    ) {
+        if (!"base".equals(kind)) {
+            return null;
+        }
+        if (!plugin.getConfig().getBoolean("base.auto-protect", true)) {
+            return null;
+        }
+        ProtectionService protection = plugin.getProtectionService();
+        if (!protection.isEnabled()) {
+            return null;
+        }
+        if (changes.isEmpty()) {
+            return null;
+        }
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (BlockChange change : changes) {
+            Block block = change.block();
+            minX = Math.min(minX, block.getX());
+            minY = Math.min(minY, block.getY());
+            minZ = Math.min(minZ, block.getZ());
+            maxX = Math.max(maxX, block.getX());
+            maxY = Math.max(maxY, block.getY());
+            maxZ = Math.max(maxZ, block.getZ());
+        }
+        int pad = Math.max(0, plugin.getConfig().getInt("base.protect-padding", 2));
+        minX -= pad;
+        minZ -= pad;
+        maxX += pad;
+        maxZ += pad;
+        minY = Math.max(world.getMinHeight(), minY - 1);
+        maxY = Math.min(world.getMaxHeight() - 1, maxY + 2);
+
+        String baseName = ("base-" + blueprint.id() + "-" + entrance.getBlockX() + "-" + entrance.getBlockZ())
+                .toLowerCase(Locale.ROOT);
+        String name = baseName;
+        int suffix = 2;
+        while (protection.getRegions().get(world.getName(), name) != null) {
+            name = baseName + "-" + suffix++;
+        }
+        if (protection.getRegions().count(world.getName()) >= protection.getMaxRegionsPerWorld()) {
+            return null;
+        }
+
+        Region region = new Region(name, world.getName(), minX, minY, minZ, maxX, maxY, maxZ);
+        region.addOwner(player.getUniqueId());
+        region.setPriority(10);
+        region.setFlag(ProtectionFlag.BUILD, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.BREAK, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.PLACE, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.TNT, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.CREEPER_EXPLOSION, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.OTHER_EXPLOSION, FlagValue.DENY);
+        region.setFlag(ProtectionFlag.MOB_GRIEF, FlagValue.DENY);
+        protection.getRegions().put(region);
+        return name;
     }
 
     private static @NotNull Location entranceLocation(
@@ -706,12 +879,13 @@ public final class BaseService {
             @NotNull UUID worldId,
             @NotNull String name,
             @NotNull String kind,
-            @NotNull List<BlockSnapshot> before
+            @NotNull List<BlockSnapshot> before,
+            @Nullable String regionName
     ) {
     }
 
     private static final class ActivePaste {
-        final @NotNull PasteSession session;
+        @NotNull PasteSession session;
         final boolean wasFlying;
         final boolean allowFlight;
         final @NotNull GameMode mode;

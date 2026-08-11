@@ -282,6 +282,10 @@ public final class StationService {
     }
 
     public void deleteStop(@NotNull Player player, @NotNull String rawName) {
+        if (rawName.equalsIgnoreCase("all") || rawName.equalsIgnoreCase("*")) {
+            deleteAllStops(player);
+            return;
+        }
         String id = StationLinkLogic.normalize(rawName);
         PortalStore store = plugin.getPortalService().getStore();
         if (!store.delete(id)) {
@@ -289,6 +293,16 @@ public final class StationService {
             return;
         }
         messages.send(player, "station-stop-deleted", MessageManager.placeholders("stop", id));
+    }
+
+    /** Wipe every named stop (same store as {@code /portal}). Does not undo buildings or rails. */
+    public void deleteAllStops(@NotNull Player player) {
+        int count = plugin.getPortalService().getStore().clearAll();
+        if (count == 0) {
+            messages.send(player, "station-stops-none");
+            return;
+        }
+        messages.send(player, "station-stops-deleted-all", MessageManager.placeholders("count", count));
     }
 
     public void sendStops(@NotNull Player player) {

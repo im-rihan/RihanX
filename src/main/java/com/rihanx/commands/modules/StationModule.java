@@ -18,7 +18,8 @@ import java.util.Set;
 public final class StationModule {
 
     private static final Set<String> TEMPLATE_IDS = Set.of(
-            "station", "depot", "crossing", "rail", "terminal", "mine"
+            "station", "depot", "crossing", "rail", "terminal", "mine",
+            "kingdom", "western", "adacia", "yard"
     );
 
     private final @NotNull RihanX plugin;
@@ -89,7 +90,7 @@ public final class StationModule {
                     yield true;
                 }
                 if (args.length < 2) {
-                    CommandSupport.usage(messages, player, "/station delete <stopName>");
+                    CommandSupport.usage(messages, player, "/station delete <stopName|all>");
                     yield true;
                 }
                 stations.deleteStop(player, args[1]);

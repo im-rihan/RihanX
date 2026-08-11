@@ -113,14 +113,16 @@ public final class FarmTemplates {
             c.set(x, 0, 1, Material.SUGAR_CANE);
             c.set(x, 1, 1, Material.SUGAR_CANE);
             c.set(x, 2, 1, Material.AIR);
-            // Piston faces cane; observer on top faces the tip; dust sits in the observer output cell
+            // Bedrock-safe (no quasi-connectivity): observer on piston faces tip;
+            // dust sits on the solid DIRECTLY behind the piston so the pulse powers the piston body.
+            // (Java also works — QC is not required with this wiring.)
             c.facing(x, 1, 2, Material.PISTON, BlockFace.NORTH);
             c.facing(x, 2, 2, Material.OBSERVER, BlockFace.NORTH);
             c.set(x, 0, 2, Material.AIR);
-            c.facing(x, -1, 2, Material.HOPPER, BlockFace.SOUTH); // drop under piston foot
-            c.set(x, 1, 3, Material.SMOOTH_STONE);
-            c.set(x, 2, 3, Material.REDSTONE_WIRE); // powered by observer back → powers piston
+            c.facing(x, -1, 2, Material.HOPPER, BlockFace.SOUTH);
             c.set(x, 0, 3, Material.SMOOTH_STONE);
+            c.set(x, 1, 3, Material.SMOOTH_STONE); // behind piston — dust on this powers piston
+            c.set(x, 2, 3, Material.REDSTONE_WIRE); // observer output face
             c.set(x, -1, 3, Material.SMOOTH_STONE);
         }
         // Hopper trench continues into the chest line
@@ -153,16 +155,14 @@ public final class FarmTemplates {
             b.set(x, 0, 0, Material.BAMBOO);
             b.set(x, 1, 0, Material.BAMBOO);
             b.set(x, 2, 0, Material.AIR);
-            // Piston faces bamboo; observer on top faces growth tip
+            // Bedrock-safe: same Sportskeeda/Astroworld wiring — dust on solid behind piston
             b.facing(x, 1, 1, Material.PISTON, BlockFace.NORTH);
             b.facing(x, 2, 1, Material.OBSERVER, BlockFace.NORTH);
-            // Drop chute under piston foot → hopper toward chest (+Z)
             b.set(x, 0, 1, Material.AIR);
             b.facing(x, -1, 1, Material.HOPPER, BlockFace.SOUTH);
-            // Observer output (back = SOUTH) lands on dust behind it
-            b.set(x, 1, 2, Material.SMOOTH_STONE);
-            b.set(x, 2, 2, Material.REDSTONE_WIRE);
             b.set(x, 0, 2, Material.SMOOTH_STONE);
+            b.set(x, 1, 2, Material.SMOOTH_STONE); // behind piston — dust powers this → piston
+            b.set(x, 2, 2, Material.REDSTONE_WIRE); // observer output
             b.set(x, -1, 2, Material.SMOOTH_STONE);
         }
         hopperRowIntoChest(b, -1, 2, -rows, rows, 4);
@@ -380,15 +380,15 @@ public final class FarmTemplates {
 
 
     /**
-     * Kelp aquarium farm.
-     * Glass walls hold the water — kelp only grows underwater (that is why it looks "inside glass").
-     * Front-row observer+piston breaks grown tips; items float up and flush into hoppers→chest.
-     * Bone-meal any column and broken pieces still float to the same top hoppers.
+     * Kelp aquarium farm (block-by-block):
+     * glass tank holds water; kelp grows to tip at y=3 on front row z=2;
+     * piston at tip height faces kelp; observer on piston watches tip cell;
+     * broken pieces float up into top water → hoppers → chest.
      */
     public static @NotNull BaseTemplates.BaseBlueprint kelp() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
 
-        // Sand + water + kelp columns
+        // Sand + water + kelp columns (tip growth space at y=3)
         for (int x = -3; x <= 3; x++) {
             for (int z = -3; z <= 2; z++) {
                 b.set(x, -1, z, Material.SAND);
@@ -399,11 +399,11 @@ public final class FarmTemplates {
                 b.set(x, 0, z, Material.KELP);
                 b.set(x, 1, z, Material.KELP_PLANT);
                 b.set(x, 2, z, Material.KELP_PLANT);
-                b.set(x, 3, z, Material.WATER); // tip grows here
+                b.set(x, 3, z, Material.WATER); // tip grows into this cell
             }
         }
 
-        // Glass aquarium shell (required water container — not decoration)
+        // Glass aquarium shell
         for (int y = -1; y <= 5; y++) {
             for (int x = -4; x <= 4; x++) {
                 b.set(x, y, -4, Material.GLASS);
@@ -415,15 +415,19 @@ public final class FarmTemplates {
             }
         }
 
-        // Front-row auto harvest (z=2 tips): piston faces kelp; observer on top; dust in observer output cell
+        // Front-row harvest: piston at tip Y faces kelp at z=2; observer on piston faces tip
+        // (was at z=4 / wrong Y so the head never hit kelp)
         for (int x = -3; x <= 3; x++) {
-            b.set(x, 3, 3, Material.AIR);
-            b.facing(x, 3, 4, Material.PISTON, BlockFace.NORTH);
-            b.facing(x, 4, 4, Material.OBSERVER, BlockFace.NORTH);
-            b.set(x, 3, 5, Material.SMOOTH_STONE);
-            b.set(x, 4, 5, Material.REDSTONE_WIRE); // observer back → dust → piston
+            b.set(x, 3, 3, Material.AIR); // open glass wall for piston body
+            b.set(x, 4, 3, Material.AIR);
+            b.facing(x, 3, 3, Material.PISTON, BlockFace.NORTH); // extends into (x,3,2) tip
+            b.facing(x, 4, 3, Material.OBSERVER, BlockFace.NORTH); // watches (x,4,2); growth to y=4 also works
+            // Also clear watch cell above tip so observer sees block updates as kelp grows past y=3
+            b.set(x, 4, 2, Material.WATER);
+            b.set(x, 3, 4, Material.SMOOTH_STONE);
+            b.set(x, 4, 4, Material.REDSTONE_WIRE); // observer output
+            b.set(x, 2, 3, Material.SMOOTH_STONE);
             b.set(x, 2, 4, Material.SMOOTH_STONE);
-            b.set(x, 2, 5, Material.SMOOTH_STONE);
         }
 
         // Open top flush: floating kelp items → water → hoppers → chest
@@ -433,28 +437,23 @@ public final class FarmTemplates {
             }
             b.set(x, 5, 2, Material.WATER);
             b.set(x, 5, 3, Material.WATER);
-            b.set(x, 5, 4, Material.AIR);
-            b.set(x, 5, 5, Material.AIR);
-        }
-        for (int x = -3; x <= 3; x++) {
             b.set(x, 5, 4, Material.WATER);
-            b.set(x, 5, 5, Material.WATER);
         }
-        hopperRowIntoChest(b, 5, 6, -3, 3, 7);
+        hopperRowIntoChest(b, 5, 5, -3, 3, 6);
 
         b.set(-5, 5, 0, Material.STONE);
         b.set(5, 5, 0, Material.STONE);
         b.hangingLantern(-5, 4, 0, Material.LANTERN, 5);
         b.hangingLantern(5, 4, 0, Material.LANTERN, 5);
 
+        spawnPad(b, 0, 8);
         spawnPad(b, 0, 9);
-        spawnPad(b, 0, 10);
-        b.set(-1, 0, 10, Material.CRAFTING_TABLE);
-        b.set(1, 0, 10, Material.BARREL);
+        b.set(-1, 0, 9, Material.CRAFTING_TABLE);
+        b.set(1, 0, 9, Material.BARREL);
         return b.build(
                 "kelp",
                 "Kelp aquarium - glass holds water; pistons break tips; items float into hoppers",
-                0, 0, 10
+                0, 0, 9
         );
     }
 
@@ -497,9 +496,10 @@ public final class FarmTemplates {
 
 
     /**
-     * Iron golem farm (Java panic design):
-     * open-sky dry spawn deck → corner water → center 2×2 drop tunnel → lava on trapdoors → hoppers→chest.
-     * Covered glass villager pods + covered zombie cage (line of sight). Add 3 villagers/pod + nametag zombie.
+     * Iron golem farm (Java 1.21 panic design, researched layout):
+     * open-sky spawn deck → edge water streams (≤8 blocks) → center 2×2 drop →
+     * lava blade on open trapdoors over hoppers → chest; magma kill-platform ring;
+     * covered villager pods + covered zombie cage (LOS). Add 3 villagers/pod + nametag zombie.
      */
     public static @NotNull BaseTemplates.BaseBlueprint iron() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
@@ -521,11 +521,16 @@ public final class FarmTemplates {
             }
         }
 
-        // Corner water sources — flow across dry deck into the center hole
-        b.set(-6, 9, -6, Material.WATER);
-        b.set(-6, 9, 6, Material.WATER);
-        b.set(6, 9, -6, Material.WATER);
-        b.set(6, 9, 6, Material.WATER);
+        // Water sources on mid-edges ≤7 from hole (corner sources never reached center —
+        // Java water only flows 8 blocks). Sources only — middles fill as flowing currents.
+        b.set(-1, 9, -7, Material.WATER);
+        b.set(0, 9, -7, Material.WATER);
+        b.set(-1, 9, 6, Material.WATER);
+        b.set(0, 9, 6, Material.WATER);
+        b.set(-7, 9, -1, Material.WATER);
+        b.set(-7, 9, 0, Material.WATER);
+        b.set(6, 9, -1, Material.WATER);
+        b.set(6, 9, 0, Material.WATER);
 
         // Continuous 2×2 drop tunnel from deck down to kill chamber
         for (int y = 1; y <= 8; y++) {
@@ -543,7 +548,6 @@ public final class FarmTemplates {
         }
 
         // Signs just under the deck hole — water cannot pass signs, golems can.
-        // Without this, deck water cascades down and washes the lava away.
         b.facing(-1, 7, -1, Material.OAK_WALL_SIGN, BlockFace.EAST);
         b.facing(-1, 7, 0, Material.OAK_WALL_SIGN, BlockFace.EAST);
         b.facing(0, 7, -1, Material.OAK_WALL_SIGN, BlockFace.WEST);
@@ -553,7 +557,8 @@ public final class FarmTemplates {
         b.facing(-1, 6, 0, Material.OAK_WALL_SIGN, BlockFace.NORTH);
         b.facing(0, 6, 0, Material.OAK_WALL_SIGN, BlockFace.NORTH);
 
-        // Kill chamber: open trapdoors hold lava blade; drops fall through into hoppers→chest
+        // Kill platform: hoppers under open trapdoors; lava blade at golem head height;
+        // magma ring is the visible burn floor around the drop (golems die in lava; drops into hoppers).
         for (int x = -1; x <= 0; x++) {
             for (int z = -1; z <= 0; z++) {
                 b.facing(x, 1, z, Material.IRON_TRAPDOOR, BlockFace.SOUTH);
@@ -561,9 +566,9 @@ public final class FarmTemplates {
                 b.facing(x, 0, z, Material.HOPPER, BlockFace.SOUTH);
             }
         }
-        // Visible magma ring around the kill hole (not on hopper/collection cells)
-        for (int x = -2; x <= 1; x++) {
-            for (int z = -2; z <= 0; z++) {
+        // Magma burn platform around the drop (keep z<=0 so +Z collection hoppers stay clear)
+        for (int x = -3; x <= 2; x++) {
+            for (int z = -3; z <= 0; z++) {
                 boolean shaft = x >= -1 && x <= 0 && z >= -1 && z <= 0;
                 if (!shaft) {
                     b.set(x, 0, z, Material.MAGMA_BLOCK);
@@ -571,15 +576,25 @@ public final class FarmTemplates {
                 }
             }
         }
-        // Glass-boxed lava lamps so the kill chamber is obviously "lava powered"
-        b.set(-3, 0, -1, Material.GLASS);
-        b.set(-3, 1, -1, Material.GLASS);
-        b.set(-3, 2, -1, Material.GLASS);
+        // Fully glass-boxed lava markers (no leak into collection)
+        for (int y = 0; y <= 2; y++) {
+            b.set(-4, y, -1, Material.GLASS);
+            b.set(-4, y, 0, Material.GLASS);
+            b.set(-4, y, 1, Material.GLASS);
+            b.set(-3, y, -1, Material.GLASS);
+            b.set(-3, y, 1, Material.GLASS);
+            b.set(3, y, -1, Material.GLASS);
+            b.set(3, y, 0, Material.GLASS);
+            b.set(3, y, 1, Material.GLASS);
+            b.set(2, y, -1, Material.GLASS);
+            b.set(2, y, 1, Material.GLASS);
+        }
         b.set(-3, 1, 0, Material.LAVA);
-        b.set(2, 0, -1, Material.GLASS);
-        b.set(2, 1, -1, Material.GLASS);
-        b.set(2, 2, -1, Material.GLASS);
+        b.set(-3, 0, 0, Material.MAGMA_BLOCK);
+        b.set(-3, 2, 0, Material.GLASS);
         b.set(2, 1, 0, Material.LAVA);
+        b.set(2, 0, 0, Material.MAGMA_BLOCK);
+        b.set(2, 2, 0, Material.GLASS);
 
         b.facing(-1, 0, 1, Material.HOPPER, BlockFace.EAST);
         b.facing(0, 0, 1, Material.HOPPER, BlockFace.DOWN);
@@ -667,9 +682,11 @@ public final class FarmTemplates {
 
 
     /**
-     * Dark-room XP mob farm:
-     * enclosed spawn pads → water channels → continuous 2×2 drop shaft (~22 blocks) →
-     * hopper+slab kill floor (one-hit XP) → chest. AFK room beside the kill chamber.
+     * Dark-room XP mob farm (researched 22-block drop design):
+     * enclosed spawn pads → water SOURCE only at channel ends (flowing current) →
+     * continuous 2×2 drop shaft through both floors (~22 blocks) →
+     * hopper + bottom-slab kill floor (one-hit XP) with magma trim platform → chest.
+     * Signs stop water at the hole; AFK room beside the kill chamber.
      */
     public static @NotNull BaseTemplates.BaseBlueprint xp() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
@@ -700,11 +717,20 @@ public final class FarmTemplates {
         b.facing(-1, 2, 11, Material.STONE_BUTTON, BlockFace.SOUTH);
         b.facing(-1, 2, 9, Material.STONE_BUTTON, BlockFace.NORTH);
 
-        // Kill floor under the shaft: hoppers with bottom slabs (fall ~22 → one-hit XP)
+        // Kill floor: hoppers + bottom slabs (22-block fall → ~1 HP for XP).
+        // Magma trim around the landing so any leftover mobs burn (items still hoppered).
         for (int x = -1; x <= 0; x++) {
             for (int z = 1; z <= 2; z++) {
                 b.facing(x, 0, z, Material.HOPPER, BlockFace.SOUTH);
                 b.slab(x, 1, z, Material.STONE_SLAB, Slab.Type.BOTTOM);
+            }
+        }
+        for (int x = -3; x <= 2; x++) {
+            for (int z = 0; z <= 3; z++) {
+                boolean landing = (x == -1 || x == 0) && (z == 1 || z == 2);
+                if (!landing) {
+                    b.set(x, 0, z, Material.MAGMA_BLOCK);
+                }
             }
         }
         b.facing(-1, 0, 3, Material.HOPPER, BlockFace.EAST);
@@ -728,8 +754,8 @@ public final class FarmTemplates {
         b.set(3, 1, 8, Material.CHEST);
         b.hangingLantern(0, 3, 7, Material.LANTERN, 3);
 
-        // ——— Continuous 2×2 drop shaft from y=1..24 (aligned under spawn holes) ———
-        for (int y = 1; y <= 24; y++) {
+        // ——— Continuous 2×2 drop shaft y=2..31 (through BOTH spawn floors) ———
+        for (int y = 2; y <= 31; y++) {
             for (int x = -2; x <= 1; x++) {
                 for (int z = 0; z <= 3; z++) {
                     boolean wall = x == -2 || x == 1 || z == 0 || z == 3;
@@ -742,27 +768,26 @@ public final class FarmTemplates {
                 }
             }
         }
-        // Re-clear kill slabs/air above hoppers inside shaft footprint
+        // Re-apply kill landing after shaft walls
         for (int x = -1; x <= 0; x++) {
             for (int z = 1; z <= 2; z++) {
                 b.facing(x, 0, z, Material.HOPPER, BlockFace.SOUTH);
                 b.slab(x, 1, z, Material.STONE_SLAB, Slab.Type.BOTTOM);
-                for (int y = 2; y <= 24; y++) {
+                for (int y = 2; y <= 31; y++) {
                     b.set(x, y, z, Material.AIR);
                 }
             }
         }
 
         // Outside ladder for maintenance
-        for (int y = 1; y <= 23; y++) {
+        for (int y = 1; y <= 30; y++) {
             b.facing(-3, y, 1, Material.LADDER, BlockFace.WEST);
         }
 
         // ——— Two dark enclosed spawn floors (roofed — not open sky) ———
-        // Floor A at y=24, Floor B at y=28. Drop hole = shaft top.
+        // Floor A at y=24, Floor B at y=28. Water: SOURCES only at outer ends so currents push mobs.
         for (int floor = 0; floor < 2; floor++) {
             int y = 24 + floor * 4;
-            // Platform + dark room shell
             for (int x = -8; x <= 7; x++) {
                 for (int z = -6; z <= 5; z++) {
                     b.set(x, y, z, Material.COBBLESTONE);
@@ -771,7 +796,6 @@ public final class FarmTemplates {
                     b.set(x, y + 3, z, Material.COBBLESTONE); // solid dark roof
                 }
             }
-            // Outer walls
             for (int yy = y + 1; yy <= y + 2; yy++) {
                 for (int x = -8; x <= 7; x++) {
                     b.set(x, yy, -6, Material.COBBLESTONE);
@@ -782,38 +806,31 @@ public final class FarmTemplates {
                     b.set(7, yy, z, Material.COBBLESTONE);
                 }
             }
-            // 2×2 hole into shaft (must match shaft x=-1..0, z=1..2)
+            // 2×2 hole into continuous shaft
             for (int x = -1; x <= 0; x++) {
                 for (int z = 1; z <= 2; z++) {
                     b.set(x, y, z, Material.AIR);
+                    b.set(x, y + 1, z, Material.AIR);
+                    b.set(x, y + 2, z, Material.AIR);
+                    b.set(x, y + 3, z, Material.AIR); // open roof over shaft so Floor B can drop through
                 }
             }
-            // Water channels stop 1 block short of the hole so water does not cascade down the shaft
-            for (int x = -1; x <= 0; x++) {
-                for (int z = -5; z <= -1; z++) {
-                    b.set(x, y + 1, z, Material.WATER);
-                }
-            }
-            for (int x = -1; x <= 0; x++) {
-                for (int z = 3; z <= 4; z++) {
-                    b.set(x, y + 1, z, Material.WATER);
-                }
-            }
-            for (int z = 1; z <= 2; z++) {
-                for (int x = -7; x <= -3; x++) {
-                    b.set(x, y + 1, z, Material.WATER);
-                }
-                for (int x = 2; x <= 6; x++) {
-                    b.set(x, y + 1, z, Material.WATER);
-                }
-            }
-            // Keep hole rim dry (mobs / items drop through without a water column)
+            // Four channels: sources ONLY at outer ends (still water if every cell is a source)
+            b.set(-1, y + 1, -5, Material.WATER);
+            b.set(0, y + 1, -5, Material.WATER);
+            b.set(-1, y + 1, 4, Material.WATER);
+            b.set(0, y + 1, 4, Material.WATER);
+            b.set(-7, y + 1, 1, Material.WATER);
+            b.set(-7, y + 1, 2, Material.WATER);
+            b.set(6, y + 1, 1, Material.WATER);
+            b.set(6, y + 1, 2, Material.WATER);
+            // Dry hole rim
             for (int x = -1; x <= 0; x++) {
                 for (int z = 1; z <= 2; z++) {
                     b.set(x, y + 1, z, Material.AIR);
                 }
             }
-            // Dry spawn pads in the four corners (hostile mobs spawn here)
+            // Dry corner spawn pads
             for (int x = -7; x <= -3; x++) {
                 for (int z = -5; z <= -1; z++) {
                     b.set(x, y + 1, z, Material.AIR);
@@ -832,11 +849,22 @@ public final class FarmTemplates {
             }
         }
 
-        // Signs at the top of the drop shaft — block water cascade, allow mobs through
-        b.facing(-1, 23, 1, Material.OAK_WALL_SIGN, BlockFace.EAST);
-        b.facing(-1, 23, 2, Material.OAK_WALL_SIGN, BlockFace.EAST);
-        b.facing(0, 23, 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
-        b.facing(0, 23, 2, Material.OAK_WALL_SIGN, BlockFace.WEST);
+        // Re-open shaft through both floors (floors rewrite solid roofs over the hole)
+        for (int y = 24; y <= 31; y++) {
+            for (int x = -1; x <= 0; x++) {
+                for (int z = 1; z <= 2; z++) {
+                    b.set(x, y, z, Material.AIR);
+                }
+            }
+        }
+
+        // Signs under each floor hole — block water cascade, allow mobs through
+        for (int signY : new int[]{23, 27}) {
+            b.facing(-1, signY, 1, Material.OAK_WALL_SIGN, BlockFace.EAST);
+            b.facing(-1, signY, 2, Material.OAK_WALL_SIGN, BlockFace.EAST);
+            b.facing(0, signY, 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
+            b.facing(0, signY, 2, Material.OAK_WALL_SIGN, BlockFace.WEST);
+        }
 
         spawnPad(b, 0, 11);
         spawnPad(b, 0, 12);
@@ -844,7 +872,7 @@ public final class FarmTemplates {
         b.set(1, 0, 12, Material.BARREL);
         return b.build(
                 "xp",
-                "XP mob farm - dark roofed pads, continuous 2x2 drop shaft, hopper+slab kill, door buttons",
+                "XP mob farm - flowing water channels, continuous drop shaft, slab+magma kill platform",
                 0, 0, 12
         );
     }

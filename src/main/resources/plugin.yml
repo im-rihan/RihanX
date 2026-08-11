@@ -186,8 +186,8 @@ commands:
     usage: /setspawn
     permission: rihanx.setspawn
   base:
-    description: Paste a house / base template (hut, cottage, bungalow, villa, village).
-    usage: /base [hut|cottage|village|bungalow|villa|modern|mansion|resort|list|undo]
+    description: Paste a house / base template (starter, luxury, or GrabCraft-style advanced).
+    usage: /base [hut|cottage|village|bungalow|villa|modern|mansion|resort|estate|chateau|skyvilla|palace|list|undo]
     permission: rihanx.base
     aliases: [house, buildbase]
   farm:

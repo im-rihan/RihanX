@@ -115,6 +115,50 @@ public final class BaseSelectGui implements InventoryHolder, Listener {
                         "<yellow>Click to build</yellow>"
                 )
         ));
+        ENTRIES.put("estate", new MenuEntry(
+                Material.SANDSTONE, 28,
+                "<gradient:#e8d5a3:#c2a86b><bold>Estate</bold></gradient>",
+                List.of(
+                        "<gold><bold>GrabCraft-style mega estate</bold></gold>",
+                        "<gray>3 floors · dual lifts · library · 8 suites</gray>",
+                        "<aqua>Court pool + rooftop plunge</aqua>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
+        ENTRIES.put("chateau", new MenuEntry(
+                Material.STONE_BRICKS, 29,
+                "<gradient:#8b7355:#d4a574><bold>Chateau</bold></gradient>",
+                List.of(
+                        "<gold>Fantasy chateau</gold>",
+                        "<gray>Turrets · great hall · lift · 6 suites</gray>",
+                        "<dark_gray>GrabCraft wooden-mansion vibe</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
+        ENTRIES.put("skyvilla", new MenuEntry(
+                Material.GLASS, 30,
+                "<gradient:#e0f7ff:#88c0d0><bold>Skyvilla</bold></gradient>",
+                List.of(
+                        "<aqua>Modernist glass villa</aqua>",
+                        "<gray>Balcony · 6 beds · garden + roof pools</gray>",
+                        "<dark_gray>GrabCraft modernist villa vibe</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
+        ENTRIES.put("palace", new MenuEntry(
+                Material.GOLD_BLOCK, 31,
+                "<gradient:#ffd700:#fff8dc><bold>Palace</bold></gradient>",
+                List.of(
+                        "<gold><bold>Grand palace</bold></gold>",
+                        "<gray>Courtyard fountain · dual lifts · 8 suites</gray>",
+                        "<aqua>Ballroom · gold trim · pool</aqua>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
     }
 
     private final @NotNull RihanX plugin;
@@ -148,7 +192,7 @@ public final class BaseSelectGui implements InventoryHolder, Listener {
                         "<gray>Face into the house direction, then click a design.</gray>",
                         "<gray>You stay at the entrance while it builds.</gray>",
                         "",
-                        "<aqua>Tip:</aqua> <gray>Need a flat open area (large for villa/mansion).</gray>"
+                        "<aqua>Tip:</aqua> <gray>Need a flat open area (huge for estate/palace).</gray>"
                 )
         ));
 

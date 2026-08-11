@@ -6,8 +6,12 @@ import org.bukkit.block.data.type.Slab;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Luxury / large real-world style bases: bungalow, villa, mansion, modern, resort.
+ * Luxury / large real-world style bases (plus GrabCraft-inspired advanced estates).
  * Local space: front door faces +Z (SOUTH before rotation).
+ * <p>
+ * Advanced IDs ({@code estate}, {@code chateau}, {@code skyvilla}, {@code palace}) take cues from
+ * GrabCraft amenity layouts (multi-wing mansions, modernist villas, grand halls) but are original
+ * procedural builds — not copies of GrabCraft blueprints.
  */
 public final class LuxuryBaseTemplates {
 
@@ -226,7 +230,7 @@ public final class LuxuryBaseTemplates {
             b.set(x, 2, minZ - 1, Material.POTTED_POPPY);
         }
 
-        return b.build("bungalow", "Luxury 5-bedroom bungalow - pitched roof, porch, pool patio, kitchen", 0, 0, maxZ + 2);
+        return finish(b, "bungalow", "Luxury 5-bedroom bungalow - pitched roof, porch, pool patio, kitchen", 0, maxZ + 2);
     }
 
     /** Two-storey villa — lift (bubble elevator), pool, loft, multi-suite. */
@@ -391,7 +395,7 @@ public final class LuxuryBaseTemplates {
         b.door(maxX, 1, 4, Material.BIRCH_DOOR, BlockFace.EAST);
         buildPool(b, 4, 10, maxZ + 3, maxZ + 8, 0, BlockFace.NORTH);
 
-        return b.build("villa", "2-storey luxury villa - bubble lift, 5 bedrooms, pool patio & balcony", 0, 0, maxZ + 2);
+        return finish(b, "villa", "2-storey luxury villa - bubble lift, 5 bedrooms, pool patio & balcony", 0, maxZ + 2);
     }
 
     /** Mega mansion — 3 levels, dual lifts, indoor + outdoor pools, 6 suites. */
@@ -511,7 +515,7 @@ public final class LuxuryBaseTemplates {
         // Indoor plunge with open west access from lounge
         buildPool(b, 6, 10, -1, 2, 0, BlockFace.WEST);
 
-        return b.build("mansion", "3-level gold mansion - dual lifts, 6 suites, indoor & outdoor pools", 0, 0, maxZ + 2);
+        return finish(b, "mansion", "3-level gold mansion - dual lifts, 6 suites, indoor & outdoor pools", 0, maxZ + 2);
     }
 
     /** Modern cube home — concrete, glass, rooftop pool, compact lift. */
@@ -583,7 +587,7 @@ public final class LuxuryBaseTemplates {
         // Rooftop pool with open south access from the roof deck
         buildPool(b, -5, 5, -5, 3, top + 1, BlockFace.SOUTH);
 
-        return b.build("modern", "Modern glass-concrete home - lift, 5 beds, rooftop pool", 0, 0, maxZ + 2);
+        return finish(b, "modern", "Modern glass-concrete home - lift, 5 beds, rooftop pool", 0, maxZ + 2);
     }
 
     /** Resort pavilion — open luxury pool club with cabanas (bedroom pods). */
@@ -641,7 +645,468 @@ public final class LuxuryBaseTemplates {
             b.stairs(x, 1, 0, Material.BIRCH_STAIRS, BlockFace.SOUTH);
         }
 
-        return b.build("resort", "Resort club - mega pool, 5 cabana bedrooms, bar lounge", 0, 0, -1);
+        return finish(b, "resort", "Resort club - mega pool, 5 cabana bedrooms, bar lounge", 0, -1);
+    }
+
+    /**
+     * GrabCraft-inspired huge modern estate (Huge Modern Mansion vibes):
+     * wide sandstone/quartz wings, library, dual lifts, court pool, 8 suites.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint estate() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -18;
+        int maxX = 18;
+        int minZ = -14;
+        int maxZ = 10;
+        int f1 = 4;
+        int f2 = 8;
+        int top = 11;
+
+        fillRect(b, minX - 2, maxX + 2, minZ - 2, maxZ + 3, -1, Material.SANDSTONE);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.SMOOTH_SANDSTONE);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, top);
+        shell(b, minX, maxX, minZ, maxZ, 1, top, Material.SANDSTONE, Material.QUARTZ_BLOCK);
+
+        fillRect(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, f1, Material.SMOOTH_QUARTZ);
+        fillRect(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, f2, Material.SMOOTH_QUARTZ);
+        clearVolume(b, -1, 1, -1, 1, f1, f1);
+        clearVolume(b, -1, 1, -1, 1, f2, f2);
+        clearVolume(b, 14, 16, 4, 7, f1, f1);
+        clearVolume(b, 14, 16, 4, 7, f2, f2);
+
+        // Flat modern roof deck (GrabCraft huge-mansion silhouette) + parapet
+        fillRect(b, minX, maxX, minZ, maxZ, top + 1, Material.SMOOTH_SANDSTONE);
+        ring(b, minX, maxX, minZ, maxZ, top + 2, Material.SANDSTONE_WALL);
+
+        b.doubleDoor(-1, 1, maxZ, Material.BIRCH_DOOR, BlockFace.SOUTH);
+        for (int x = -6; x <= 6; x++) {
+            if (x == -1 || x == 0) {
+                continue;
+            }
+            b.set(x, 2, maxZ, Material.GLASS);
+            b.set(x, 3, maxZ, Material.GLASS);
+        }
+
+        buildLift(b, 0, 0, 0, top, 1, f1 + 1, f2 + 1);
+        buildLift(b, -15, 0, 0, top, 1, f1 + 1, f2 + 1);
+        markLiftLobby(b, 0, 0, 1);
+        markLiftLobby(b, 0, 0, f1 + 1);
+        markLiftLobby(b, 0, 0, f2 + 1);
+        markLiftLobby(b, -15, 0, 1);
+        markLiftLobby(b, -15, 0, f1 + 1);
+
+        // Grand stair
+        for (int i = 0; i < 4; i++) {
+            b.stairs(15, 1 + i, 7 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.set(15, 1 + i, 6 - i, Material.QUARTZ_BLOCK);
+        }
+        for (int i = 0; i < 4; i++) {
+            b.stairs(15, f1 + 1 + i, 7 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.set(15, f1 + 1 + i, 6 - i, Material.QUARTZ_BLOCK);
+        }
+
+        // 8 suites across floors
+        furnishBedroom(b, -17, -8, -13, -10, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.RED_BED, BlockFace.EAST);
+        furnishBedroom(b, -17, -8, -8, -5, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.ORANGE_BED, BlockFace.EAST);
+        furnishBedroom(b, 8, 17, -13, -10, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.YELLOW_BED, BlockFace.WEST);
+        furnishBedroom(b, 8, 17, -8, -5, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.LIME_BED, BlockFace.WEST);
+        furnishBedroom(b, -17, -8, -13, -10, f1 + 1, f2,
+                Material.SMOOTH_QUARTZ, Material.QUARTZ_BLOCK, Material.LIGHT_BLUE_BED, BlockFace.EAST);
+        furnishBedroom(b, 8, 17, -13, -10, f1 + 1, f2,
+                Material.SMOOTH_QUARTZ, Material.QUARTZ_BLOCK, Material.CYAN_BED, BlockFace.WEST);
+        furnishBedroom(b, -17, -8, -13, -10, f2 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.QUARTZ_BLOCK, Material.PURPLE_BED, BlockFace.EAST);
+        furnishBedroom(b, 8, 17, -13, -10, f2 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.QUARTZ_BLOCK, Material.MAGENTA_BED, BlockFace.WEST);
+
+        // Library wing (GrabCraft estate amenity)
+        for (int x = -16; x <= -10; x++) {
+            for (int z = 4; z <= 8; z++) {
+                b.set(x, 1, z, Material.BOOKSHELF);
+            }
+        }
+        b.set(-13, 1, 6, Material.ENCHANTING_TABLE);
+        b.set(-12, 1, 6, Material.LECTERN);
+        clearVolume(b, -15, -11, 5, 7, 1, 2);
+
+        // Kitchen / utility
+        b.set(10, 1, 7, Material.CRAFTING_TABLE);
+        b.facing(11, 1, 7, Material.SMOKER, BlockFace.WEST);
+        b.facing(12, 1, 7, Material.FURNACE, BlockFace.WEST);
+        b.facing(13, 1, 7, Material.BLAST_FURNACE, BlockFace.WEST);
+        b.set(14, 1, 8, Material.BARREL);
+        b.set(0, 1, 7, Material.JUKEBOX);
+
+        for (int y : new int[]{2, 6, 10}) {
+            for (int z = -12; z <= 8; z += 2) {
+                b.set(minX, y, z, Material.GLASS);
+                b.set(maxX, y, z, Material.GLASS);
+            }
+        }
+        for (int x = -16; x <= 16; x += 4) {
+            for (int z = -12; z <= 8; z += 4) {
+                if (Math.abs(x) <= 2 && Math.abs(z) <= 2) {
+                    continue;
+                }
+                b.set(x, f1 - 1, z, Material.END_ROD);
+                b.set(x, f2 - 1, z, Material.END_ROD);
+                b.set(x, top, z, Material.END_ROD);
+            }
+        }
+
+        // Court pool + patio (front +Z)
+        poolWalkway(b, -8, 8, maxZ + 1, maxZ + 2, 0);
+        buildPool(b, -8, 8, maxZ + 3, maxZ + 12, 0, BlockFace.NORTH);
+        // Rooftop plunge
+        buildPool(b, -4, 4, -4, 2, top + 1, BlockFace.SOUTH);
+
+        return finish(
+                b,
+                "estate",
+                "GrabCraft-style mega estate - 3 floors, dual lifts, library, 8 suites, court + roof pools",
+                0, maxZ + 2
+        );
+    }
+
+    /**
+     * GrabCraft-inspired tall fantasy chateau / wooden mansion:
+     * stone brick shell, corner turrets, great hall, gabled roof, side pool.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint chateau() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -12;
+        int maxX = 12;
+        int minZ = -11;
+        int maxZ = 7;
+        int f1 = 4;
+        int top = 7;
+
+        fillRect(b, minX - 1, maxX + 1, minZ - 1, maxZ + 2, -1, Material.COBBLESTONE);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.DARK_OAK_PLANKS);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, top);
+        shell(b, minX, maxX, minZ, maxZ, 1, top, Material.STONE_BRICKS, Material.DARK_OAK_LOG);
+
+        fillRect(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, f1, Material.SPRUCE_PLANKS);
+        clearVolume(b, -1, 1, -1, 1, f1, f1);
+
+        gabledRoof(
+                b, minX, maxX, minZ, maxZ, top + 1,
+                Material.DARK_OAK_STAIRS, Material.DARK_OAK_PLANKS,
+                Material.DARK_OAK_SLAB, Material.STONE_BRICKS
+        );
+
+        // Corner turrets (fantasy mansion silhouette)
+        for (int[] c : new int[][]{
+                {minX, minZ}, {maxX, minZ}, {minX, maxZ}, {maxX, maxZ}
+        }) {
+            int tx = c[0];
+            int tz = c[1];
+            for (int y = 1; y <= top + 3; y++) {
+                b.set(tx, y, tz, Material.STONE_BRICKS);
+            }
+            b.set(tx, top + 4, tz, Material.DARK_OAK_FENCE);
+            b.set(tx, top + 5, tz, Material.LANTERN);
+            for (int dy = 2; dy <= 6; dy += 2) {
+                if (tx == minX) {
+                    b.set(tx + 1, dy, tz, Material.GLASS_PANE);
+                } else {
+                    b.set(tx - 1, dy, tz, Material.GLASS_PANE);
+                }
+            }
+        }
+
+        b.doubleDoor(-1, 1, maxZ, Material.DARK_OAK_DOOR, BlockFace.SOUTH);
+        b.set(0, 2, maxZ, Material.IRON_BARS);
+
+        buildLift(b, 0, 0, 0, top, 1, f1 + 1);
+        markLiftLobby(b, 0, 0, 1);
+        markLiftLobby(b, 0, 0, f1 + 1);
+
+        for (int i = 0; i < 4; i++) {
+            b.stairs(9, 1 + i, 5 - i, Material.STONE_BRICK_STAIRS, BlockFace.NORTH);
+            b.set(9, 1 + i, 4 - i, Material.STONE_BRICKS);
+        }
+
+        furnishBedroom(b, -11, -5, -10, -7, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.RED_BED, BlockFace.EAST);
+        furnishBedroom(b, -11, -5, -5, -2, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.BLUE_BED, BlockFace.EAST);
+        furnishBedroom(b, 5, 11, -10, -7, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.GREEN_BED, BlockFace.WEST);
+        furnishBedroom(b, -11, -5, -10, -7, f1 + 1, top + 1,
+                Material.SPRUCE_PLANKS, Material.DARK_OAK_PLANKS, Material.YELLOW_BED, BlockFace.EAST);
+        furnishBedroom(b, 5, 11, -10, -7, f1 + 1, top + 1,
+                Material.SPRUCE_PLANKS, Material.DARK_OAK_PLANKS, Material.PURPLE_BED, BlockFace.WEST);
+        furnishBedroom(b, -3, 3, -10, -8, f1 + 1, top + 1,
+                Material.SPRUCE_PLANKS, Material.DARK_OAK_PLANKS, Material.WHITE_BED, BlockFace.SOUTH);
+
+        // Great hall
+        for (int x = -4; x <= 4; x++) {
+            b.stairs(x, 1, 4, Material.DARK_OAK_STAIRS, BlockFace.SOUTH);
+        }
+        b.set(0, 1, 3, Material.JUKEBOX);
+        b.set(-8, 1, 5, Material.CRAFTING_TABLE);
+        b.facing(-9, 1, 5, Material.FURNACE, BlockFace.SOUTH);
+        b.set(8, 1, 5, Material.ENCHANTING_TABLE);
+        b.set(9, 1, 5, Material.BOOKSHELF);
+        b.set(10, 1, 5, Material.BOOKSHELF);
+        b.set(0, 1, -9, Material.ANVIL);
+
+        for (int y = 2; y <= 6; y += 2) {
+            for (int z = -9; z <= 5; z += 3) {
+                framedWindow(b, minX, y, z, BlockFace.WEST);
+                framedWindow(b, maxX, y, z, BlockFace.EAST);
+            }
+        }
+        for (int x = -9; x <= 9; x += 3) {
+            safeCeilingLantern(b, x, 0, f1);
+            safeCeilingLantern(b, x, 0, top + 1);
+        }
+
+        poolWalkway(b, 4, 11, maxZ + 1, maxZ + 2, 0);
+        buildPool(b, 4, 11, maxZ + 3, maxZ + 9, 0, BlockFace.NORTH);
+
+        return finish(
+                b,
+                "chateau",
+                "GrabCraft-style fantasy chateau - turrets, great hall, lift, 6 suites, pool",
+                0, maxZ + 2
+        );
+    }
+
+    /**
+     * GrabCraft-inspired modernist villa (Modernist / Exotic Modern Villa vibes):
+     * white concrete + glass, split levels, balcony, large garden pool.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint skyvilla() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -14;
+        int maxX = 14;
+        int minZ = -12;
+        int maxZ = 8;
+        int loft = 4;
+        int top = 7;
+
+        fillRect(b, minX - 1, maxX + 1, minZ - 1, maxZ + 2, -1, Material.GRAY_CONCRETE);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.WHITE_CONCRETE);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, top);
+        shell(b, minX, maxX, minZ, maxZ, 1, top, Material.WHITE_CONCRETE, Material.LIGHT_GRAY_CONCRETE);
+
+        fillRect(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, loft, Material.WHITE_CONCRETE);
+        clearVolume(b, -2, 2, -2, 2, loft, loft);
+
+        // Full glass façades
+        for (int y = 1; y <= 3; y++) {
+            for (int x = minX + 2; x <= maxX - 2; x++) {
+                b.set(x, y, maxZ, Material.GLASS);
+                b.set(x, y, minZ, Material.GLASS);
+            }
+            for (int z = minZ + 2; z <= maxZ - 2; z++) {
+                b.set(minX, y, z, Material.GLASS);
+                b.set(maxX, y, z, Material.GLASS);
+            }
+        }
+        // Upper glass band
+        for (int y = loft + 1; y <= loft + 2; y++) {
+            for (int x = minX + 2; x <= maxX - 2; x++) {
+                b.set(x, y, maxZ, Material.GLASS);
+            }
+        }
+
+        b.doubleDoor(-1, 1, maxZ, Material.OAK_DOOR, BlockFace.SOUTH);
+
+        buildLift(b, 0, 0, 0, top, 1, loft + 1);
+        markLiftLobby(b, 0, 0, 1);
+        markLiftLobby(b, 0, 0, loft + 1);
+
+        // Floating balcony slab over front
+        fillRect(b, -6, 6, maxZ + 1, maxZ + 3, loft, Material.WHITE_CONCRETE);
+        for (int x = -6; x <= 6; x++) {
+            b.set(x, loft + 1, maxZ + 3, Material.GLASS_PANE);
+        }
+        for (int i = 0; i < 4; i++) {
+            b.stairs(5, 1 + i, maxZ - i, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
+        }
+
+        furnishBedroom(b, -13, -6, -11, -7, 1, loft,
+                Material.LIGHT_GRAY_CONCRETE, Material.WHITE_CONCRETE, Material.WHITE_BED, BlockFace.EAST);
+        furnishBedroom(b, 6, 13, -11, -7, 1, loft,
+                Material.LIGHT_GRAY_CONCRETE, Material.WHITE_CONCRETE, Material.LIGHT_GRAY_BED, BlockFace.WEST);
+        furnishBedroom(b, -13, -6, -5, -2, 1, loft,
+                Material.LIGHT_GRAY_CONCRETE, Material.WHITE_CONCRETE, Material.CYAN_BED, BlockFace.EAST);
+        furnishBedroom(b, -13, -6, -11, -7, loft + 1, top + 1,
+                Material.WHITE_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.BLUE_BED, BlockFace.EAST);
+        furnishBedroom(b, 6, 13, -11, -7, loft + 1, top + 1,
+                Material.WHITE_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.PURPLE_BED, BlockFace.WEST);
+        furnishBedroom(b, -3, 3, -11, -8, loft + 1, top + 1,
+                Material.WHITE_CONCRETE, Material.LIGHT_GRAY_CONCRETE, Material.GRAY_BED, BlockFace.SOUTH);
+
+        b.set(10, 1, 5, Material.CRAFTING_TABLE);
+        b.facing(11, 1, 5, Material.SMOKER, BlockFace.WEST);
+        b.facing(12, 1, 5, Material.FURNACE, BlockFace.WEST);
+        b.set(-10, 1, 5, Material.ENCHANTING_TABLE);
+        b.set(-11, 1, 5, Material.BOOKSHELF);
+        b.set(-9, 1, 5, Material.ENDER_CHEST);
+        b.set(0, 1, 5, Material.JUKEBOX);
+
+        for (int x = -12; x <= 12; x += 4) {
+            b.set(x, loft - 1, 0, Material.END_ROD);
+            b.set(x, top, 0, Material.END_ROD);
+        }
+
+        // Flat roof + roof deck pool
+        fillRect(b, minX, maxX, minZ, maxZ, top + 1, Material.WHITE_CONCRETE);
+        buildPool(b, -5, 5, -6, 2, top + 1, BlockFace.SOUTH);
+
+        // Large garden pool (Exotic Modern Villa outdoor focus)
+        poolWalkway(b, -10, 10, maxZ + 1, maxZ + 2, 0);
+        buildPool(b, -10, 10, maxZ + 4, maxZ + 14, 0, BlockFace.NORTH);
+
+        // Garden planters
+        for (int x = -12; x <= 12; x += 4) {
+            b.set(x, 0, maxZ + 3, Material.PODZOL);
+            b.set(x, 1, maxZ + 3, Material.AZALEA);
+        }
+
+        return finish(
+                b,
+                "skyvilla",
+                "GrabCraft-style modernist villa - glass façades, balcony, 6 beds, garden + roof pools",
+                0, maxZ + 2
+        );
+    }
+
+    /**
+     * GrabCraft-inspired grand palace: courtyard, fountain, gold accents, ballroom, dual wings.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint palace() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -16;
+        int maxX = 16;
+        int minZ = -13;
+        int maxZ = 9;
+        int f1 = 4;
+        int top = 8;
+
+        fillRect(b, minX - 2, maxX + 2, minZ - 2, maxZ + 2, -1, Material.POLISHED_DIORITE);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.SMOOTH_QUARTZ);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, top);
+        shell(b, minX, maxX, minZ, maxZ, 1, top, Material.QUARTZ_BLOCK, Material.GOLD_BLOCK);
+
+        fillRect(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, f1, Material.SMOOTH_QUARTZ);
+        clearVolume(b, -2, 2, -2, 2, f1, f1);
+
+        gabledRoof(
+                b, minX, maxX, minZ, maxZ, top + 1,
+                Material.QUARTZ_STAIRS, Material.QUARTZ_BLOCK,
+                Material.QUARTZ_SLAB, Material.QUARTZ_BLOCK
+        );
+        // Gold crown corners
+        for (int[] c : new int[][]{
+                {minX, minZ}, {maxX, minZ}, {minX, maxZ}, {maxX, maxZ}
+        }) {
+            b.set(c[0], top + 1, c[1], Material.GOLD_BLOCK);
+            b.set(c[0], top + 2, c[1], Material.GOLD_BLOCK);
+            b.set(c[0], top + 3, c[1], Material.LANTERN);
+        }
+
+        b.doubleDoor(-1, 1, maxZ, Material.DARK_OAK_DOOR, BlockFace.SOUTH);
+        b.set(-2, 2, maxZ, Material.GOLD_BLOCK);
+        b.set(1, 2, maxZ, Material.GOLD_BLOCK);
+
+        // Open courtyard hole through floor 1 (palace atrium)
+        clearVolume(b, -4, 4, -4, 4, 1, f1 - 1);
+        for (int x = -4; x <= 4; x++) {
+            for (int z = -4; z <= 4; z++) {
+                boolean edge = x == -4 || x == 4 || z == -4 || z == 4;
+                if (edge) {
+                    b.set(x, 0, z, Material.QUARTZ_PILLAR);
+                } else {
+                    b.set(x, 0, z, Material.WATER);
+                    b.set(x, -1, z, Material.PRISMARINE);
+                }
+            }
+        }
+        b.set(0, -1, 0, Material.SEA_LANTERN);
+        b.set(0, 1, 0, Material.AIR);
+        // Fountain jet marker
+        b.set(0, 0, 0, Material.WATER);
+        for (int y = 1; y <= 3; y++) {
+            b.set(0, y, 0, Material.IRON_BARS);
+        }
+        b.set(0, 4, 0, Material.SEA_LANTERN);
+
+        buildLift(b, -14, 0, 0, top, 1, f1 + 1);
+        buildLift(b, 14, 0, 0, top, 1, f1 + 1);
+        markLiftLobby(b, -14, 0, 1);
+        markLiftLobby(b, -14, 0, f1 + 1);
+        markLiftLobby(b, 14, 0, 1);
+        markLiftLobby(b, 14, 0, f1 + 1);
+
+        for (int i = 0; i < 4; i++) {
+            b.stairs(-8, 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.stairs(8, 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+        }
+
+        furnishBedroom(b, -15, -8, -12, -9, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.RED_WOOL, Material.RED_BED, BlockFace.EAST);
+        furnishBedroom(b, -15, -8, -7, -4, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.BLUE_WOOL, Material.BLUE_BED, BlockFace.EAST);
+        furnishBedroom(b, 8, 15, -12, -9, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.YELLOW_WOOL, Material.YELLOW_BED, BlockFace.WEST);
+        furnishBedroom(b, 8, 15, -7, -4, 1, f1,
+                Material.DARK_OAK_PLANKS, Material.LIME_WOOL, Material.LIME_BED, BlockFace.WEST);
+        furnishBedroom(b, -15, -8, -12, -9, f1 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.PURPLE_WOOL, Material.PURPLE_BED, BlockFace.EAST);
+        furnishBedroom(b, 8, 15, -12, -9, f1 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.MAGENTA_WOOL, Material.MAGENTA_BED, BlockFace.WEST);
+        furnishBedroom(b, -6, -3, -12, -9, f1 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.WHITE_WOOL, Material.WHITE_BED, BlockFace.SOUTH);
+        furnishBedroom(b, 3, 6, -12, -9, f1 + 1, top + 1,
+                Material.SMOOTH_QUARTZ, Material.LIGHT_BLUE_WOOL, Material.LIGHT_BLUE_BED, BlockFace.SOUTH);
+
+        // Ballroom / throne lounge (south of courtyard)
+        for (int x = -5; x <= 5; x++) {
+            b.stairs(x, 1, 7, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
+        }
+        b.set(0, 1, 6, Material.JUKEBOX);
+        b.set(-3, 1, 6, Material.GOLD_BLOCK);
+        b.set(3, 1, 6, Material.GOLD_BLOCK);
+        b.set(-12, 1, 7, Material.CRAFTING_TABLE);
+        b.facing(-13, 1, 7, Material.SMOKER, BlockFace.SOUTH);
+        b.set(12, 1, 7, Material.ENCHANTING_TABLE);
+        b.set(13, 1, 7, Material.BOOKSHELF);
+        b.set(14, 1, 7, Material.BOOKSHELF);
+
+        for (int y = 2; y <= 6; y += 2) {
+            for (int z = -11; z <= 7; z += 2) {
+                b.set(minX, y, z, Material.GLASS);
+                b.set(maxX, y, z, Material.GLASS);
+            }
+        }
+        for (int x = -14; x <= 14; x += 4) {
+            for (int z = -11; z <= 7; z += 4) {
+                if (Math.abs(x) <= 4 && Math.abs(z) <= 4) {
+                    continue;
+                }
+                b.set(x, f1 - 1, z, Material.END_ROD);
+                b.set(x, top, z, Material.END_ROD);
+            }
+        }
+
+        poolWalkway(b, 6, 14, maxZ + 1, maxZ + 2, 0);
+        buildPool(b, 6, 14, maxZ + 3, maxZ + 10, 0, BlockFace.NORTH);
+
+        return finish(
+                b,
+                "palace",
+                "GrabCraft-style grand palace - courtyard fountain, gold trim, dual lifts, 8 suites, pool",
+                0, maxZ + 2
+        );
     }
 
     // ——— helpers ———
@@ -669,6 +1134,11 @@ public final class LuxuryBaseTemplates {
         );
     }
 
+    /**
+     * Dual bubble-column lifts (Bedrock + Java):
+     * sealed glass tubes filled with water SOURCE blocks, soul sand = up, magma = down.
+     * Entries use wall signs (hold water, no collision) — never open AIR holes that drain the shaft.
+     */
     private static void buildLift(
             @NotNull BaseTemplates.Builder b,
             int x,
@@ -677,7 +1147,7 @@ public final class LuxuryBaseTemplates {
             int yTop,
             int... walkFloors
     ) {
-        // Glass tube shells (up shaft at x, down shaft at x+2)
+        // Fully sealed glass shells (up at x, down at x+2)
         for (int y = yBottom; y <= yTop; y++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
@@ -689,44 +1159,58 @@ public final class LuxuryBaseTemplates {
                 }
             }
         }
+        // Bubble bases
         b.set(x, yBottom, z, Material.SOUL_SAND);
         b.set(x + 2, yBottom, z, Material.MAGMA_BLOCK);
+        // Source water column (level 0) — required for bubble columns on Bedrock/Java
         for (int y = yBottom + 1; y <= yTop; y++) {
             b.set(x, y, z, Material.WATER);
             b.set(x + 2, y, z, Material.WATER);
-            b.set(x + 1, y, z, Material.AIR);
+            b.set(x + 1, y, z, Material.GLASS); // solid divider between up/down shafts
         }
-        // Open 2-high doors on +Z at every walk floor (enter from rooms / atrium)
-        int[] floors = walkFloors.length > 0 ? walkFloors : new int[]{yBottom + 1, Math.max(yBottom + 1, yTop - 1)};
+        // Sign doors on +Z — players walk through; water stays contained
+        int[] floors = walkFloors.length > 0
+                ? walkFloors
+                : new int[]{yBottom + 1, Math.max(yBottom + 1, yTop - 1)};
         for (int walkY : floors) {
-            if (walkY < yBottom + 1 || walkY >= yTop) {
+            if (walkY < yBottom + 1 || walkY > yTop - 1) {
                 continue;
             }
-            openLiftDoor(b, x, z, walkY);
-            openLiftDoor(b, x + 2, z, walkY);
+            signLiftDoor(b, x, z, walkY);
+            signLiftDoor(b, x + 2, z, walkY);
+            // Clear lobby approach outside the tube (do NOT punch the water cell)
             for (int dx = 0; dx <= 2; dx++) {
-                b.set(x + dx, walkY, z + 1, Material.AIR);
-                b.set(x + dx, walkY + 1, z + 1, Material.AIR);
                 b.set(x + dx, walkY, z + 2, Material.AIR);
                 b.set(x + dx, walkY + 1, z + 2, Material.AIR);
+                b.set(x + dx, walkY, z + 3, Material.AIR);
+                b.set(x + dx, walkY + 1, z + 3, Material.AIR);
             }
         }
         b.set(x, yBottom - 1, z, Material.SEA_LANTERN);
         b.set(x + 2, yBottom - 1, z, Material.SEA_LANTERN);
+        // Cap tubes so water does not spill upward; rods mark the shafts
         b.set(x, yTop + 1, z, Material.SMOOTH_QUARTZ);
         b.set(x + 2, yTop + 1, z, Material.SMOOTH_QUARTZ);
         b.set(x, yTop + 1, z + 1, Material.END_ROD);
         b.set(x + 2, yTop + 1, z + 1, Material.END_ROD);
     }
 
-    private static void openLiftDoor(
+    /**
+     * 2-high wall-sign door on the south face of the tube.
+     * Signs attach to the SE glass pillar (facing WEST) so they are valid wall signs,
+     * hold water in the shaft, and have no collision for players.
+     */
+    private static void signLiftDoor(
             @NotNull BaseTemplates.Builder b,
             int shaftX,
             int shaftZ,
             int walkY
     ) {
-        b.set(shaftX, walkY, shaftZ + 1, Material.AIR);
-        b.set(shaftX, walkY + 1, shaftZ + 1, Material.AIR);
+        // Keep SE corner glass as attachment point
+        b.set(shaftX + 1, walkY, shaftZ + 1, Material.GLASS);
+        b.set(shaftX + 1, walkY + 1, shaftZ + 1, Material.GLASS);
+        b.facing(shaftX, walkY, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
+        b.facing(shaftX, walkY + 1, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
     }
 
     /** Sea-lantern approach + gold/end-rod posts so the lift is obvious from hallways. */
@@ -738,6 +1222,7 @@ public final class LuxuryBaseTemplates {
     ) {
         int floorY = walkY - 1;
         for (int dx = -1; dx <= 3; dx++) {
+            // Keep z+1 as sign doors — lobby markers start at z+2
             b.set(liftX + dx, floorY, liftZ + 2, Material.SEA_LANTERN);
             b.set(liftX + dx, floorY, liftZ + 3, Material.POLISHED_BLACKSTONE);
         }
@@ -751,6 +1236,40 @@ public final class LuxuryBaseTemplates {
         b.set(liftX, walkY + 1, liftZ + 3, Material.AIR);
         b.set(liftX + 1, walkY + 1, liftZ + 3, Material.AIR);
         b.set(liftX + 2, walkY + 1, liftZ + 3, Material.AIR);
+    }
+
+    /**
+     * Always-clear spawn pad: solid under feet, air at feet/head (spawnDy = 0), open 3×3.
+     * Last write wins — call immediately before {@code b.build(...)}.
+     */
+    static void protectSpawnPad(
+            @NotNull BaseTemplates.Builder b,
+            int spawnX,
+            int spawnZ
+    ) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int x = spawnX + dx;
+                int z = spawnZ + dz;
+                b.set(x, -1, z, Material.SMOOTH_STONE);
+                b.set(x, 0, z, Material.AIR);
+                b.set(x, 1, z, Material.AIR);
+            }
+        }
+        b.set(spawnX, -1, spawnZ, Material.DIRT_PATH);
+        b.set(spawnX, 0, spawnZ, Material.AIR);
+        b.set(spawnX, 1, spawnZ, Material.AIR);
+    }
+
+    private static @NotNull BaseTemplates.BaseBlueprint finish(
+            @NotNull BaseTemplates.Builder b,
+            @NotNull String id,
+            @NotNull String description,
+            int spawnX,
+            int spawnZ
+    ) {
+        protectSpawnPad(b, spawnX, spawnZ);
+        return b.build(id, description, spawnX, 0, spawnZ);
     }
 
     /** Lantern flush under ceiling — never below y=3 (head clearance on y=0 floors). */

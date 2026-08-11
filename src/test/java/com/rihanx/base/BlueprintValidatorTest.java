@@ -99,26 +99,73 @@ class BlueprintValidatorTest {
         BaseTemplates.BaseBlueprint xp = FarmTemplates.all().get("xp");
         boolean hasButton = false;
         boolean darkRoof = false;
+        boolean hasMagma = false;
+        boolean hasSignUpper = false;
         int shaftAir = 0;
+        int waterSources = 0;
         for (BaseTemplates.RelBlock block : xp.blocks()) {
             if (block.material().name().endsWith("_BUTTON")) {
                 hasButton = true;
                 assertTrue(Math.abs(block.dx()) >= 1, "XP door buttons must be on wall beside door");
             }
-            // Continuous shaft cells
+            // Continuous shaft through both floors (y=2..31)
             if ((block.dx() == -1 || block.dx() == 0)
                     && (block.dz() == 1 || block.dz() == 2)
-                    && block.dy() >= 2 && block.dy() <= 24
+                    && block.dy() >= 2 && block.dy() <= 31
                     && block.material() == org.bukkit.Material.AIR) {
                 shaftAir++;
             }
-            if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE) {
+            if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE
+                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 1 && block.dz() <= 2)) {
                 darkRoof = true;
+            }
+            if (block.material() == org.bukkit.Material.MAGMA_BLOCK) {
+                hasMagma = true;
+            }
+            if (block.material().name().contains("SIGN") && block.dy() == 27) {
+                hasSignUpper = true;
+            }
+            if (block.material() == org.bukkit.Material.WATER && (block.dy() == 25 || block.dy() == 29)) {
+                waterSources++;
             }
         }
         assertTrue(hasButton, "xp farm needs door buttons");
-        assertTrue(shaftAir >= 40, "xp farm needs continuous drop shaft air, got " + shaftAir);
+        assertTrue(shaftAir >= 80, "xp farm needs continuous drop shaft through both floors, got " + shaftAir);
         assertTrue(darkRoof, "xp spawn floors need solid dark roofs (not open sky)");
+        assertTrue(hasMagma, "xp kill chamber needs magma burn platform trim");
+        assertTrue(hasSignUpper, "xp Floor B needs water-break signs");
+        // Sources only at channel ends (not flooding every channel cell)
+        assertTrue(waterSources > 0 && waterSources <= 20,
+                "xp water should be end-sources only, got " + waterSources);
+    }
+
+    @Test
+    void stationPoweredRailsSitOnRedstoneBlocks() {
+        for (String id : List.of(
+                "station", "depot", "rail", "terminal", "mine",
+                "kingdom", "western", "adacia", "yard"
+        )) {
+            BaseTemplates.BaseBlueprint bp = StationTemplates.all().get(id);
+            Map<String, org.bukkit.Material> at = new java.util.HashMap<>();
+            for (BaseTemplates.RelBlock block : bp.blocks()) {
+                at.put(block.dx() + "," + block.dy() + "," + block.dz(), block.material());
+            }
+            int powered = 0;
+            int poweredOnRedstone = 0;
+            for (BaseTemplates.RelBlock block : bp.blocks()) {
+                if (block.material() != org.bukkit.Material.POWERED_RAIL) {
+                    continue;
+                }
+                powered++;
+                org.bukkit.Material under = at.get(block.dx() + "," + (block.dy() - 1) + "," + block.dz());
+                if (under == org.bukkit.Material.REDSTONE_BLOCK) {
+                    poweredOnRedstone++;
+                }
+            }
+            assertTrue(powered > 0, id + " needs powered rails");
+            assertEquals(powered, poweredOnRedstone,
+                    id + " every powered rail must sit on a redstone block");
+        }
     }
 
     @Test
@@ -170,7 +217,7 @@ class BlueprintValidatorTest {
     @Test
     void everyStationBlueprintIsValid() {
         Map<String, BaseTemplates.BaseBlueprint> stations = StationTemplates.all();
-        assertEquals(6, stations.size(), "expected 6 station templates");
+        assertEquals(10, stations.size(), "expected 10 station templates");
         for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : stations.entrySet()) {
             Set<String> errors = BlueprintValidator.validate(entry.getValue());
             assertTrue(errors.isEmpty(), () -> entry.getKey() + " failed: " + errors);
@@ -182,7 +229,10 @@ class BlueprintValidatorTest {
 
     @Test
     void passengerStationsIncludeLinkPressurePlate() {
-        for (String id : List.of("station", "depot", "terminal", "mine")) {
+        for (String id : List.of(
+                "station", "depot", "terminal", "mine",
+                "kingdom", "western", "adacia", "yard"
+        )) {
             BaseTemplates.BaseBlueprint bp = StationTemplates.all().get(id);
             boolean hasPlate = bp.blocks().stream()
                     .anyMatch(b -> b.material() == org.bukkit.Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
@@ -222,15 +272,80 @@ class BlueprintValidatorTest {
 
     @Test
     void homesHaveContinuousCeilingsOverInterior() {
-        for (String id : List.of("hut", "cottage", "village", "bungalow", "villa", "mansion")) {
+        for (String id : List.of("hut", "cottage", "village", "bungalow", "villa", "mansion", "chateau", "palace")) {
             BaseTemplates.BaseBlueprint bp = BaseTemplates.all().get(id);
             assertTrue(BlueprintValidator.hasContinuousCeiling(bp), id + " has sky holes over interior");
         }
     }
 
     @Test
+    void luxuryBasesProtectSpawnPadAndHaveWorkingLiftParts() {
+        for (String id : List.of("villa", "mansion", "modern", "estate", "chateau", "skyvilla", "palace")) {
+            BaseTemplates.BaseBlueprint bp = BaseTemplates.all().get(id);
+            int sx = bp.spawnDx();
+            int sy = bp.spawnDy();
+            int sz = bp.spawnDz();
+            boolean feetAir = false;
+            boolean headAir = false;
+            boolean floorSolid = false;
+            boolean hasSoulSand = false;
+            boolean hasMagma = false;
+            boolean hasWater = false;
+            boolean hasSignDoor = false;
+            for (BaseTemplates.RelBlock block : bp.blocks()) {
+                if (block.dx() == sx && block.dz() == sz && block.dy() == sy
+                        && block.material() == org.bukkit.Material.AIR) {
+                    feetAir = true;
+                }
+                if (block.dx() == sx && block.dz() == sz && block.dy() == sy + 1
+                        && block.material() == org.bukkit.Material.AIR) {
+                    headAir = true;
+                }
+                if (block.dx() == sx && block.dz() == sz && block.dy() == sy - 1) {
+                    String n = block.material().name();
+                    if (!n.equals("AIR") && !n.equals("WATER") && !n.contains("SIGN")
+                            && !n.contains("RAIL") && !n.contains("BUTTON")) {
+                        floorSolid = true;
+                    }
+                }
+                if (block.material() == org.bukkit.Material.SOUL_SAND) {
+                    hasSoulSand = true;
+                }
+                if (block.material() == org.bukkit.Material.MAGMA_BLOCK) {
+                    hasMagma = true;
+                }
+                if (block.material() == org.bukkit.Material.WATER) {
+                    hasWater = true;
+                }
+                if (block.material().name().contains("SIGN")) {
+                    hasSignDoor = true;
+                }
+            }
+            assertTrue(feetAir, id + " spawn feet must be air");
+            assertTrue(headAir, id + " spawn head must be air");
+            assertTrue(floorSolid, id + " spawn needs solid floor under feet");
+            assertTrue(hasSoulSand, id + " needs soul-sand up lift");
+            assertTrue(hasMagma, id + " needs magma down lift");
+            assertTrue(hasWater, id + " needs water in lift tubes");
+            assertTrue(hasSignDoor, id + " needs sign doors (water-holding lift entries)");
+        }
+    }
+
+    @Test
+    void advancedGrabCraftStyleBasesExistAndAreSubstantial() {
+        for (String id : List.of("estate", "chateau", "skyvilla", "palace")) {
+            BaseTemplates.BaseBlueprint bp = BaseTemplates.all().get(id);
+            assertTrue(bp != null, id + " missing");
+            assertTrue(bp.blocks().size() > 800, id + " too small for advanced tier: " + bp.blocks().size());
+            Set<String> errors = BlueprintValidator.validate(bp);
+            errors.removeIf(e -> e.startsWith("water-no-support"));
+            assertTrue(errors.isEmpty(), () -> id + " failed: " + errors);
+        }
+    }
+
+    @Test
     void luxuryHomesHaveNoLanternsInWalkVolume() {
-        for (String id : List.of("bungalow", "villa", "mansion", "modern")) {
+        for (String id : List.of("bungalow", "villa", "mansion", "modern", "estate", "chateau", "skyvilla", "palace")) {
             BaseTemplates.BaseBlueprint bp = BaseTemplates.all().get(id);
             for (BaseTemplates.RelBlock block : bp.blocks()) {
                 if (!block.material().name().contains("LANTERN")) {
