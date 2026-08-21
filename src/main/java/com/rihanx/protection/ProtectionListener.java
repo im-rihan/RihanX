@@ -96,7 +96,8 @@ public final class ProtectionListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!protection.isAllowed(player, event.getClickedBlock().getLocation(), ProtectionFlag.FIRE_DESTROY)
+        // Player lighting portals/TNT/campfires is PLACE/BUILD — not wildfire (fire-destroy/spread).
+        if (!protection.isAllowed(player, event.getClickedBlock().getLocation(), ProtectionFlag.PLACE)
                 || !protection.isAllowed(player, event.getClickedBlock().getLocation(), ProtectionFlag.BUILD)) {
             event.setCancelled(true);
             protection.getPluginMessages().send(player, "protect-denied-place");
@@ -138,10 +139,20 @@ public final class ProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onIgnite(@NotNull BlockIgniteEvent event) {
-        ProtectionFlag flag = event.getCause() == BlockIgniteEvent.IgniteCause.LAVA
+        Player player = event.getPlayer();
+        BlockIgniteEvent.IgniteCause cause = event.getCause();
+        // Player flint/fire-charge lighting (nether portals, TNT, campfires) uses PLACE — not fire-spread.
+        if (player != null && (cause == BlockIgniteEvent.IgniteCause.FLINT_AND_STEEL
+                || cause == BlockIgniteEvent.IgniteCause.FIREBALL)) {
+            if (!protection.isAllowed(player, event.getBlock().getLocation(), ProtectionFlag.PLACE)
+                    || !protection.isAllowed(player, event.getBlock().getLocation(), ProtectionFlag.BUILD)) {
+                event.setCancelled(true);
+            }
+            return;
+        }
+        ProtectionFlag flag = cause == BlockIgniteEvent.IgniteCause.LAVA
                 ? ProtectionFlag.LAVA_FIRE
                 : ProtectionFlag.FIRE_SPREAD;
-        Player player = event.getPlayer();
         if (!protection.isAllowed(player, event.getBlock().getLocation(), flag)) {
             event.setCancelled(true);
         }
@@ -177,25 +188,45 @@ public final class ProtectionListener implements Listener {
         if (entity instanceof Player) {
             return;
         }
-        ProtectionFlag flag;
         String type = entity.getType().getKey().getKey();
+        // Farmer villagers must harvest/replant crops — do not treat that as mob grief.
+        if (type.contains("villager")) {
+            Material from = event.getBlock().getType();
+            Material to = event.getTo();
+            if (isVillagerFarmBlock(from) || isVillagerFarmBlock(to)) {
+                return;
+            }
+        }
+        ProtectionFlag flag;
         if (type.contains("enderman")) {
             flag = ProtectionFlag.ENDERMAN_GRIEF;
-        } else if (event.getTo() == Material.AIR || event.getBlock().getType().name().contains("CROP")
-                || event.getBlock().getType() == Material.FARMLAND) {
-            flag = type.contains("villager") ? ProtectionFlag.MOB_GRIEF : ProtectionFlag.CROP_TRAMPLE;
-            if (event.getBlock().getType() != Material.FARMLAND && !type.contains("enderman")) {
-                flag = ProtectionFlag.MOB_GRIEF;
-            }
-            if (event.getBlock().getType() == Material.FARMLAND) {
-                flag = ProtectionFlag.CROP_TRAMPLE;
-            }
+        } else if (event.getBlock().getType() == Material.FARMLAND) {
+            flag = ProtectionFlag.CROP_TRAMPLE;
+        } else if (event.getTo() == Material.AIR || event.getBlock().getType().name().contains("CROP")) {
+            flag = ProtectionFlag.MOB_GRIEF;
         } else {
             flag = ProtectionFlag.MOB_GRIEF;
         }
         if (!protection.isAllowed(null, event.getBlock().getLocation(), flag)) {
             event.setCancelled(true);
         }
+    }
+
+    private static boolean isVillagerFarmBlock(@NotNull Material material) {
+        String name = material.name();
+        return material == Material.FARMLAND
+                || material == Material.WHEAT
+                || material == Material.POTATOES
+                || material == Material.CARROTS
+                || material == Material.BEETROOTS
+                || material == Material.PUMPKIN_STEM
+                || material == Material.ATTACHED_PUMPKIN_STEM
+                || material == Material.MELON_STEM
+                || material == Material.ATTACHED_MELON_STEM
+                || material == Material.TORCHFLOWER_CROP
+                || material == Material.PITCHER_CROP
+                || name.endsWith("_SAPLING")
+                || name.equals("AIR");
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

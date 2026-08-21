@@ -51,19 +51,19 @@ class BlueprintValidatorTest {
             if (block.material().name().contains("TRAPDOOR")) {
                 hasTrapdoor = true;
             }
-            if (block.dx() == -9 && block.dy() == 8 && block.material() == org.bukkit.Material.STONE_BRICKS) {
+            if (block.dx() == -5 && block.dy() == 8 && block.material() == org.bukkit.Material.STONE_BRICKS) {
                 hasPodFloor = true;
             }
-            if (block.dx() == 0 && block.dz() == 0 && block.dy() == 8
+            if (block.dx() == 0 && block.dz() == 0 && block.dy() == 13
                     && block.material() == org.bukkit.Material.AIR) {
                 hasCenterHole = true;
             }
-            // Spawn deck should stay open to sky (no roof slab over center platform)
-            if (block.dy() == 12 && Math.abs(block.dx()) <= 5 && Math.abs(block.dz()) <= 5
+            // Golem deck (y=13+) must stay open to sky — no roof over center pads
+            if (block.dy() == 16 && Math.abs(block.dx()) <= 5 && Math.abs(block.dz()) <= 5
                     && block.material().name().contains("SLAB")) {
                 hasDeckRoof = true;
             }
-            if (block.dy() == 8 && Math.abs(block.dx()) <= 4 && Math.abs(block.dz()) <= 4
+            if (block.dy() == 13 && Math.abs(block.dx()) <= 4 && Math.abs(block.dz()) <= 4
                     && block.material() == org.bukkit.Material.WATER) {
                 floodedDeck = true;
             }
@@ -109,42 +109,47 @@ class BlueprintValidatorTest {
                 hasButton = true;
                 assertTrue(Math.abs(block.dx()) >= 1, "XP door buttons must be on wall beside door");
             }
-            // Continuous shaft through deck (y=1..26)
+            // Continuous shaft through deck
             if ((block.dx() == -1 || block.dx() == 0)
-                    && (block.dz() == -1 || block.dz() == 0)
+                    && (block.dz() == 0 || block.dz() == 1)
                     && block.dy() >= 1 && block.dy() <= 26
                     && block.material() == org.bukkit.Material.AIR) {
                 shaftAir++;
             }
             if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE
-                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= -1 && block.dz() <= 0)) {
+                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 0 && block.dz() <= 1)) {
                 darkRoof = true;
             }
-            // Magma is the landing — not unreachable trim beside slabs
-            if (block.material() == org.bukkit.Material.MAGMA_BLOCK
+            // Dark roof over spawn deck (deck y=23 → roof at 26)
+            if (block.material() == org.bukkit.Material.COBBLESTONE && block.dy() == 26
+                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 0 && block.dz() <= 1)) {
+                darkRoof = true;
+            }
+            // Open trapdoors over hoppers = punch-XP landing
+            if (block.material() == org.bukkit.Material.IRON_TRAPDOOR
                     && (block.dx() == -1 || block.dx() == 0)
-                    && (block.dz() == -1 || block.dz() == 0)
-                    && block.dy() == 0) {
+                    && (block.dz() == 0 || block.dz() == 1)
+                    && block.dy() == 1) {
                 hasMagmaLanding = true;
             }
             if (block.material().name().contains("SLAB")
                     && (block.dx() == -1 || block.dx() == 0)
-                    && (block.dz() == -1 || block.dz() == 0)
+                    && (block.dz() == 0 || block.dz() == 1)
                     && block.dy() == 1) {
                 hasSlabOnLanding = true;
             }
-            if (block.material().name().contains("SIGN") && (block.dy() == 23 || block.dy() == 22)) {
+            if (block.material().name().contains("SIGN") && (block.dy() == 22 || block.dy() == 21)) {
                 hasSign = true;
             }
-            if (block.material() == org.bukkit.Material.WATER && block.dy() == 24) {
+            if (block.material() == org.bukkit.Material.WATER && block.dy() == 23) {
                 waterSources++;
             }
         }
         assertTrue(hasButton, "xp farm needs door buttons");
         assertTrue(shaftAir >= 80, "xp farm needs continuous drop shaft, got " + shaftAir);
         assertTrue(darkRoof, "xp spawn deck needs solid dark roof");
-        assertTrue(hasMagmaLanding, "xp kill landing must be magma (mobs fall onto it)");
-        assertFalse(hasSlabOnLanding, "xp landing must not use slabs that block magma");
+        assertTrue(hasMagmaLanding, "xp kill landing must be open trapdoors over hoppers");
+        assertFalse(hasSlabOnLanding, "xp landing must not use slabs that block collection");
         assertTrue(hasSign, "xp hole needs water-break signs");
         assertTrue(waterSources > 0 && waterSources <= 12,
                 "xp water should be trench-end sources only, got " + waterSources);
@@ -410,6 +415,59 @@ class BlueprintValidatorTest {
                 }
             }
             assertFalse(spawnSolid, entry.getKey() + " spawn cell is solid (player trapped in floor)");
+        }
+    }
+
+    /**
+     * BuildGuides-style layer audit: every farm must have visible loot, no buried chests,
+     * and pass playability rules (cane water, iron dry pads, etc.).
+     */
+    @Test
+    void layerAuditNoBuriedChestsAndPlayability() {
+        StringBuilder report = new StringBuilder();
+        for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : FarmTemplates.all().entrySet()) {
+            BaseTemplates.BaseBlueprint bp = entry.getValue();
+            Set<String> play = BlueprintValidator.validateFarmPlayability(bp);
+            int buried = 0;
+            int visible = 0;
+            int minY = Integer.MAX_VALUE;
+            int maxY = Integer.MIN_VALUE;
+            Map<Integer, Integer> layerCounts = new java.util.TreeMap<>();
+            for (BaseTemplates.RelBlock block : bp.blocks()) {
+                minY = Math.min(minY, block.dy());
+                maxY = Math.max(maxY, block.dy());
+                layerCounts.merge(block.dy(), 1, Integer::sum);
+                if (block.material() == org.bukkit.Material.CHEST
+                        || block.material() == org.bukkit.Material.BARREL) {
+                    if (block.dy() < 0) {
+                        buried++;
+                    } else {
+                        visible++;
+                    }
+                }
+            }
+            report.append(entry.getKey())
+                    .append(" y=").append(minY).append("..").append(maxY)
+                    .append(" layers=").append(layerCounts.size())
+                    .append(" storage visible=").append(visible)
+                    .append(" buried=").append(buried)
+                    .append(" playErrors=").append(play)
+                    .append('\n');
+            assertEquals(0, buried, () -> entry.getKey() + " has buried storage (dig-to-find): " + report);
+            assertTrue(visible > 0, () -> entry.getKey() + " has no ground-visible chest/barrel");
+            assertTrue(play.isEmpty(), () -> entry.getKey() + " playability failed: " + play + "\n" + report);
+        }
+        System.out.println("=== Farm layer audit ===\n" + report);
+    }
+
+    @Test
+    void baseTemplatesPassBasicStructureAndSpawn() {
+        for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : BaseTemplates.all().entrySet()) {
+            Set<String> errors = BlueprintValidator.validate(entry.getValue());
+            // Luxury bases may have intentional water features — filter only hard fails
+            errors.removeIf(e -> e.startsWith("water-no-support"));
+            assertTrue(errors.isEmpty(), () -> entry.getKey() + " base failed: " + errors);
+            assertTrue(entry.getValue().blocks().size() > 30, entry.getKey() + " too small");
         }
     }
 }

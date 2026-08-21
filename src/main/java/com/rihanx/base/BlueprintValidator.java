@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -125,7 +126,8 @@ public final class BlueprintValidator {
         if (!hasGadget) {
             errors.add("missing-gadgets");
         }
-        if (!hasHopper) {
+        if (!hasHopper && !"animal".equals(blueprint.id())) {
+            // Animal pens are feed/storage only — no auto hopper collection
             errors.add("missing-hopper");
         }
         if (!hasStorage) {
@@ -133,6 +135,115 @@ public final class BlueprintValidator {
         }
         errors.addAll(validateHopperOutputsReachStorage(blueprint));
         errors.addAll(validateObserverPistonCircuits(blueprint));
+        errors.addAll(validateFarmPlayability(blueprint));
+        return errors;
+    }
+
+    /**
+     * BuildGuides-style playability checks: storage must be visible without digging,
+     * beds need floors, cane needs water adjacency, iron deck must not flood spawn pads.
+     */
+    public static @NotNull Set<String> validateFarmPlayability(@NotNull BaseTemplates.BaseBlueprint blueprint) {
+        Set<String> errors = new HashSet<>();
+        Map<Long, BaseTemplates.RelBlock> cells = new HashMap<>();
+        for (BaseTemplates.RelBlock block : blueprint.blocks()) {
+            cells.put(pack(block.dx(), block.dy(), block.dz()), block);
+        }
+
+        int buriedStorage = 0;
+        int visibleStorage = 0;
+        for (BaseTemplates.RelBlock block : cells.values()) {
+            if (block.material() != Material.CHEST && block.material() != Material.BARREL) {
+                continue;
+            }
+            if (block.dy() < 0) {
+                buriedStorage++;
+                errors.add("buried-storage@" + block.dx() + "," + block.dy() + "," + block.dz());
+            } else {
+                visibleStorage++;
+            }
+        }
+        if (visibleStorage == 0) {
+            errors.add("no-visible-storage");
+        }
+
+        // Beds need solid under foot and head
+        for (BaseTemplates.RelBlock block : cells.values()) {
+            if (block.bedPart() == null || !block.material().name().endsWith("_BED")) {
+                continue;
+            }
+            BaseTemplates.RelBlock under = cells.get(pack(block.dx(), block.dy() - 1, block.dz()));
+            if (under == null || under.material() == Material.AIR || under.material() == Material.WATER) {
+                errors.add("bed-no-floor@" + block.dx() + "," + block.dy() + "," + block.dz());
+            }
+        }
+
+        String id = blueprint.id();
+        if ("cane".equals(id)) {
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.SUGAR_CANE) {
+                    continue;
+                }
+                // Soil under cane; water must share that soil Y orthogonally
+                BaseTemplates.RelBlock soil = cells.get(pack(block.dx(), block.dy() - 1, block.dz()));
+                if (soil == null) {
+                    errors.add("cane-no-soil@" + block.dx() + "," + block.dz());
+                    continue;
+                }
+                int sy = soil.dy();
+                boolean watered = false;
+                for (BlockFace f : List.of(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST)) {
+                    BaseTemplates.RelBlock n = cells.get(pack(soil.dx() + f.getModX(), sy, soil.dz() + f.getModZ()));
+                    if (n != null && n.material() == Material.WATER) {
+                        watered = true;
+                        break;
+                    }
+                }
+                if (!watered) {
+                    errors.add("cane-no-water@" + block.dx() + "," + block.dz());
+                }
+            }
+        }
+
+        if ("iron".equals(id)) {
+            // Water on top of solid golem deck (y=14 over stone at y=13) floods spawn space
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.WATER || block.dy() != 14) {
+                    continue;
+                }
+                BaseTemplates.RelBlock under = cells.get(pack(block.dx(), 13, block.dz()));
+                if (under != null && under.material() != Material.AIR && under.material() != Material.WATER) {
+                    errors.add("iron-flood-on-deck@" + block.dx() + "," + block.dz());
+                }
+            }
+            // Dry pads on TOP golem deck (y=13)
+            boolean dryPad = false;
+            for (int[] p : new int[][]{{3, 3}, {-4, 3}, {3, -4}, {-4, -4}}) {
+                BaseTemplates.RelBlock floor = cells.get(pack(p[0], 13, p[1]));
+                BaseTemplates.RelBlock above = cells.get(pack(p[0], 14, p[1]));
+                if (floor != null && floor.material() != Material.AIR && floor.material() != Material.WATER
+                        && (above == null || above.material() == Material.AIR)) {
+                    dryPad = true;
+                    break;
+                }
+            }
+            if (!dryPad) {
+                errors.add("iron-no-dry-spawn-pad");
+            }
+        }
+
+        if ("mushroom".equals(id)) {
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.LANTERN && block.material() != Material.SOUL_LANTERN) {
+                    continue;
+                }
+                // Interior volume roughly |x|<=3, |z|<=2, y<=3 — lanterns there kill growth
+                if (Math.abs(block.dx()) <= 3 && block.dz() >= -3 && block.dz() <= 2 && block.dy() <= 3) {
+                    errors.add("mushroom-interior-light@" + block.dx() + "," + block.dy() + "," + block.dz());
+                }
+            }
+        }
+
         return errors;
     }
 

@@ -89,9 +89,11 @@ protection:
   enabled: true
   max-regions-per-world: 200
   default-world-flags:
-    tnt: deny
+    # TNT explosions allowed (place TNT still needs build/place). Set deny to hard-disable.
+    tnt: allow
     creeper-explosion: deny
     other-explosion: deny
+    # Wildfire spread stays off; player flint-and-steel uses place/build (portals/TNT OK).
     fire-spread: deny
     fire-destroy: deny
     lava-fire: deny

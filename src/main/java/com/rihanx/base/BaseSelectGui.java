@@ -159,6 +159,37 @@ public final class BaseSelectGui implements InventoryHolder, Listener {
                         "<yellow>Click to build</yellow>"
                 )
         ));
+        ENTRIES.put("nordic", new MenuEntry(
+                Material.SPRUCE_LOG, 37,
+                "<gradient:#8b5a2b:#d2b48c><bold>Nordic</bold></gradient>",
+                List.of(
+                        "<gray>Spruce longhouse</gray>",
+                        "<dark_gray>Hearth hall · loft beds</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
+        ENTRIES.put("medieval", new MenuEntry(
+                Material.STONE_BRICKS, 38,
+                "<gradient:#6b7280:#d1d5db><bold>Medieval</bold></gradient>",
+                List.of(
+                        "<gray>Stone manor · towers</gray>",
+                        "<dark_gray>Battlements · courtyard</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
+        ENTRIES.put("secret", new MenuEntry(
+                Material.CHEST, 40,
+                "<gradient:#334155:#94a3b8><bold>Secret</bold></gradient>",
+                List.of(
+                        "<light_purple>Hidden vault safehouse</light_purple>",
+                        "<gray>Closet hatch → ladder → stocked vault</gray>",
+                        "<aqua>10 stocked chests</aqua> <dark_gray>(tools · food · ores…)</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
     }
 
     private final @NotNull RihanX plugin;

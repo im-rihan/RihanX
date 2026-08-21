@@ -26,6 +26,7 @@ import org.bukkit.block.data.type.Lantern;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -256,6 +257,8 @@ public final class BaseService {
                 protectSpawnPad(world, entrance);
                 activateBubbleLifts(world, changes);
                 refreshRails(world, changes);
+                activateFarmFluids(world, changes);
+                activateFarmFluids(world, changes);
                 String regionName = claimBaseRegion(player, world, blueprint, changes, entrance, kind);
                 Location done = entranceLocation(origin, blueprint, facing, faceToYaw(opposite(facing)));
                 player.teleport(done);
@@ -272,12 +275,299 @@ public final class BaseService {
                 if (regionName != null && "base".equals(kind)) {
                     messages.send(player, "base-protected", MessageManager.placeholders("name", regionName));
                 }
-                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato").contains(blueprint.id())) {
+                if ("base".equals(kind) && blueprint.id().equals("secret")) {
+                    // Delay so double-chests finish linking after paste physics
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () ->
+                            stockSecretStashChests(world, origin, facing), 5L);
+                    messages.send(player, "base-secret-hint");
+                }
+                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato", "animal").contains(blueprint.id())) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
+                }
+                if ("farm".equals(kind) && (blueprint.id().equals("wheat") || blueprint.id().equals("potato"))) {
+                    spawnFarmerInPod(world, origin, facing);
+                }
+                if ("farm".equals(kind) && blueprint.id().equals("iron")) {
+                    spawnIronFarmMobs(world, origin, facing);
+                }
+                if ("farm".equals(kind) && blueprint.id().equals("animal")) {
+                    spawnAnimalFarmMobs(world, origin, facing);
                 }
                 messages.send(player, kindMessage(kind, "undo-hint"));
             }
         }, 1L, 1L);
+    }
+
+    /** Spawns a farmer villager inside the crop pod next to the bed (walk Y=1). */
+    private void spawnFarmerInPod(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing
+    ) {
+        // cropVillagerFarm size=4: bed foot at (-1,1,7), open cell beside at (0,1,7)
+        int[] xz = rotate(0, 7, structureFacing);
+        Location at = origin.clone().add(xz[0] + 0.5, 1.0, xz[1] + 0.5);
+        Block feet = at.getBlock();
+        // Don't destroy bed/composter — only clear air-ish occupancy
+        if (!feet.getType().name().endsWith("_BED") && feet.getType() != Material.COMPOSTER) {
+            if (feet.getType().isSolid()) {
+                feet.setType(Material.AIR, false);
+            }
+        } else {
+            // Shift one block toward door if we landed on furniture
+            int[] alt = rotate(0, 6, structureFacing);
+            at = origin.clone().add(alt[0] + 0.5, 1.0, alt[1] + 0.5);
+            at.getBlock().setType(Material.AIR, false);
+        }
+        at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+        Block under = at.getBlock().getRelative(0, -1, 0);
+        if (!under.getType().isSolid()) {
+            under.setType(Material.SMOOTH_STONE, false);
+        }
+        Location spawnAt = at;
+        world.spawn(spawnAt, Villager.class, villager -> {
+            villager.setProfession(Villager.Profession.FARMER);
+            villager.setVillagerLevel(2);
+            villager.setAdult();
+            villager.setCanPickupItems(true);
+            villager.setRemoveWhenFarAway(false);
+            villager.customName(net.kyori.adventure.text.Component.text("Farm Helper"));
+            villager.setCustomNameVisible(true);
+        });
+    }
+
+    /**
+     * Spawns 3 unemployed villagers per pod (claim farmer at composters) + nametag zombie.
+     * Pods face the zombie through iron bars so they panic; golems spawn on the TOP deck.
+     */
+    private void spawnIronFarmMobs(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing
+    ) {
+        List<Villager> spawned = new ArrayList<>();
+        for (int side : new int[]{-5, 5}) {
+            int outer = side < 0 ? side - 1 : side + 1;
+            for (int i = 0; i < 3; i++) {
+                int bedZ = -3 + i * 2;
+                // Stand on outer column next to composter (solid floor, not on bed)
+                int spawnZ = bedZ + 1;
+                int[] xz = rotate(outer, spawnZ, structureFacing);
+                Location at = origin.clone().add(xz[0] + 0.5, 9.0, xz[1] + 0.5);
+                Block floor = at.getBlock().getRelative(0, -1, 0);
+                if (!floor.getType().isSolid()) {
+                    floor.setType(Material.STONE_BRICKS, false);
+                }
+                // Clear headroom only — never destroy beds/composters
+                Material here = at.getBlock().getType();
+                if (here == Material.AIR || here == Material.GLASS || here == Material.IRON_BARS) {
+                    at.getBlock().setType(Material.AIR, false);
+                } else if (here == Material.COMPOSTER || here.name().endsWith("_BED")) {
+                    // Shift one step along Z away from bed foot
+                    int[] alt = rotate(outer, bedZ - 1 >= -3 ? bedZ - 1 : bedZ + 2, structureFacing);
+                    at = origin.clone().add(alt[0] + 0.5, 9.0, alt[1] + 0.5);
+                    Block f2 = at.getBlock().getRelative(0, -1, 0);
+                    if (!f2.getType().isSolid()) {
+                        f2.setType(Material.STONE_BRICKS, false);
+                    }
+                    at.getBlock().setType(Material.AIR, false);
+                }
+                at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+                Location spawnAt = at;
+                Villager villager = world.spawn(spawnAt, Villager.class, v -> {
+                    // NONE (unemployed) — can claim composters. Nitwit can NEVER take a job.
+                    v.setProfession(Villager.Profession.NONE);
+                    v.setVillagerLevel(1);
+                    v.setAdult();
+                    v.setAI(true);
+                    v.setAware(true);
+                    v.setCanPickupItems(false);
+                    v.setRemoveWhenFarAway(false);
+                    v.setPersistent(true);
+                    v.customName(net.kyori.adventure.text.Component.text("Iron Villager"));
+                    v.setCustomNameVisible(false);
+                });
+                spawned.add(villager);
+            }
+        }
+
+        // Force farmer after a short delay so composters are claimed even if pathfinding is slow
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            for (Villager v : spawned) {
+                if (!v.isValid()) {
+                    continue;
+                }
+                if (v.getProfession() == Villager.Profession.NONE
+                        || v.getProfession() == Villager.Profession.NITWIT) {
+                    v.setProfession(Villager.Profession.FARMER);
+                    v.setVillagerExperience(1);
+                }
+            }
+        }, 40L);
+
+        int[] zx = rotate(0, -5, structureFacing);
+        Location zombieAt = origin.clone().add(zx[0] + 0.5, 9.0, zx[1] + 0.5);
+        Block zUnder = zombieAt.getBlock().getRelative(0, -1, 0);
+        if (!zUnder.getType().isSolid()) {
+            zUnder.setType(Material.STONE_BRICKS, false);
+        }
+        zombieAt.getBlock().setType(Material.AIR, false);
+        zombieAt.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+        world.spawn(zombieAt, org.bukkit.entity.Zombie.class, zombie -> {
+            zombie.setRemoveWhenFarAway(false);
+            zombie.setPersistent(true);
+            zombie.setShouldBurnInDay(false);
+            zombie.setAware(true);
+            zombie.setAI(true);
+            zombie.customName(net.kyori.adventure.text.Component.text("Iron Panic"));
+            zombie.setCustomNameVisible(true);
+            zombie.setAdult();
+            // Silent + no pickup — stays a threat villagers can see through bars
+            zombie.setSilent(true);
+            zombie.setCanPickupItems(false);
+        });
+    }
+
+    /**
+     * Fills secret vault chests with categorized kits.
+     * Uses {@link SecretBaseTemplates#CHEST_DY} so Y always matches the blueprint.
+     */
+    private void stockSecretStashChests(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing
+    ) {
+        int chestY = origin.getBlockY() + SecretBaseTemplates.CHEST_DY;
+        for (SecretBaseTemplates.StashSpec spec : SecretBaseTemplates.stashChestSpecs()) {
+            int[] rightXz = rotate(spec.dx(), spec.dz(), structureFacing);
+            int[] leftXz = rotate(spec.dx() - 1, spec.dz(), structureFacing);
+            Block right = world.getBlockAt(
+                    origin.getBlockX() + rightXz[0], chestY, origin.getBlockZ() + rightXz[1]);
+            Block left = world.getBlockAt(
+                    origin.getBlockX() + leftXz[0], chestY, origin.getBlockZ() + leftXz[1]);
+
+            ensureChest(right, structureFacing);
+            ensureChest(left, structureFacing);
+
+            String label = "Stash: " + Character.toUpperCase(spec.category().charAt(0))
+                    + spec.category().substring(1);
+
+            // Split items across both halves (27+27) — works even before double-chest links
+            List<org.bukkit.inventory.ItemStack> items = spec.items();
+            fillChestInventory(left, label, items, 0, 27);
+            fillChestInventory(right, label, items, 27, items.size());
+        }
+    }
+
+    private static void ensureChest(@NotNull Block block, @NotNull BlockFace structureFacing) {
+        if (block.getType() != Material.CHEST) {
+            block.setType(Material.CHEST, false);
+        }
+        if (block.getBlockData() instanceof org.bukkit.block.data.type.Chest chestData) {
+            BlockFace face = mapFacing(BlockFace.SOUTH, structureFacing);
+            chestData.setFacing(face);
+            block.setBlockData(chestData, false);
+        }
+    }
+
+    private static void fillChestInventory(
+            @NotNull Block block,
+            @NotNull String label,
+            @NotNull List<org.bukkit.inventory.ItemStack> items,
+            int fromInclusive,
+            int toExclusive
+    ) {
+        if (!(block.getState() instanceof org.bukkit.block.Chest chest)) {
+            return;
+        }
+        chest.customName(net.kyori.adventure.text.Component.text(label));
+        org.bukkit.inventory.Inventory inv = chest.getBlockInventory();
+        inv.clear();
+        int slot = 0;
+        for (int i = fromInclusive; i < toExclusive && i < items.size(); i++) {
+            if (slot >= inv.getSize()) {
+                break;
+            }
+            inv.setItem(slot++, items.get(i).clone());
+        }
+        chest.update(true, false);
+    }
+
+    /**
+     * Fills the 4 animal pens: cows, sheep, pigs, chickens (2 adults each so they can breed).
+     */
+    private void spawnAnimalFarmMobs(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing
+    ) {
+        // Pen centers match FarmTemplates.animal() layout (local coords before rotation).
+        record Pen(int lx, int lz, Class<? extends org.bukkit.entity.Animals> type, String label) {
+        }
+        List<Pen> pens = List.of(
+                new Pen(-4, -4, org.bukkit.entity.Cow.class, "Cow Pen"),
+                new Pen(4, -4, org.bukkit.entity.Sheep.class, "Sheep Pen"),
+                new Pen(-4, 4, org.bukkit.entity.Pig.class, "Pig Pen"),
+                new Pen(4, 4, org.bukkit.entity.Chicken.class, "Chicken Pen")
+        );
+        for (Pen pen : pens) {
+            int[] xz = rotate(pen.lx(), pen.lz(), structureFacing);
+            for (int i = 0; i < 2; i++) {
+                double ox = (i == 0) ? 0.3 : -0.3;
+                double oz = (i == 0) ? 0.3 : -0.3;
+                Location at = origin.clone().add(xz[0] + 0.5 + ox, 1.0, xz[1] + 0.5 + oz);
+                // Clear fence/hay if paste left something in the way
+                Block feet = at.getBlock();
+                if (feet.getType().isSolid() || feet.getType().name().contains("FENCE")) {
+                    feet.setType(Material.AIR, false);
+                }
+                at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+                Block under = feet.getRelative(0, -1, 0);
+                if (!under.getType().isSolid()) {
+                    under.setType(Material.GRASS_BLOCK, false);
+                }
+                String label = pen.label();
+                world.spawn(at, pen.type(), animal -> {
+                    animal.setAdult();
+                    animal.setRemoveWhenFarAway(false);
+                    animal.setCanPickupItems(false);
+                    animal.customName(net.kyori.adventure.text.Component.text(label));
+                    animal.setCustomNameVisible(false);
+                    if (animal instanceof org.bukkit.entity.Ageable ageable) {
+                        ageable.setAdult();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Re-apply water sources (and nudge observers) after silent paste so streams/redstone wake up.
+     */
+    private static void activateFarmFluids(@NotNull World world, @NotNull List<BlockChange> changes) {
+        for (BlockChange change : changes) {
+            Material planned = change.data().getMaterial();
+            if (planned != Material.WATER) {
+                continue;
+            }
+            Block block = change.block();
+            BlockData water = Material.WATER.createBlockData();
+            if (water instanceof Levelled levelled) {
+                levelled.setLevel(0);
+            }
+            block.setBlockData(water, true);
+        }
+        for (BlockChange change : changes) {
+            Material planned = change.data().getMaterial();
+            if (planned != Material.OBSERVER && planned != Material.REDSTONE_WIRE
+                    && planned != Material.PISTON && planned != Material.STICKY_PISTON) {
+                continue;
+            }
+            Block block = change.block();
+            BlockData data = change.data();
+            block.setType(Material.AIR, false);
+            block.setBlockData(data, true);
+        }
     }
 
     private boolean startAbsolutePaste(
@@ -356,6 +646,7 @@ public final class BaseService {
             if (index[0] >= changes.size()) {
                 activateBubbleLifts(world, changes);
                 refreshRails(world, changes);
+                activateFarmFluids(world, changes);
                 finishActive(player, active, false);
                 messages.send(player, kindMessage(kind, "done"), MessageManager.placeholders(
                         "name", name,
@@ -590,7 +881,6 @@ public final class BaseService {
                 continue;
             }
             Block base = change.block();
-            // Ensure base block is correct with physics so the column can form
             if (base.getType() != planned) {
                 base.setType(planned, false);
             }
@@ -607,12 +897,41 @@ public final class BaseService {
                 if (water instanceof Levelled levelled) {
                     levelled.setLevel(0);
                 }
-                above.setBlockData(water, true);
+                // physics=false so water does not spill out tiny seal gaps during refresh
+                above.setBlockData(water, false);
             }
-            // Nudge the bubble base so the column recalculates
             Material keep = base.getType();
             base.setType(Material.STONE, false);
             base.setType(keep, true);
+        }
+        // Re-place planned glass around lifts so any spilled water is sealed again
+        for (BlockChange change : changes) {
+            if (change.data().getMaterial() != Material.GLASS) {
+                continue;
+            }
+            Block block = change.block();
+            if (block.getType() == Material.WATER || block.getType() == Material.BUBBLE_COLUMN
+                    || block.getType() == Material.AIR) {
+                // Only restore glass if a neighbor water column exists (lift shell)
+                boolean nearWater = false;
+                for (BlockFace face : new BlockFace[]{
+                        BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST,
+                        BlockFace.UP, BlockFace.DOWN
+                }) {
+                    Material n = block.getRelative(face).getType();
+                    if (n == Material.WATER || n == Material.BUBBLE_COLUMN
+                            || n == Material.SOUL_SAND || n == Material.MAGMA_BLOCK) {
+                        nearWater = true;
+                        break;
+                    }
+                }
+                if (nearWater) {
+                    block.setType(Material.GLASS, false);
+                }
+            } else if (block.getType() != Material.GLASS) {
+                // Keep intentional glass
+                block.setBlockData(change.data(), false);
+            }
         }
     }
 
@@ -681,7 +1000,7 @@ public final class BaseService {
         region.setFlag(ProtectionFlag.BUILD, FlagValue.DENY);
         region.setFlag(ProtectionFlag.BREAK, FlagValue.DENY);
         region.setFlag(ProtectionFlag.PLACE, FlagValue.DENY);
-        region.setFlag(ProtectionFlag.TNT, FlagValue.DENY);
+        // Keep creeper/other grief out; do not blanket-deny TNT so owners can still use it if world allows.
         region.setFlag(ProtectionFlag.CREEPER_EXPLOSION, FlagValue.DENY);
         region.setFlag(ProtectionFlag.OTHER_EXPLOSION, FlagValue.DENY);
         region.setFlag(ProtectionFlag.MOB_GRIEF, FlagValue.DENY);
@@ -768,13 +1087,18 @@ public final class BaseService {
             }
             return slab;
         }
-        // Open trapdoors (lava blades, item pass-through) — facing = hinge side attachment
+        // Open iron trapdoors only (lava blades / XP landings). Wooden floor hatches stay closed.
         if (data instanceof org.bukkit.block.data.type.TrapDoor trapDoor && worldFacing != null) {
             if (trapDoor.getFaces().contains(worldFacing)) {
                 trapDoor.setFacing(worldFacing);
             }
-            trapDoor.setOpen(true);
-            trapDoor.setHalf(Bisected.Half.TOP);
+            if (material == Material.IRON_TRAPDOOR) {
+                trapDoor.setOpen(true);
+                trapDoor.setHalf(Bisected.Half.TOP);
+            } else {
+                trapDoor.setOpen(false);
+                trapDoor.setHalf(Bisected.Half.BOTTOM);
+            }
             return trapDoor;
         }
         // Buttons / levers need wall attachment + facing or they won't power doors

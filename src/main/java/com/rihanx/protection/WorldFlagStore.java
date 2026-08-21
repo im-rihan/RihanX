@@ -43,7 +43,7 @@ public final class WorldFlagStore {
                 }
             }
         }
-        defaults.putIfAbsent(ProtectionFlag.TNT, FlagValue.DENY);
+        defaults.putIfAbsent(ProtectionFlag.TNT, FlagValue.ALLOW);
         defaults.putIfAbsent(ProtectionFlag.CREEPER_EXPLOSION, FlagValue.DENY);
         defaults.putIfAbsent(ProtectionFlag.OTHER_EXPLOSION, FlagValue.DENY);
         defaults.putIfAbsent(ProtectionFlag.FIRE_SPREAD, FlagValue.DENY);

@@ -332,7 +332,7 @@ public final class LuxuryBaseTemplates {
         b.facing(10, 1, 5, Material.FURNACE, BlockFace.WEST);
         b.facing(10, 1, 4, Material.SMOKER, BlockFace.WEST);
         b.facing(10, 1, 3, Material.BLAST_FURNACE, BlockFace.WEST);
-        b.set(9, 1, 5, Material.BARREL);
+        b.set(8, 1, 6, Material.BARREL); // was (9,1,5) — blocked stair foot
         b.set(8, 1, 4, Material.SMITHING_TABLE);
         b.set(8, 1, 3, Material.ANVIL);
         b.set(-9, 1, 5, Material.BOOKSHELF);
@@ -829,6 +829,8 @@ public final class LuxuryBaseTemplates {
         for (int i = 0; i < 4; i++) {
             b.stairs(9, 1 + i, 5 - i, Material.STONE_BRICK_STAIRS, BlockFace.NORTH);
             b.set(9, 1 + i, 4 - i, Material.STONE_BRICKS);
+            // Keep stair column clear of furniture
+            b.set(9, 1 + i, 5 - i + 1, Material.AIR);
         }
 
         furnishBedroom(b, -11, -5, -10, -7, 1, f1,
@@ -852,8 +854,8 @@ public final class LuxuryBaseTemplates {
         b.set(-8, 1, 5, Material.CRAFTING_TABLE);
         b.facing(-9, 1, 5, Material.FURNACE, BlockFace.SOUTH);
         b.set(8, 1, 5, Material.ENCHANTING_TABLE);
-        b.set(9, 1, 5, Material.BOOKSHELF);
-        b.set(10, 1, 5, Material.BOOKSHELF);
+        b.set(10, 1, 5, Material.BOOKSHELF); // was (9,1,5) — blocked stair
+        b.set(10, 1, 6, Material.BOOKSHELF);
         b.set(0, 1, -9, Material.ANVIL);
 
         for (int y = 2; y <= 6; y += 2) {
@@ -929,7 +931,9 @@ public final class LuxuryBaseTemplates {
             b.set(x, loft + 1, maxZ + 3, Material.GLASS_PANE);
         }
         for (int i = 0; i < 4; i++) {
-            b.stairs(5, 1 + i, maxZ - i, Material.QUARTZ_STAIRS, BlockFace.SOUTH);
+            // Ascend toward -Z (into the house) as Y rises — facing NORTH
+            b.stairs(5, 1 + i, maxZ - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.set(5, 1 + i, maxZ - i - 1, Material.SMOOTH_QUARTZ);
         }
 
         furnishBedroom(b, -13, -6, -11, -7, 1, loft,
@@ -978,6 +982,205 @@ public final class LuxuryBaseTemplates {
                 "GrabCraft-style modernist villa - glass façades, balcony, 6 beds, garden + roof pools",
                 0, maxZ + 2
         );
+    }
+
+    /**
+     * GrabCraft-inspired spruce longhouse (Nordic): timber frame, peaked roof, hearth hall, loft beds.
+     * Original layout — not a scraped GrabCraft schematic.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint nordic() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -7;
+        int maxX = 7;
+        int minZ = -6;
+        int maxZ = 5;
+        int wallH = 4;
+
+        fillRect(b, minX - 1, maxX + 1, minZ - 1, maxZ + 1, -1, Material.COBBLESTONE);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.SPRUCE_PLANKS);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, wallH);
+        shell(b, minX, maxX, minZ, maxZ, 1, wallH, Material.SPRUCE_PLANKS, Material.SPRUCE_LOG);
+
+        // Timber posts every 3 blocks
+        for (int x = minX; x <= maxX; x += 3) {
+            for (int y = 1; y <= wallH; y++) {
+                b.set(x, y, minZ, Material.SPRUCE_LOG);
+                b.set(x, y, maxZ, Material.SPRUCE_LOG);
+            }
+        }
+        for (int z = minZ; z <= maxZ; z += 3) {
+            for (int y = 1; y <= wallH; y++) {
+                b.set(minX, y, z, Material.SPRUCE_LOG);
+                b.set(maxX, y, z, Material.SPRUCE_LOG);
+            }
+        }
+
+        gabledRoof(
+                b, minX, maxX, minZ, maxZ, wallH + 1,
+                Material.SPRUCE_STAIRS, Material.SPRUCE_PLANKS,
+                Material.SPRUCE_SLAB, Material.SPRUCE_PLANKS
+        );
+
+        b.doubleDoor(-1, 1, maxZ, Material.SPRUCE_DOOR, BlockFace.SOUTH);
+        for (int x = -5; x <= 5; x += 2) {
+            if (x == -1 || x == 0) {
+                continue;
+            }
+            framedWindow(b, x, 2, minZ, BlockFace.NORTH);
+            framedWindow(b, x, 2, maxZ, BlockFace.SOUTH);
+        }
+        framedWindow(b, minX, 2, 0, BlockFace.WEST);
+        framedWindow(b, maxX, 2, 0, BlockFace.EAST);
+
+        // Great hearth
+        b.set(0, 1, -2, Material.CAMPFIRE);
+        b.set(-1, 1, -2, Material.COBBLESTONE);
+        b.set(1, 1, -2, Material.COBBLESTONE);
+        b.set(0, 1, -3, Material.COBBLESTONE);
+        b.set(0, 1, -1, Material.COBBLESTONE);
+        b.set(0, 2, -2, Material.IRON_BARS);
+        b.set(0, wallH + 1, -2, Material.COBBLESTONE);
+        b.set(0, wallH + 2, -2, Material.COBBLESTONE);
+        b.set(0, wallH + 3, -2, Material.CAMPFIRE);
+
+        // Benches + table
+        for (int x = -4; x <= 4; x++) {
+            b.stairs(x, 1, 1, Material.SPRUCE_STAIRS, BlockFace.SOUTH);
+            b.stairs(x, 1, 3, Material.SPRUCE_STAIRS, BlockFace.NORTH);
+        }
+        fillRect(b, -3, 3, 2, 2, 1, Material.SPRUCE_PLANKS);
+
+        // Side bedrooms
+        furnishBedroom(b, -6, -5, -5, -3, 1, wallH + 1,
+                Material.SPRUCE_PLANKS, Material.SPRUCE_LOG, Material.RED_BED, BlockFace.EAST);
+        furnishBedroom(b, 5, 6, -5, -3, 1, wallH + 1,
+                Material.SPRUCE_PLANKS, Material.SPRUCE_LOG, Material.BLUE_BED, BlockFace.WEST);
+        furnishBedroom(b, -6, -5, 0, 2, 1, wallH + 1,
+                Material.SPRUCE_PLANKS, Material.SPRUCE_LOG, Material.YELLOW_BED, BlockFace.EAST);
+        furnishBedroom(b, 5, 6, 0, 2, 1, wallH + 1,
+                Material.SPRUCE_PLANKS, Material.SPRUCE_LOG, Material.GREEN_BED, BlockFace.WEST);
+
+        // Storage loft markers
+        b.set(-5, 1, 4, Material.BARREL);
+        b.set(5, 1, 4, Material.BARREL);
+        b.set(0, 1, 4, Material.CRAFTING_TABLE);
+        b.set(-2, 1, 4, Material.FURNACE);
+        b.set(2, 1, 4, Material.CHEST);
+        safeCeilingLantern(b, -3, 0, wallH);
+        safeCeilingLantern(b, 3, 0, wallH);
+        safeCeilingLantern(b, 0, 3, wallH);
+
+        // Front path
+        b.set(0, 0, maxZ + 1, Material.COBBLESTONE_SLAB);
+        b.set(0, 0, maxZ + 2, Material.DIRT_PATH);
+        b.set(-1, 0, maxZ + 2, Material.DIRT_PATH);
+        b.set(1, 0, maxZ + 2, Material.DIRT_PATH);
+
+        return b.build("nordic", "Nordic spruce longhouse - hearth hall, timber posts, loft beds", 0, 0, maxZ + 2);
+    }
+
+    /**
+     * GrabCraft-inspired medieval stone manor: keep walls, battlements, courtyard, great hall.
+     * Original layout — not a scraped GrabCraft schematic.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint medieval() {
+        BaseTemplates.Builder b = new BaseTemplates.Builder();
+        int minX = -10;
+        int maxX = 10;
+        int minZ = -9;
+        int maxZ = 7;
+        int wallH = 5;
+
+        fillRect(b, minX - 2, maxX + 2, minZ - 2, maxZ + 2, -1, Material.STONE_BRICKS);
+        fillRect(b, minX, maxX, minZ, maxZ, 0, Material.STONE_BRICKS);
+        clearVolume(b, minX + 1, maxX - 1, minZ + 1, maxZ - 1, 1, wallH);
+        shell(b, minX, maxX, minZ, maxZ, 1, wallH, Material.STONE_BRICKS, Material.COBBLESTONE);
+
+        // Corner towers
+        for (int[] c : new int[][]{{minX, minZ}, {maxX, minZ}, {minX, maxZ}, {maxX, maxZ}}) {
+            for (int y = 1; y <= wallH + 2; y++) {
+                b.set(c[0], y, c[1], Material.STONE_BRICKS);
+                b.set(c[0] + (c[0] < 0 ? 1 : -1), y, c[1], Material.STONE_BRICKS);
+                b.set(c[0], y, c[1] + (c[1] < 0 ? 1 : -1), Material.STONE_BRICKS);
+            }
+            b.set(c[0], wallH + 3, c[1], Material.STONE_BRICK_WALL);
+            b.set(c[0], wallH + 4, c[1], Material.LANTERN);
+        }
+
+        // Battlement crenels along walls
+        for (int x = minX + 2; x <= maxX - 2; x += 2) {
+            b.set(x, wallH + 1, minZ, Material.STONE_BRICK_WALL);
+            b.set(x, wallH + 1, maxZ, Material.STONE_BRICK_WALL);
+        }
+        for (int z = minZ + 2; z <= maxZ - 2; z += 2) {
+            b.set(minX, wallH + 1, z, Material.STONE_BRICK_WALL);
+            b.set(maxX, wallH + 1, z, Material.STONE_BRICK_WALL);
+        }
+
+        gabledRoof(
+                b, minX + 2, maxX - 2, minZ + 2, maxZ - 2, wallH + 1,
+                Material.DARK_OAK_STAIRS, Material.DARK_OAK_PLANKS,
+                Material.DARK_OAK_SLAB, Material.STONE_BRICKS
+        );
+
+        b.doubleDoor(-1, 1, maxZ, Material.IRON_DOOR, BlockFace.SOUTH);
+        b.facing(-2, 2, maxZ + 1, Material.STONE_BUTTON, BlockFace.SOUTH);
+        b.facing(-2, 2, maxZ - 1, Material.STONE_BUTTON, BlockFace.NORTH);
+
+        // Arrow-slit windows
+        for (int z = -6; z <= 4; z += 3) {
+            b.set(minX, 2, z, Material.IRON_BARS);
+            b.set(minX, 3, z, Material.IRON_BARS);
+            b.set(maxX, 2, z, Material.IRON_BARS);
+            b.set(maxX, 3, z, Material.IRON_BARS);
+        }
+
+        // Open courtyard fountain
+        fillRect(b, -2, 2, -2, 2, 0, Material.POLISHED_ANDESITE);
+        b.set(0, 1, 0, Material.WATER);
+        b.set(-1, 1, 0, Material.STONE_BRICK_WALL);
+        b.set(1, 1, 0, Material.STONE_BRICK_WALL);
+        b.set(0, 1, -1, Material.STONE_BRICK_WALL);
+        b.set(0, 1, 1, Material.STONE_BRICK_WALL);
+        b.set(0, 2, 0, Material.LANTERN);
+
+        // Great hall furniture
+        for (int x = -6; x <= -3; x++) {
+            b.stairs(x, 1, 4, Material.DARK_OAK_STAIRS, BlockFace.SOUTH);
+        }
+        for (int x = 3; x <= 6; x++) {
+            b.stairs(x, 1, 4, Material.DARK_OAK_STAIRS, BlockFace.SOUTH);
+        }
+        b.set(0, 1, 5, Material.LECTERN);
+        b.set(-1, 1, 5, Material.BOOKSHELF);
+        b.set(1, 1, 5, Material.BOOKSHELF);
+
+        furnishBedroom(b, -9, -7, -8, -5, 1, wallH + 1,
+                Material.STONE_BRICKS, Material.COBBLESTONE, Material.RED_BED, BlockFace.EAST);
+        furnishBedroom(b, 7, 9, -8, -5, 1, wallH + 1,
+                Material.STONE_BRICKS, Material.COBBLESTONE, Material.BLUE_BED, BlockFace.WEST);
+        furnishBedroom(b, -9, -7, -2, 0, 1, wallH + 1,
+                Material.STONE_BRICKS, Material.COBBLESTONE, Material.YELLOW_BED, BlockFace.EAST);
+        furnishBedroom(b, 7, 9, -2, 0, 1, wallH + 1,
+                Material.STONE_BRICKS, Material.COBBLESTONE, Material.GREEN_BED, BlockFace.WEST);
+
+        b.set(-8, 1, 5, Material.CRAFTING_TABLE);
+        b.set(-7, 1, 5, Material.FURNACE);
+        b.set(7, 1, 5, Material.BLAST_FURNACE);
+        b.set(8, 1, 5, Material.SMOKER);
+        b.set(0, 1, -7, Material.CHEST);
+        b.set(-1, 1, -7, Material.BARREL);
+        b.set(1, 1, -7, Material.BARREL);
+        safeCeilingLantern(b, -5, 2, wallH);
+        safeCeilingLantern(b, 5, 2, wallH);
+        safeCeilingLantern(b, 0, -5, wallH);
+
+        b.set(0, 0, maxZ + 1, Material.STONE_BRICK_SLAB);
+        b.set(0, 0, maxZ + 2, Material.STONE_BRICKS);
+        b.set(-1, 0, maxZ + 2, Material.STONE_BRICKS);
+        b.set(1, 0, maxZ + 2, Material.STONE_BRICKS);
+
+        return b.build("medieval", "Medieval stone manor - towers, battlements, courtyard fountain", 0, 0, maxZ + 2);
     }
 
     /**
@@ -1050,6 +1253,15 @@ public final class LuxuryBaseTemplates {
         for (int i = 0; i < 4; i++) {
             b.stairs(-8, 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
             b.stairs(8, 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.set(-8, 1 + i, 5 - i, Material.SMOOTH_QUARTZ);
+            b.set(8, 1 + i, 5 - i, Material.SMOOTH_QUARTZ);
+        }
+        // Second flight to upper floor (f1 → top)
+        for (int i = 0; i < 4; i++) {
+            b.stairs(-8, f1 + 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.stairs(8, f1 + 1 + i, 6 - i, Material.QUARTZ_STAIRS, BlockFace.NORTH);
+            b.set(-8, f1 + 1 + i, 5 - i, Material.SMOOTH_QUARTZ);
+            b.set(8, f1 + 1 + i, 5 - i, Material.SMOOTH_QUARTZ);
         }
 
         furnishBedroom(b, -15, -8, -12, -9, 1, f1,
@@ -1136,8 +1348,8 @@ public final class LuxuryBaseTemplates {
 
     /**
      * Dual bubble-column lifts (Bedrock + Java):
-     * sealed glass tubes filled with water SOURCE blocks, soul sand = up, magma = down.
-     * Entries use wall signs (hold water, no collision) — never open AIR holes that drain the shaft.
+     * sealed glass tubes with water sources; soul sand = up, magma = down.
+     * Entries use closed iron trapdoors (hold water, no leak) — not open glass gaps.
      */
     private static void buildLift(
             @NotNull BaseTemplates.Builder b,
@@ -1159,16 +1371,13 @@ public final class LuxuryBaseTemplates {
                 }
             }
         }
-        // Bubble bases
         b.set(x, yBottom, z, Material.SOUL_SAND);
         b.set(x + 2, yBottom, z, Material.MAGMA_BLOCK);
-        // Source water column (level 0) — required for bubble columns on Bedrock/Java
         for (int y = yBottom + 1; y <= yTop; y++) {
             b.set(x, y, z, Material.WATER);
             b.set(x + 2, y, z, Material.WATER);
-            b.set(x + 1, y, z, Material.GLASS); // solid divider between up/down shafts
+            b.set(x + 1, y, z, Material.GLASS);
         }
-        // Sign doors on +Z — players walk through; water stays contained
         int[] floors = walkFloors.length > 0
                 ? walkFloors
                 : new int[]{yBottom + 1, Math.max(yBottom + 1, yTop - 1)};
@@ -1176,19 +1385,26 @@ public final class LuxuryBaseTemplates {
             if (walkY < yBottom + 1 || walkY > yTop - 1) {
                 continue;
             }
-            signLiftDoor(b, x, z, walkY);
-            signLiftDoor(b, x + 2, z, walkY);
-            // Clear lobby approach outside the tube (do NOT punch the water cell)
+            trapdoorLiftDoor(b, x, z, walkY);
+            trapdoorLiftDoor(b, x + 2, z, walkY);
             for (int dx = 0; dx <= 2; dx++) {
                 b.set(x + dx, walkY, z + 2, Material.AIR);
                 b.set(x + dx, walkY + 1, z + 2, Material.AIR);
                 b.set(x + dx, walkY, z + 3, Material.AIR);
                 b.set(x + dx, walkY + 1, z + 3, Material.AIR);
             }
+            // Re-seal side/back glass after lobby clears (prevents water spill)
+            b.set(x - 1, walkY, z, Material.GLASS);
+            b.set(x - 1, walkY + 1, z, Material.GLASS);
+            b.set(x + 3, walkY, z, Material.GLASS);
+            b.set(x + 3, walkY + 1, z, Material.GLASS);
+            b.set(x, walkY, z - 1, Material.GLASS);
+            b.set(x, walkY + 1, z - 1, Material.GLASS);
+            b.set(x + 2, walkY, z - 1, Material.GLASS);
+            b.set(x + 2, walkY + 1, z - 1, Material.GLASS);
         }
         b.set(x, yBottom - 1, z, Material.SEA_LANTERN);
         b.set(x + 2, yBottom - 1, z, Material.SEA_LANTERN);
-        // Cap tubes so water does not spill upward; rods mark the shafts
         b.set(x, yTop + 1, z, Material.SMOOTH_QUARTZ);
         b.set(x + 2, yTop + 1, z, Material.SMOOTH_QUARTZ);
         b.set(x, yTop + 1, z + 1, Material.END_ROD);
@@ -1196,21 +1412,31 @@ public final class LuxuryBaseTemplates {
     }
 
     /**
-     * 2-high wall-sign door on the south face of the tube.
-     * Signs attach to the SE glass pillar (facing WEST) so they are valid wall signs,
-     * hold water in the shaft, and have no collision for players.
+     * 2-high wall-sign door on the south face — holds water, no collision.
+     * (Trapdoors are forced open by paste for farm lava blades, so signs are safer here.)
      */
+    private static void trapdoorLiftDoor(
+            @NotNull BaseTemplates.Builder b,
+            int shaftX,
+            int shaftZ,
+            int walkY
+    ) {
+        b.set(shaftX + 1, walkY, shaftZ + 1, Material.GLASS);
+        b.set(shaftX + 1, walkY + 1, shaftZ + 1, Material.GLASS);
+        b.set(shaftX - 1, walkY, shaftZ + 1, Material.GLASS);
+        b.set(shaftX - 1, walkY + 1, shaftZ + 1, Material.GLASS);
+        b.facing(shaftX, walkY, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
+        b.facing(shaftX, walkY + 1, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
+    }
+
+    /** @deprecated kept for any leftover callers — use {@link #trapdoorLiftDoor} */
     private static void signLiftDoor(
             @NotNull BaseTemplates.Builder b,
             int shaftX,
             int shaftZ,
             int walkY
     ) {
-        // Keep SE corner glass as attachment point
-        b.set(shaftX + 1, walkY, shaftZ + 1, Material.GLASS);
-        b.set(shaftX + 1, walkY + 1, shaftZ + 1, Material.GLASS);
-        b.facing(shaftX, walkY, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
-        b.facing(shaftX, walkY + 1, shaftZ + 1, Material.OAK_WALL_SIGN, BlockFace.WEST);
+        trapdoorLiftDoor(b, shaftX, shaftZ, walkY);
     }
 
     /** Sea-lantern approach + gold/end-rod posts so the lift is obvious from hallways. */
