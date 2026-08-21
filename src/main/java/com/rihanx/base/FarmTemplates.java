@@ -58,12 +58,10 @@ public final class FarmTemplates {
         BaseTemplates.Builder c = new BaseTemplates.Builder();
         int rows = 6;
         for (int x = -rows; x <= rows; x++) {
-            // Water must sit beside sand at the same Y (sugar cane adjacency rule)
-            c.set(x, 0, 0, Material.WATER);
             c.set(x, 0, 1, Material.SAND);
-            c.set(x, 1, 1, Material.SUGAR_CANE); // base — never broken
+            c.set(x, 1, 1, Material.SUGAR_CANE);
             c.set(x, 2, 1, Material.AIR);
-            c.set(x, 3, 1, Material.AIR); // observer watches tip growth
+            c.set(x, 3, 1, Material.AIR);
             c.facing(x, 2, 2, Material.PISTON, BlockFace.NORTH);
             c.facing(x, 3, 2, Material.OBSERVER, BlockFace.NORTH);
             c.set(x, 1, 2, Material.AIR);
@@ -72,12 +70,30 @@ public final class FarmTemplates {
             c.set(x, 3, 3, Material.REDSTONE_WIRE);
             c.set(x, 0, 3, Material.SMOOTH_STONE);
             c.set(x, 0, 2, Material.SMOOTH_STONE);
+            // Water over hoppers (hydration). Carpet row feeds south into water hoppers.
+            c.facing(x, -1, -1, Material.HOPPER, BlockFace.SOUTH);
+            c.set(x, 0, -1, Material.WHITE_CARPET);
+            c.facing(x, -1, 0, Material.HOPPER, BlockFace.SOUTH);
+            c.set(x, 0, 0, Material.WATER);
         }
-        // Hoppers under the water channel → chest
-        hopperRowIntoChest(c, -1, 0, -rows, rows, 5);
         for (int x = -rows - 1; x <= rows + 1; x++) {
-            c.set(x, 1, -1, Material.STONE_BRICKS);
+            c.set(x, 0, -2, Material.STONE_BRICKS);
+            c.set(x, 1, -2, Material.STONE_BRICKS);
             c.slab(x, 4, 2, Material.STONE_BRICK_SLAB, Slab.Type.BOTTOM);
+        }
+        c.set(-rows - 1, 0, -1, Material.STONE_BRICKS);
+        c.set(rows + 1, 0, -1, Material.STONE_BRICKS);
+        c.set(-rows - 1, 0, 0, Material.STONE_BRICKS);
+        c.set(rows + 1, 0, 0, Material.STONE_BRICKS);
+        // Loot bay from water hopper row (under hydration canal)
+        hopperRowIntoChest(c, -1, 0, -rows, rows, 5);
+        for (int x = -rows; x <= rows; x++) {
+            // Do not overwrite hopperRow facings at z=0 — only restore overlays + carpet feeders
+            c.facing(x, -1, -1, Material.HOPPER, BlockFace.SOUTH);
+            c.set(x, 0, -1, Material.WHITE_CARPET);
+            c.set(x, 0, 0, Material.WATER);
+            c.set(x, 0, 1, Material.SAND);
+            c.set(x, 1, 1, Material.SUGAR_CANE);
         }
         c.set(-rows - 1, 1, 1, Material.STONE_BRICKS);
         c.set(rows + 1, 1, 1, Material.STONE_BRICKS);
@@ -87,35 +103,57 @@ public final class FarmTemplates {
         spawnPad(c, 0, 7);
         c.set(-1, 0, 7, Material.CRAFTING_TABLE);
         c.set(1, 0, 7, Material.BARREL);
-        return c.build("cane", "Auto sugar-cane - observer breaks top, base stays and regrows, water to chest", 0, 0, 7);
+        return c.build("cane", "Auto sugar-cane - tip break; carpet hoppers + water collect", 0, 0, 7);
     }
 
     /**
      * Bamboo observer farm — same leave-base / tip-break cycle as cane.
+     * Water is NOT adjacent to bamboo (would break it). Collection uses carpet→hopper.
      */
     public static @NotNull BaseTemplates.BaseBlueprint bamboo() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
         int rows = 5;
         for (int x = -rows; x <= rows; x++) {
-            b.set(x, -1, 0, Material.PODZOL);
-            b.set(x, 0, 0, Material.BAMBOO); // base stays
-            b.set(x, 1, 0, Material.AIR);
-            b.set(x, 2, 0, Material.AIR);
-            b.facing(x, 1, 1, Material.PISTON, BlockFace.NORTH);
-            b.facing(x, 2, 1, Material.OBSERVER, BlockFace.NORTH);
-            b.set(x, 0, 1, Material.AIR);
             b.set(x, 0, 2, Material.SMOOTH_STONE);
             b.set(x, 1, 2, Material.SMOOTH_STONE);
             b.set(x, 2, 2, Material.REDSTONE_WIRE);
             b.set(x, -1, 2, Material.SMOOTH_STONE);
             b.set(x, -1, 1, Material.SMOOTH_STONE);
-            // Water+hopper collection beside stalks
-            b.set(x, 0, -1, Material.WATER);
+            if (x == 0) {
+                // Center column reserved for hopper pipe to loot bay
+                b.set(x, -1, 0, Material.SMOOTH_STONE);
+                b.set(x, 0, 0, Material.AIR);
+                b.set(x, 1, 0, Material.AIR);
+                b.set(x, 2, 0, Material.AIR);
+                continue;
+            }
+            b.set(x, -1, 0, Material.PODZOL);
+            b.set(x, 0, 0, Material.BAMBOO);
+            b.set(x, 1, 0, Material.AIR);
+            b.set(x, 2, 0, Material.AIR);
+            b.facing(x, 1, 1, Material.PISTON, BlockFace.NORTH);
+            b.facing(x, 2, 1, Material.OBSERVER, BlockFace.NORTH);
+            b.set(x, 0, 1, Material.AIR);
+            // Carpet over hoppers beside stalks (NOT water — water breaks bamboo)
+            b.facing(x, -1, -1, Material.HOPPER, BlockFace.SOUTH);
+            b.set(x, 0, -1, Material.WHITE_CARPET);
         }
-        hopperRowIntoChest(b, -1, -1, -rows, rows, 4);
+        // Solid walls contain the farm (fences do not block items/water)
         for (int x = -rows - 1; x <= rows + 1; x++) {
-            b.set(x, 0, -2, Material.JUNGLE_FENCE);
+            b.set(x, 0, -2, Material.JUNGLE_PLANKS);
+            b.set(x, 1, -2, Material.JUNGLE_PLANKS);
             b.slab(x, 3, 1, Material.JUNGLE_SLAB, Slab.Type.BOTTOM);
+        }
+        b.set(-rows - 1, 0, -1, Material.JUNGLE_PLANKS);
+        b.set(rows + 1, 0, -1, Material.JUNGLE_PLANKS);
+        hopperRowIntoChest(b, -1, -1, -rows, rows, 4);
+        for (int x = -rows; x <= rows; x++) {
+            if (x == 0) {
+                continue;
+            }
+            b.set(x, 0, -1, Material.WHITE_CARPET);
+            b.set(x, -1, 0, Material.PODZOL);
+            b.set(x, 0, 0, Material.BAMBOO);
         }
         spawnPad(b, 0, 5);
         spawnPad(b, 0, 6);
@@ -123,23 +161,63 @@ public final class FarmTemplates {
         b.set(1, 0, 6, Material.CRAFTING_TABLE);
         postHangingLantern(b, -rows, 0, -2, Material.LANTERN);
         postHangingLantern(b, rows, 0, -2, Material.LANTERN);
-        return b.build("bamboo", "Auto bamboo - observer breaks top, base stays and regrows, water to chest", 0, 0, 6);
+        return b.build("bamboo", "Auto bamboo - tip break; carpet hoppers collect (no water on stalks)", 0, 0, 6);
     }
 
     /**
-     * Melon stem farm with dirt fruit pads and hopper trenches (stems stay and regrow fruit).
-     * Break melons (or use a villager); slices fall into water→hopper lines. Stems are never removed.
+     * Melon stem farm — dry fruit pads (water in 1-deep trenches only so stems are not flooded).
      */
     public static @NotNull BaseTemplates.BaseBlueprint melon() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
-        // Checkerboard: stem / dirt fruit pad so every stem has an adjacent grow site
         for (int x = -5; x <= 5; x++) {
-            for (int z = -2; z <= 3; z++) {
+            for (int z = -2; z <= 2; z++) {
                 b.set(x, -2, z, Material.STONE);
                 if ((x & 1) != 0) {
-                    // Water+hopper trenches between stem columns
-                    b.facing(x, -1, z, Material.HOPPER, BlockFace.SOUTH);
-                    b.set(x, 0, z, Material.WATER);
+                    // Trench: water at y=-1 over hoppers at y=-2 — pads at y=0 stay DRY
+                    b.facing(x, -2, z, Material.HOPPER, BlockFace.SOUTH);
+                    b.set(x, -1, z, Material.WATER);
+                    b.set(x, 0, z, Material.AIR);
+                } else if (((x / 2) + z) % 2 == 0) {
+                    b.set(x, -1, z, Material.FARMLAND);
+                    b.set(x, 0, z, Material.MELON_STEM);
+                } else {
+                    b.set(x, -1, z, Material.DIRT);
+                    b.set(x, 0, z, Material.AIR); // fruit pad
+                }
+            }
+            // End water sources for trench flow (odd columns only — match hopper trenches)
+            b.set(x, -2, -3, Material.STONE);
+            if ((x & 1) != 0) {
+                b.facing(x, -2, -3, Material.HOPPER, BlockFace.SOUTH);
+                b.set(x, -1, -3, Material.WATER);
+            } else {
+                b.set(x, -1, -3, Material.STONE);
+            }
+        }
+        for (int x = -6; x <= 6; x++) {
+            b.set(x, 0, -4, Material.STONE_BRICKS);
+            b.set(x, 0, 4, Material.STONE_BRICKS);
+            b.set(x, 1, -4, Material.STONE_BRICKS);
+            b.set(x, 1, 4, Material.STONE_BRICKS);
+        }
+        for (int z = -4; z <= 4; z++) {
+            b.set(-6, 0, z, Material.STONE_BRICKS);
+            b.set(6, 0, z, Material.STONE_BRICKS);
+            b.set(-6, 1, z, Material.STONE_BRICKS);
+            b.set(6, 1, z, Material.STONE_BRICKS);
+        }
+        b.set(0, 0, 4, Material.AIR);
+        b.set(0, 1, 4, Material.AIR);
+        b.facing(0, 0, 4, Material.OAK_FENCE_GATE, BlockFace.SOUTH);
+        // Loot bay PAST the plot so hopperRow does not wipe farmland (lineZ=3 was on stems)
+        hopperRowIntoChest(b, -2, 3, -5, 5, 6);
+        // Re-assert grow soil after helper
+        for (int x = -5; x <= 5; x++) {
+            for (int z = -2; z <= 2; z++) {
+                if ((x & 1) != 0) {
+                    b.facing(x, -2, z, Material.HOPPER, BlockFace.SOUTH);
+                    b.set(x, -1, z, Material.WATER);
+                    b.set(x, 0, z, Material.AIR);
                 } else if (((x / 2) + z) % 2 == 0) {
                     b.set(x, -1, z, Material.FARMLAND);
                     b.set(x, 0, z, Material.MELON_STEM);
@@ -148,27 +226,14 @@ public final class FarmTemplates {
                     b.set(x, 0, z, Material.AIR);
                 }
             }
-            b.set(x, -1, -3, Material.STONE);
-            b.set(x, 0, -3, Material.WATER);
         }
-        for (int x = -6; x <= 6; x++) {
-            b.set(x, 0, -4, Material.OAK_FENCE);
-            b.set(x, 0, 4, Material.OAK_FENCE);
-        }
-        for (int z = -4; z <= 4; z++) {
-            b.set(-6, 0, z, Material.OAK_FENCE);
-            b.set(6, 0, z, Material.OAK_FENCE);
-        }
-        b.facing(0, 0, 4, Material.OAK_FENCE_GATE, BlockFace.SOUTH);
-        // Loot bay past the fence (must be last so fences don't wipe hoppers/chests)
-        hopperRowIntoChest(b, -1, 3, -5, 5, 7);
         spawnPad(b, 0, 8);
         spawnPad(b, 0, 9);
         postHangingLantern(b, -5, 0, -4, Material.LANTERN);
         postHangingLantern(b, 5, 0, -4, Material.LANTERN);
         b.set(-2, 0, 9, Material.CRAFTING_TABLE);
         b.set(2, 0, 9, Material.COMPOSTER);
-        return b.build("melon", "Melon farm - stems stay and regrow fruit; water hoppers collect slices", 0, 0, 9);
+        return b.build("melon", "Melon farm - dry pads; trench water/hoppers; stems stay", 0, 0, 9);
     }
 
     /** Nether wart farm on soul sand with hopper trenches between columns. */
@@ -191,13 +256,25 @@ public final class FarmTemplates {
                 }
             }
         }
-        // Odd-X trenches already face south into z=2 row
         b.facing(0, 0, 3, Material.CRIMSON_FENCE_GATE, BlockFace.SOUTH);
         postHangingLantern(b, -4, 0, -4, Material.SOUL_LANTERN);
         postHangingLantern(b, 4, 0, -4, Material.SOUL_LANTERN);
         postHangingLantern(b, 4, 0, 3, Material.SOUL_LANTERN);
         postHangingLantern(b, -4, 0, 3, Material.SOUL_LANTERN);
-        hopperRowIntoChest(b, -1, 2, -3, 3, 6);
+        // lineZ=3 past soul-sand rows — do NOT wipe wart soil at z=2
+        hopperRowIntoChest(b, -1, 3, -3, 3, 6);
+        // Re-assert soul sand + wart after helper
+        for (int x = -4; x <= 4; x++) {
+            for (int z = -4; z <= 2; z++) {
+                if (x == -4 || x == 4 || z == -4) {
+                    continue;
+                }
+                if ((x & 1) == 0) {
+                    b.set(x, -1, z, Material.SOUL_SAND);
+                    b.set(x, 0, z, Material.NETHER_WART);
+                }
+            }
+        }
         spawnPad(b, 0, 7);
         spawnPad(b, 0, 8);
         b.set(-1, 0, 8, Material.CRAFTING_TABLE);
@@ -341,13 +418,19 @@ public final class FarmTemplates {
 
 
     /**
-     * Kelp aquarium: sealed glass tank; pistons break tips; items float into a
-     * contained roof stream over hoppers → pipe down to chests UNDER hoppers at ground.
+     * Kelp aquarium with a real item path to hoppers:
+     * <ol>
+     *   <li>Pistons break tips in the tank</li>
+     *   <li>Items float up to the open water surface (no solid roof / stone slab in the way)</li>
+     *   <li>North-only water sources at y=5 create a south-flowing stream</li>
+     *   <li>Stream runs over hoppers at y=4 — hoppers suck items, then pipe to ground chests</li>
+     * </ol>
+     * Static water everywhere does not push items; solid stone above observers blocks float-up.
      */
     public static @NotNull BaseTemplates.BaseBlueprint kelp() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
 
-        // Sand + water + kelp columns (fully inside glass)
+        // Grow tank: sand + water + kelp (surface at y=4 — open to sky inside walls)
         for (int x = -3; x <= 3; x++) {
             for (int z = -3; z <= 2; z++) {
                 b.set(x, -1, z, Material.SAND);
@@ -362,73 +445,70 @@ public final class FarmTemplates {
             }
         }
 
-        // Glass aquarium shell (walls tall enough to hold tank + roof stream)
-        for (int y = -1; y <= 7; y++) {
+        // Glass walls only — NO glass roof over the grow tank (items must float to surface)
+        for (int y = -1; y <= 6; y++) {
             for (int x = -4; x <= 4; x++) {
                 b.set(x, y, -4, Material.GLASS);
-                b.set(x, y, 6, Material.GLASS); // south wall past collection
+                b.set(x, y, 6, Material.GLASS);
             }
             for (int z = -4; z <= 6; z++) {
                 b.set(-4, y, z, Material.GLASS);
                 b.set(4, y, z, Material.GLASS);
             }
         }
-        // Glass floor/roof over BACK of tank only — front row (z=2) stays open so
-        // broken kelp can float into the collection stream (no sealed trap under glass)
-        for (int x = -3; x <= 3; x++) {
-            for (int z = -3; z <= 1; z++) {
-                b.set(x, 5, z, Material.GLASS);
-            }
-            // Open water bridge from tank surface into the hopper stream
-            b.set(x, 5, 2, Material.WATER);
-        }
 
-        // Front-row harvest: piston at tip Y faces kelp; observer watches growth
+        // Harvest: piston at tip Y; observer on top faces kelp; dust south of observer (not on hoppers)
         for (int x = -3; x <= 3; x++) {
             b.set(x, 3, 3, Material.AIR);
-            b.set(x, 4, 3, Material.AIR);
             b.facing(x, 3, 3, Material.PISTON, BlockFace.NORTH);
             b.facing(x, 4, 3, Material.OBSERVER, BlockFace.NORTH);
-            b.set(x, 4, 2, Material.WATER);
             b.set(x, 3, 4, Material.SMOOTH_STONE);
-            b.set(x, 4, 4, Material.REDSTONE_WIRE);
+            b.set(x, 4, 4, Material.REDSTONE_WIRE); // observer output → powers piston via stone
             b.set(x, 2, 3, Material.SMOOTH_STONE);
             b.set(x, 2, 4, Material.SMOOTH_STONE);
         }
 
-        // Contained collection stream — water ONLY above the hopper row (no spillover film)
+        // Hoppers only at z=5 under the stream (z=4 kept for redstone)
         for (int x = -3; x <= 3; x++) {
-            b.set(x, 5, 3, Material.SMOOTH_STONE);
-            b.set(x, 5, 4, Material.SMOOTH_STONE);
+            b.facing(x, 4, 5, Material.HOPPER, BlockFace.SOUTH);
         }
-        // Lid over stream area
+        hopperRowIntoChest(b, 4, 5, -3, 3, 8);
+        // Re-assert redstone after hopper helper (must not wipe observer circuit)
         for (int x = -3; x <= 3; x++) {
-            for (int z = 2; z <= 5; z++) {
-                b.set(x, 7, z, Material.GLASS);
-            }
+            b.set(x, 3, 4, Material.SMOOTH_STONE);
+            b.set(x, 4, 4, Material.REDSTONE_WIRE);
+            b.facing(x, 4, 3, Material.OBSERVER, BlockFace.NORTH);
+            b.facing(x, 3, 3, Material.PISTON, BlockFace.NORTH);
         }
 
-        // LAST: hoppers at z=5 → pipe through south glass at (0,5,6) → chests under hoppers
-        hopperRowIntoChest(b, 5, 5, -3, 3, 8);
-        // Water only on top of collection hoppers; keep glass seal beside the pipe hole
+        // Flowing stream at y=5: SOURCE only on the NORTH edge of the tank.
+        // AIR toward the south so water actually flows over hoppers after paste ticks.
         for (int x = -3; x <= 3; x++) {
-            b.set(x, 6, 5, Material.WATER);
-            b.set(x, 7, 5, Material.GLASS);
+            for (int z = -2; z <= 5; z++) {
+                b.set(x, 5, z, Material.AIR);
+            }
+            b.set(x, 5, -3, Material.WATER);
         }
-        // Re-seal south wall except the single hopper pipe cell at (0,5,6)
-        for (int y = -1; y <= 7; y++) {
+        // Glass lid contains the stream
+        for (int x = -3; x <= 3; x++) {
+            for (int z = -3; z <= 5; z++) {
+                b.set(x, 6, z, Material.GLASS);
+            }
+        }
+        // South glass wall — leave hopper pipe column open
+        for (int y = -1; y <= 6; y++) {
             for (int x = -4; x <= 4; x++) {
-                if (x == 0 && y == 5) {
-                    continue; // pipe hopper
+                if (x == 0 && y >= 1 && y <= 5) {
+                    continue;
                 }
                 b.set(x, y, 6, Material.GLASS);
             }
         }
 
-        b.set(-5, 5, 0, Material.STONE);
-        b.set(5, 5, 0, Material.STONE);
-        b.hangingLantern(-5, 4, 0, Material.LANTERN, 5);
-        b.hangingLantern(5, 4, 0, Material.LANTERN, 5);
+        b.set(-5, 4, 0, Material.STONE);
+        b.set(5, 4, 0, Material.STONE);
+        b.hangingLantern(-5, 3, 0, Material.LANTERN, 4);
+        b.hangingLantern(5, 3, 0, Material.LANTERN, 4);
 
         spawnPad(b, 0, 10);
         spawnPad(b, 0, 11);
@@ -436,7 +516,7 @@ public final class FarmTemplates {
         b.set(1, 0, 11, Material.BARREL);
         return b.build(
                 "kelp",
-                "Kelp aquarium - sealed tank + stream; hoppers on chests at ground",
+                "Kelp aquarium - open surface, flowing stream over hoppers → chests",
                 0, 0, 11
         );
     }
@@ -573,85 +653,97 @@ public final class FarmTemplates {
         b.hangingLantern(0, 3, 4, Material.LANTERN, 3);
 
         // ——— Mid-level panic floor (villagers + zombie) ———
-        // Bridge walkway around shaft so pods face the zombie cage to the north
+        // Pods face a center zombie south of the shaft through IRON BARS only.
+        // Solid GLASS blocks villager LOS — use bars / panes on viewing faces.
         for (int x = -7; x <= 7; x++) {
-            for (int z = -7; z <= 3; z++) {
-                // leave shaft open
+            for (int z = -3; z <= 5; z++) {
                 if (x >= -1 && x <= 0 && z >= -1 && z <= 0) {
-                    continue;
+                    continue; // drop shaft
                 }
                 b.set(x, 8, z, Material.STONE_BRICKS);
             }
         }
 
-        // Covered zombie cage — centered north so both pods are ~6–8 blocks away
-        for (int x = -1; x <= 1; x++) {
-            for (int z = -6; z <= -4; z++) {
-                b.set(x, 8, z, Material.STONE_BRICKS);
+        // Zombie cage at (0,9,2) — south of shaft so LOS does not cross shaft walls
+        b.set(0, 9, 2, Material.AIR);
+        b.set(0, 10, 2, Material.AIR);
+        for (int y = 9; y <= 10; y++) {
+            for (int x = -1; x <= 1; x++) {
+                b.set(x, y, 1, Material.IRON_BARS);
+                b.set(x, y, 3, Material.IRON_BARS);
+            }
+            b.set(-1, y, 2, Material.IRON_BARS);
+            b.set(1, y, 2, Material.IRON_BARS);
+        }
+        b.set(0, 11, 2, Material.STONE_BRICK_SLAB);
+
+        // Clear open corridor between pods ↔ zombie (eye level air)
+        for (int x = -3; x <= 3; x++) {
+            for (int z = 1; z <= 3; z++) {
+                if (Math.abs(x) <= 1) {
+                    continue; // cage
+                }
+                b.set(x, 9, z, Material.AIR);
+                b.set(x, 10, z, Material.AIR);
             }
         }
-        b.set(0, 9, -5, Material.AIR);
-        b.set(0, 10, -5, Material.AIR);
-        for (int x = -1; x <= 1; x++) {
-            b.set(x, 9, -4, Material.IRON_BARS);
-            b.set(x, 10, -4, Material.IRON_BARS);
-            b.set(x, 9, -6, Material.IRON_BARS);
-            b.set(x, 10, -6, Material.IRON_BARS);
-            b.set(x, 11, -5, Material.STONE_BRICKS);
+        // Re-assert cage after corridor clear
+        b.set(0, 9, 2, Material.AIR);
+        b.set(0, 10, 2, Material.AIR);
+        for (int y = 9; y <= 10; y++) {
+            for (int x = -1; x <= 1; x++) {
+                b.set(x, y, 1, Material.IRON_BARS);
+                b.set(x, y, 3, Material.IRON_BARS);
+            }
+            b.set(-1, y, 2, Material.IRON_BARS);
+            b.set(1, y, 2, Material.IRON_BARS);
         }
-        b.set(-1, 9, -5, Material.IRON_BARS);
-        b.set(1, 9, -5, Material.IRON_BARS);
-        b.set(-1, 10, -5, Material.IRON_BARS);
-        b.set(1, 10, -5, Material.IRON_BARS);
 
-        // Villager pods at x=±5 — close enough to fear the zombie; beds face OUTWARD
-        // so the inner (bridge) face stays clear iron-bars for line-of-sight.
+        // Villager pods at x=±5: bridge=bars toward zombie, side=stand, outer/far=beds
         for (int side : new int[]{-5, 5}) {
-            int outer = side < 0 ? side - 1 : side + 1;   // away from center
-            int bridge = side < 0 ? side + 1 : side - 1; // toward zombie / deck
-            BlockFace bedFace = side < 0 ? BlockFace.WEST : BlockFace.EAST; // head toward outer
+            int outer = side < 0 ? side - 1 : side + 1;
+            int far = side < 0 ? outer - 1 : outer + 1;
+            int bridge = side < 0 ? side + 1 : side - 1;
+            BlockFace bedFace = side < 0 ? BlockFace.WEST : BlockFace.EAST;
 
-            for (int dz = -3; dz <= 2; dz++) {
+            for (int dz = 0; dz <= 4; dz++) {
                 b.set(side, 8, dz, Material.STONE_BRICKS);
                 b.set(outer, 8, dz, Material.STONE_BRICKS);
+                b.set(far, 8, dz, Material.STONE_BRICKS);
                 b.set(bridge, 8, dz, Material.STONE_BRICKS);
             }
-            // Glass shell + slab roof (pods only — golem deck above stays open sky)
             for (int y = 9; y <= 11; y++) {
-                for (int dz = -3; dz <= 2; dz++) {
-                    // Outer wall — leave floor-level stand cells open beside composters
-                    boolean standCell = y == 9 && (dz == -2 || dz == 0 || dz == 2);
-                    if (!(standCell)) {
-                        b.set(outer, y, dz, Material.GLASS);
-                    } else {
-                        b.set(outer, y, dz, Material.AIR);
-                    }
-                    if (dz == -3 || dz == 2) {
-                        b.set(side, y, dz, Material.GLASS);
-                        b.set(bridge, y, dz, Material.GLASS);
+                for (int dz = 0; dz <= 4; dz++) {
+                    b.set(far, y, dz, Material.GLASS_PANE);
+                    if (dz == 0 || dz == 4) {
+                        b.set(side, y, dz, Material.GLASS_PANE);
+                        b.set(outer, y, dz, Material.GLASS_PANE);
+                        b.set(bridge, y, dz, Material.GLASS_PANE);
                     }
                 }
             }
-            for (int dz = -3; dz <= 2; dz++) {
+            for (int dz = 0; dz <= 4; dz++) {
                 b.set(side, 12, dz, Material.STONE_BRICK_SLAB);
                 b.set(outer, 12, dz, Material.STONE_BRICK_SLAB);
+                b.set(far, 12, dz, Material.STONE_BRICK_SLAB);
                 b.set(bridge, 12, dz, Material.STONE_BRICK_SLAB);
             }
-            // Clear LOS face toward zombie: iron bars (not beds)
-            for (int dz = -2; dz <= 1; dz++) {
+            for (int dz = 1; dz <= 3; dz++) {
                 b.set(bridge, 9, dz, Material.IRON_BARS);
                 b.set(bridge, 10, dz, Material.IRON_BARS);
-                b.set(bridge, 11, dz, Material.GLASS);
+                b.set(bridge, 11, dz, Material.GLASS_PANE);
             }
-            // Beds foot on side facing outward → head on outer; composters beside (all inside pod)
             for (int i = 0; i < 3; i++) {
-                int z = -3 + i * 2; // -3, -1, 1
-                b.bed(side, 9, z, Material.RED_BED, bedFace);
-                b.set(side, 9, z + 1, Material.COMPOSTER); // -2, 0, 2
-                // Villager stand on outer beside composter
-                b.set(outer, 9, z + 1, Material.AIR);
-                b.set(outer, 10, z + 1, Material.AIR);
+                int z = 1 + i;
+                b.bed(outer, 9, z, Material.RED_BED, bedFace);
+                b.set(side, 9, z, Material.AIR);
+                b.set(side, 10, z, Material.AIR);
+                b.set(bridge, 9, z, Material.IRON_BARS);
+                b.set(bridge, 10, z, Material.IRON_BARS);
             }
+            b.set(outer, 9, 0, Material.COMPOSTER);
+            b.set(outer, 9, 4, Material.COMPOSTER);
+            b.set(side, 9, 0, Material.COMPOSTER);
         }
 
         // ——— TOP open-sky golem spawn deck (separate from pods) ———

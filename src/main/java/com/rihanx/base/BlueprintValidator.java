@@ -244,6 +244,53 @@ public final class BlueprintValidator {
             }
         }
 
+        if ("bamboo".equals(id)) {
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.BAMBOO) {
+                    continue;
+                }
+                for (BlockFace f : List.of(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST)) {
+                    BaseTemplates.RelBlock n = cells.get(pack(block.dx() + f.getModX(), block.dy(), block.dz() + f.getModZ()));
+                    if (n != null && n.material() == Material.WATER) {
+                        errors.add("bamboo-water-adjacent@" + block.dx() + "," + block.dz());
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ("melon".equals(id)) {
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.MELON_STEM) {
+                    continue;
+                }
+                BaseTemplates.RelBlock soil = cells.get(pack(block.dx(), block.dy() - 1, block.dz()));
+                if (soil == null || soil.material() != Material.FARMLAND) {
+                    errors.add("melon-stem-no-farmland@" + block.dx() + "," + block.dz());
+                }
+                // Water at stem Y floods/breaks stems
+                for (BlockFace f : List.of(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST)) {
+                    BaseTemplates.RelBlock n = cells.get(pack(block.dx() + f.getModX(), block.dy(), block.dz() + f.getModZ()));
+                    if (n != null && n.material() == Material.WATER) {
+                        errors.add("melon-stem-flood@" + block.dx() + "," + block.dz());
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ("nether".equals(id)) {
+            for (BaseTemplates.RelBlock block : cells.values()) {
+                if (block.material() != Material.NETHER_WART) {
+                    continue;
+                }
+                BaseTemplates.RelBlock soil = cells.get(pack(block.dx(), block.dy() - 1, block.dz()));
+                if (soil == null || soil.material() != Material.SOUL_SAND) {
+                    errors.add("nether-wart-no-soul-sand@" + block.dx() + "," + block.dz());
+                }
+            }
+        }
+
         return errors;
     }
 

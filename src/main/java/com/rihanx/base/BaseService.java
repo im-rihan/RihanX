@@ -276,10 +276,15 @@ public final class BaseService {
                     messages.send(player, "base-protected", MessageManager.placeholders("name", regionName));
                 }
                 if ("base".equals(kind) && blueprint.id().equals("secret")) {
-                    // Delay so double-chests finish linking after paste physics
-                    plugin.getServer().getScheduler().runTaskLater(plugin, () ->
-                            stockSecretStashChests(world, origin, facing), 5L);
+                    // Snapshot fill after chests exist; retry once in case chunk TE was late
+                    Runnable stock = () -> stockSecretStashChests(world, origin, facing);
+                    plugin.getServer().getScheduler().runTaskLater(plugin, stock, 5L);
+                    plugin.getServer().getScheduler().runTaskLater(plugin, stock, 40L);
                     messages.send(player, "base-secret-hint");
+                }
+                if ("farm".equals(kind) && blueprint.id().equals("kelp")) {
+                    // North water sources need physics ticks to flow south over hoppers
+                    startKelpWaterStream(world, origin, facing);
                 }
                 if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato", "animal").contains(blueprint.id())) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
@@ -296,6 +301,47 @@ public final class BaseService {
                 messages.send(player, kindMessage(kind, "undo-hint"));
             }
         }, 1L, 1L);
+    }
+
+    /**
+     * Primes the kelp top stream: north-edge water sources with physics so water
+     * flows south over the hopper row (static full-source water never pushes items).
+     */
+    private void startKelpWaterStream(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing
+    ) {
+        Runnable prime = () -> {
+            for (int lx = -3; lx <= 3; lx++) {
+                // Clear stream path to air first (local y=5, z=-2..5)
+                for (int lz = -2; lz <= 5; lz++) {
+                    int[] xz = rotate(lx, lz, structureFacing);
+                    Block cell = world.getBlockAt(
+                            origin.getBlockX() + xz[0],
+                            origin.getBlockY() + 5,
+                            origin.getBlockZ() + xz[1]
+                    );
+                    if (cell.getType() == Material.WATER || cell.getType() == Material.AIR
+                            || cell.getType() == Material.GLASS) {
+                        // don't wipe glass lid — only clear stream layer if not glass
+                        if (cell.getType() != Material.GLASS) {
+                            cell.setType(Material.AIR, false);
+                        }
+                    }
+                }
+                // Place north source with physics so it spreads south
+                int[] north = rotate(lx, -3, structureFacing);
+                Block src = world.getBlockAt(
+                        origin.getBlockX() + north[0],
+                        origin.getBlockY() + 5,
+                        origin.getBlockZ() + north[1]
+                );
+                src.setType(Material.WATER, true);
+            }
+        };
+        plugin.getServer().getScheduler().runTaskLater(plugin, prime, 5L);
+        plugin.getServer().getScheduler().runTaskLater(plugin, prime, 25L);
     }
 
     /** Spawns a farmer villager inside the crop pod next to the bed (walk Y=1). */
@@ -346,36 +392,26 @@ public final class BaseService {
             @NotNull BlockFace structureFacing
     ) {
         List<Villager> spawned = new ArrayList<>();
+        // Stand on side column at z=1,2,3 looking through iron bars at the center zombie
         for (int side : new int[]{-5, 5}) {
-            int outer = side < 0 ? side - 1 : side + 1;
             for (int i = 0; i < 3; i++) {
-                int bedZ = -3 + i * 2;
-                // Stand on outer column next to composter (solid floor, not on bed)
-                int spawnZ = bedZ + 1;
-                int[] xz = rotate(outer, spawnZ, structureFacing);
+                int spawnZ = 1 + i;
+                int[] xz = rotate(side, spawnZ, structureFacing);
                 Location at = origin.clone().add(xz[0] + 0.5, 9.0, xz[1] + 0.5);
                 Block floor = at.getBlock().getRelative(0, -1, 0);
                 if (!floor.getType().isSolid()) {
                     floor.setType(Material.STONE_BRICKS, false);
                 }
-                // Clear headroom only — never destroy beds/composters
                 Material here = at.getBlock().getType();
-                if (here == Material.AIR || here == Material.GLASS || here == Material.IRON_BARS) {
+                if (here != Material.AIR && !here.name().endsWith("_BED") && here != Material.COMPOSTER) {
                     at.getBlock().setType(Material.AIR, false);
-                } else if (here == Material.COMPOSTER || here.name().endsWith("_BED")) {
-                    // Shift one step along Z away from bed foot
-                    int[] alt = rotate(outer, bedZ - 1 >= -3 ? bedZ - 1 : bedZ + 2, structureFacing);
-                    at = origin.clone().add(alt[0] + 0.5, 9.0, alt[1] + 0.5);
-                    Block f2 = at.getBlock().getRelative(0, -1, 0);
-                    if (!f2.getType().isSolid()) {
-                        f2.setType(Material.STONE_BRICKS, false);
-                    }
+                } else if (here.name().endsWith("_BED") || here == Material.COMPOSTER) {
+                    // Stand one step toward the zombie (bridge column is bars — use side±0 clear)
                     at.getBlock().setType(Material.AIR, false);
                 }
                 at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
                 Location spawnAt = at;
                 Villager villager = world.spawn(spawnAt, Villager.class, v -> {
-                    // NONE (unemployed) — can claim composters. Nitwit can NEVER take a job.
                     v.setProfession(Villager.Profession.NONE);
                     v.setVillagerLevel(1);
                     v.setAdult();
@@ -405,7 +441,8 @@ public final class BaseService {
             }
         }, 40L);
 
-        int[] zx = rotate(0, -5, structureFacing);
+        // Zombie in the center bars cage at local (0, 9, 2) — visible to both pods
+        int[] zx = rotate(0, 2, structureFacing);
         Location zombieAt = origin.clone().add(zx[0] + 0.5, 9.0, zx[1] + 0.5);
         Block zUnder = zombieAt.getBlock().getRelative(0, -1, 0);
         if (!zUnder.getType().isSolid()) {
@@ -422,7 +459,6 @@ public final class BaseService {
             zombie.customName(net.kyori.adventure.text.Component.text("Iron Panic"));
             zombie.setCustomNameVisible(true);
             zombie.setAdult();
-            // Silent + no pickup — stays a threat villagers can see through bars
             zombie.setSilent(true);
             zombie.setCanPickupItems(false);
         });
@@ -430,7 +466,8 @@ public final class BaseService {
 
     /**
      * Fills secret vault chests with categorized kits.
-     * Uses {@link SecretBaseTemplates#CHEST_DY} so Y always matches the blueprint.
+     * Uses snapshot inventory + one {@code update()} — the Paper-safe pattern
+     * (same as {@code KitService}). Filling live then calling update() wipes items.
      */
     private void stockSecretStashChests(
             @NotNull World world,
@@ -438,7 +475,10 @@ public final class BaseService {
             @NotNull BlockFace structureFacing
     ) {
         int chestY = origin.getBlockY() + SecretBaseTemplates.CHEST_DY;
-        for (SecretBaseTemplates.StashSpec spec : SecretBaseTemplates.stashChestSpecs()) {
+        List<SecretBaseTemplates.StashSpec> specs = SecretBaseTemplates.stashChestSpecs();
+        int filled = 0;
+
+        for (SecretBaseTemplates.StashSpec spec : specs) {
             int[] rightXz = rotate(spec.dx(), spec.dz(), structureFacing);
             int[] leftXz = rotate(spec.dx() - 1, spec.dz(), structureFacing);
             Block right = world.getBlockAt(
@@ -446,51 +486,178 @@ public final class BaseService {
             Block left = world.getBlockAt(
                     origin.getBlockX() + leftXz[0], chestY, origin.getBlockZ() + leftXz[1]);
 
-            ensureChest(right, structureFacing);
-            ensureChest(left, structureFacing);
+            left = findOrPlaceChest(left, structureFacing);
+            right = findOrPlaceChest(right, structureFacing);
+            pairDoubleChest(left, right, structureFacing);
 
             String label = "Stash: " + Character.toUpperCase(spec.category().charAt(0))
                     + spec.category().substring(1);
-
-            // Split items across both halves (27+27) — works even before double-chest links
             List<org.bukkit.inventory.ItemStack> items = spec.items();
-            fillChestInventory(left, label, items, 0, 27);
-            fillChestInventory(right, label, items, 27, items.size());
+            if (items.isEmpty()) {
+                continue;
+            }
+
+            if (depositIntoChest(left, label, items)) {
+                filled++;
+            } else if (depositIntoChest(right, label, items)) {
+                filled++;
+            }
+        }
+
+        if (filled < specs.size()) {
+            filled += stockOrphanVaultChests(world, origin, chestY, structureFacing, specs, filled);
+        }
+
+        if (filled == 0) {
+            plugin.getLogger().warning("[RihanX] Secret vault: failed to stock any stash chests at y="
+                    + chestY + " origin=" + origin.getBlockX() + "," + origin.getBlockY() + ","
+                    + origin.getBlockZ());
+        } else {
+            plugin.getLogger().info("[RihanX] Secret vault: stocked " + filled + " stash chest groups.");
         }
     }
 
-    private static void ensureChest(@NotNull Block block, @NotNull BlockFace structureFacing) {
-        if (block.getType() != Material.CHEST) {
-            block.setType(Material.CHEST, false);
+    private int stockOrphanVaultChests(
+            @NotNull World world,
+            @NotNull Location origin,
+            int chestY,
+            @NotNull BlockFace structureFacing,
+            @NotNull List<SecretBaseTemplates.StashSpec> specs,
+            int alreadyFilled
+    ) {
+        List<Block> empties = new ArrayList<>();
+        int ox = origin.getBlockX();
+        int oz = origin.getBlockZ();
+        // Scan vault Y and ±1 in case paste origin / floor is slightly off
+        for (int y = chestY - 1; y <= chestY + 1; y++) {
+            for (int x = ox - 12; x <= ox + 12; x++) {
+                for (int z = oz - 12; z <= oz + 12; z++) {
+                    Block b = world.getBlockAt(x, y, z);
+                    if (b.getType() != Material.CHEST) {
+                        continue;
+                    }
+                    if (!(b.getState() instanceof org.bukkit.block.Chest chest)) {
+                        continue;
+                    }
+                    boolean empty = true;
+                    for (org.bukkit.inventory.ItemStack s : chest.getBlockInventory().getContents()) {
+                        if (s != null && !s.getType().isAir()) {
+                            empty = false;
+                            break;
+                        }
+                    }
+                    if (empty && empties.stream().noneMatch(e -> e.getX() == b.getX()
+                            && e.getY() == b.getY() && e.getZ() == b.getZ())) {
+                        empties.add(b);
+                    }
+                }
+            }
         }
-        if (block.getBlockData() instanceof org.bukkit.block.data.type.Chest chestData) {
-            BlockFace face = mapFacing(BlockFace.SOUTH, structureFacing);
-            chestData.setFacing(face);
-            block.setBlockData(chestData, false);
+        empties.sort(Comparator
+                .comparingInt(Block::getX)
+                .thenComparingInt(Block::getZ));
+        int added = 0;
+        int specIdx = alreadyFilled;
+        for (int i = 0; i < empties.size() && specIdx < specs.size(); i++) {
+            SecretBaseTemplates.StashSpec spec = specs.get(specIdx);
+            String label = "Stash: " + Character.toUpperCase(spec.category().charAt(0))
+                    + spec.category().substring(1);
+            if (depositIntoChest(empties.get(i), label, spec.items())) {
+                added++;
+                specIdx++;
+                if (i + 1 < empties.size()) {
+                    Block next = empties.get(i + 1);
+                    Block cur = empties.get(i);
+                    if (Math.abs(next.getX() - cur.getX()) + Math.abs(next.getZ() - cur.getZ()) == 1
+                            && next.getY() == cur.getY()) {
+                        i++; // skip twin half — already filled via double-chest inventory
+                    }
+                }
+            }
+        }
+        return added;
+    }
+
+    private static @NotNull Block findOrPlaceChest(
+            @NotNull Block expected,
+            @NotNull BlockFace structureFacing
+    ) {
+        if (expected.getType() == Material.CHEST) {
+            return expected;
+        }
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                Block n = expected.getRelative(dx, 0, dz);
+                if (n.getType() == Material.CHEST) {
+                    return n;
+                }
+            }
+        }
+        expected.setType(Material.CHEST, false);
+        if (expected.getBlockData() instanceof org.bukkit.block.data.type.Chest data) {
+            data.setFacing(mapFacing(BlockFace.SOUTH, structureFacing));
+            expected.setBlockData(data, false);
+        }
+        Block under = expected.getRelative(0, -1, 0);
+        if (!under.getType().isSolid()) {
+            under.setType(Material.POLISHED_DEEPSLATE, false);
+        }
+        return expected;
+    }
+
+    /** Force two adjacent chests into a double-chest pair (physics-off paste never links them). */
+    private static void pairDoubleChest(
+            @NotNull Block left,
+            @NotNull Block right,
+            @NotNull BlockFace structureFacing
+    ) {
+        BlockFace face = mapFacing(BlockFace.SOUTH, structureFacing);
+        // Type is from the front: local dx-1 = LEFT half, dx = RIGHT half
+        if (left.getBlockData() instanceof org.bukkit.block.data.type.Chest leftData) {
+            leftData.setFacing(face);
+            leftData.setType(org.bukkit.block.data.type.Chest.Type.LEFT);
+            left.setBlockData(leftData, false);
+        }
+        if (right.getBlockData() instanceof org.bukkit.block.data.type.Chest rightData) {
+            rightData.setFacing(face);
+            rightData.setType(org.bukkit.block.data.type.Chest.Type.RIGHT);
+            right.setBlockData(rightData, false);
         }
     }
 
-    private static void fillChestInventory(
+
+
+    private static boolean depositIntoChest(
             @NotNull Block block,
             @NotNull String label,
-            @NotNull List<org.bukkit.inventory.ItemStack> items,
-            int fromInclusive,
-            int toExclusive
+            @NotNull List<org.bukkit.inventory.ItemStack> items
     ) {
+        if (block.getType() != Material.CHEST || items.isEmpty()) {
+            return false;
+        }
         if (!(block.getState() instanceof org.bukkit.block.Chest chest)) {
-            return;
+            return false;
         }
         chest.customName(net.kyori.adventure.text.Component.text(label));
-        org.bukkit.inventory.Inventory inv = chest.getBlockInventory();
+        org.bukkit.inventory.Inventory inv = chest.getSnapshotInventory();
         inv.clear();
         int slot = 0;
-        for (int i = fromInclusive; i < toExclusive && i < items.size(); i++) {
+        int placed = 0;
+        for (org.bukkit.inventory.ItemStack stack : items) {
+            if (stack == null || stack.getType().isAir() || stack.getAmount() <= 0) {
+                continue;
+            }
             if (slot >= inv.getSize()) {
                 break;
             }
-            inv.setItem(slot++, items.get(i).clone());
+            inv.setItem(slot++, stack.clone());
+            placed++;
+        }
+        if (placed == 0) {
+            return false;
         }
         chest.update(true, false);
+        return true;
     }
 
     /**
