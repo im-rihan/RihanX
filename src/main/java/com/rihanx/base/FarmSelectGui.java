@@ -56,7 +56,7 @@ public final class FarmSelectGui implements InventoryHolder, Listener {
                 List.of("<gray>Break fences · hoppers</gray>")));
         ENTRIES.put("iron", new MenuEntry(Material.IRON_INGOT, 23, "<white><bold>Iron Farm</bold></white>",
                 List.of("<gray>Open deck · lava blade · magma alcove</gray>",
-                        "<yellow>Add 3 villagers/pod + nametag zombie</yellow>")));
+                        "<green>Advanced: villagers + minecart zombie</green>")));
         ENTRIES.put("xp", new MenuEntry(Material.EXPERIENCE_BOTTLE, 24, "<light_purple><bold>XP Farm</bold></light_purple>",
                 List.of("<gray>Dark roofed pads · 2×2 drop shaft · one-hit XP</gray>")));
     }

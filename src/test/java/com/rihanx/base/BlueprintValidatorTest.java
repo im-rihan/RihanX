@@ -79,6 +79,56 @@ class BlueprintValidatorTest {
     }
 
     @Test
+    void ironFarmMobStandCellsAndPlayerPadAreAir() {
+        BaseTemplates.BaseBlueprint iron = FarmTemplates.all().get("iron");
+        Map<String, org.bukkit.Material> at = new java.util.HashMap<>();
+        for (BaseTemplates.RelBlock block : iron.blocks()) {
+            at.put(block.dx() + "," + block.dy() + "," + block.dz(), block.material());
+        }
+        for (int side : FarmTemplates.IRON_POD_SIDES) {
+            for (int i = 0; i < FarmTemplates.IRON_VILLAGERS_PER_POD; i++) {
+                int z = FarmTemplates.IRON_POD_Z0 + i;
+                org.bukkit.Material stand = at.get(side + "," + FarmTemplates.IRON_POD_Y + "," + z);
+                assertEquals(org.bukkit.Material.AIR, stand,
+                        "villager stand " + side + "," + z + " must be air");
+            }
+        }
+        org.bukkit.Material cage = at.get(FarmTemplates.IRON_ZOMBIE_X + "," + FarmTemplates.IRON_POD_Y + ","
+                + FarmTemplates.IRON_ZOMBIE_Z);
+        assertTrue(
+                cage == org.bukkit.Material.AIR || cage == org.bukkit.Material.RAIL,
+                "zombie cage cell must be air or rail for the minecart"
+        );
+        assertEquals(
+                org.bukkit.Material.AIR,
+                at.get(iron.spawnDx() + "," + iron.spawnDy() + "," + iron.spawnDz()),
+                "player spawn pad must be air so Paper can spawn mobs there"
+        );
+    }
+
+    @Test
+    void cropFarmerStandCellIsAirBesideBed() {
+        for (String id : List.of("wheat", "potato")) {
+            BaseTemplates.BaseBlueprint farm = FarmTemplates.all().get(id);
+            org.bukkit.Material stand = null;
+            org.bukkit.Material bed = null;
+            for (BaseTemplates.RelBlock block : farm.blocks()) {
+                if (block.dx() == FarmTemplates.CROP_FARMER_DX
+                        && block.dy() == FarmTemplates.CROP_FARMER_DY
+                        && block.dz() == FarmTemplates.CROP_FARMER_DZ) {
+                    stand = block.material();
+                }
+                if (block.dx() == -1 && block.dy() == 1 && block.dz() == 7
+                        && block.material().name().endsWith("_BED")) {
+                    bed = block.material();
+                }
+            }
+            assertEquals(org.bukkit.Material.AIR, stand, id + " farmer stand must be air");
+            assertTrue(bed != null && bed.name().endsWith("_BED"), id + " needs a bed next to the farmer");
+        }
+    }
+
+    @Test
     void mineStationHasDescendingTunnelAndOutpost() {
         BaseTemplates.BaseBlueprint mine = StationTemplates.all().get("mine");
         assertTrue(mine.blocks().size() > 200, "mine station should be substantial");

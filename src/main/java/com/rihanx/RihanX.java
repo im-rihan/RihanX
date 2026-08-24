@@ -35,6 +35,7 @@ import com.rihanx.managers.GodManager;
 import com.rihanx.managers.MessageManager;
 import com.rihanx.managers.PlayerStateStore;
 import com.rihanx.managers.VanishManager;
+import com.rihanx.mob.MobSpawnService;
 import com.rihanx.performance.PerformanceService;
 import com.rihanx.placeholders.RihanXPlaceholders;
 import com.rihanx.player.PlayerService;
@@ -104,6 +105,7 @@ public final class RihanX extends JavaPlugin {
     private ChatService chatService;
     private AfkManager afkManager;
     private SpawnService spawnService;
+    private MobSpawnService mobSpawnService;
     private RihanXAPI api;
 
     @Override
@@ -138,6 +140,7 @@ public final class RihanX extends JavaPlugin {
         this.homeService = new HomeService(this, messageManager, teleportManager);
         this.warpService = new WarpService(this, messageManager, teleportManager);
         this.kitService = new KitService(this, messageManager);
+        this.mobSpawnService = new MobSpawnService(this);
         this.baseService = new BaseService(this, messageManager);
         this.farmService = new FarmService(this, messageManager);
         this.stationService = new StationService(this, messageManager);
@@ -355,6 +358,10 @@ public final class RihanX extends JavaPlugin {
 
     public @NotNull KitService getKitService() {
         return kitService;
+    }
+
+    public @NotNull MobSpawnService getMobSpawnService() {
+        return mobSpawnService;
     }
 
     public @NotNull BaseService getBaseService() {

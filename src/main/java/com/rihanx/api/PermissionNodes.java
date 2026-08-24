@@ -158,6 +158,9 @@ public final class PermissionNodes {
     public static final String SPAWN = ROOT + ".spawn";
     public static final String SETSPAWN = ROOT + ".setspawn";
 
+    public static final String MOB = ROOT + ".mob";
+    public static final String MOB_ALL = MOB + ".*";
+
     public static final String BASE = ROOT + ".base";
     public static final String BASE_ALL = BASE + ".*";
     public static final String BASE_BUILD = BASE + ".build";

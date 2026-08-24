@@ -8,6 +8,7 @@ import com.rihanx.utils.MaterialUtil;
 import com.rihanx.utils.PermissionUtil;
 import com.rihanx.utils.PlayerUtil;
 import com.rihanx.utils.StructureUtil;
+import com.rihanx.mob.MobSpawnService;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -32,7 +33,7 @@ public final class RihanXTabCompleter implements TabCompleter {
     private static final List<String> MODULES = List.of(
             "help", "slime", "world", "find", "chunk", "tp", "back", "player", "inventory", "item",
             "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
-            "msg", "reply", "afk", "spawn", "setspawn", "base", "farm", "station", "portal", "bridge", "build",
+            "msg", "reply", "afk", "spawn", "setspawn", "mob", "base", "farm", "station", "portal", "bridge", "build",
             "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere", "tunnel",
             "flatten", "drain", "plain", "clearland", "clearpad", "plot", "pyramid", "stairs", "stack", "admin"
     );
@@ -123,6 +124,7 @@ public final class RihanXTabCompleter implements TabCompleter {
                  "plain", "clearland", "clearpad", "plot",
                  "pyramid", "hpyramid", "stairs", "stack" -> completeBuild(module, prefixed);
             case "afk", "spawn", "setspawn" -> new ArrayList<>();
+            case "mob", "spawnmob" -> completeMob(prefixed);
             case "admin" -> completeAdmin(prefixed);
             default -> new ArrayList<>();
         };
@@ -493,6 +495,19 @@ public final class RihanXTabCompleter implements TabCompleter {
             options.add("list");
             options.add("undo");
             return filter(options, args[1]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeMob(@NotNull String[] args) {
+        if (args.length == 2) {
+            return filter(MobSpawnService.TYPES, args[1]);
+        }
+        if (args.length >= 3) {
+            List<String> options = new ArrayList<>(MobSpawnService.FLAGS);
+            options.addAll(MobSpawnService.PROFESSIONS);
+            options.addAll(List.of("1", "2", "3", "6"));
+            return filter(options, args[args.length - 1]);
         }
         return new ArrayList<>();
     }

@@ -8,6 +8,7 @@ import com.rihanx.protection.FlagValue;
 import com.rihanx.protection.ProtectionFlag;
 import com.rihanx.protection.ProtectionService;
 import com.rihanx.protection.Region;
+import com.rihanx.mob.MobSpawnService;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -289,11 +290,20 @@ public final class BaseService {
                 if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato", "animal").contains(blueprint.id())) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
                 }
+                Location pad = done.clone();
                 if ("farm".equals(kind) && (blueprint.id().equals("wheat") || blueprint.id().equals("potato"))) {
-                    spawnFarmerInPod(world, origin, facing);
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> spawnFarmerInPod(world, origin, facing, pad), 10L);
                 }
                 if ("farm".equals(kind) && blueprint.id().equals("iron")) {
-                    spawnIronFarmMobs(world, origin, facing);
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        int spawned = spawnIronFarmMobs(world, origin, facing, pad);
+                        if (player.isOnline()) {
+                            messages.send(player, "farm-iron-spawned", MessageManager.placeholders(
+                                    "count", spawned
+                            ));
+                        }
+                    }, 10L);
                 }
                 if ("farm".equals(kind) && blueprint.id().equals("animal")) {
                     spawnAnimalFarmMobs(world, origin, facing);
@@ -344,90 +354,60 @@ public final class BaseService {
         plugin.getServer().getScheduler().runTaskLater(plugin, prime, 25L);
     }
 
-    /** Spawns a farmer villager inside the crop pod next to the bed (walk Y=1). */
+    /**
+     * Spawns the crop farmer on the player spawn pad, then moves them into the pod.
+     */
     private void spawnFarmerInPod(
             @NotNull World world,
             @NotNull Location origin,
-            @NotNull BlockFace structureFacing
+            @NotNull BlockFace structureFacing,
+            @NotNull Location playerPad
     ) {
-        // cropVillagerFarm size=4: bed foot at (-1,1,7), open cell beside at (0,1,7)
-        int[] xz = rotate(0, 7, structureFacing);
-        Location at = origin.clone().add(xz[0] + 0.5, 1.0, xz[1] + 0.5);
-        Block feet = at.getBlock();
-        // Don't destroy bed/composter — only clear air-ish occupancy
-        if (!feet.getType().name().endsWith("_BED") && feet.getType() != Material.COMPOSTER) {
-            if (feet.getType().isSolid()) {
-                feet.setType(Material.AIR, false);
-            }
-        } else {
-            // Shift one block toward door if we landed on furniture
-            int[] alt = rotate(0, 6, structureFacing);
-            at = origin.clone().add(alt[0] + 0.5, 1.0, alt[1] + 0.5);
-            at.getBlock().setType(Material.AIR, false);
-        }
-        at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
-        Block under = at.getBlock().getRelative(0, -1, 0);
-        if (!under.getType().isSolid()) {
-            under.setType(Material.SMOOTH_STONE, false);
-        }
-        Location spawnAt = at;
-        world.spawn(spawnAt, Villager.class, villager -> {
-            villager.setProfession(Villager.Profession.FARMER);
-            villager.setVillagerLevel(2);
-            villager.setAdult();
-            villager.setCanPickupItems(true);
-            villager.setRemoveWhenFarAway(false);
-            villager.customName(net.kyori.adventure.text.Component.text("Farm Helper"));
-            villager.setCustomNameVisible(true);
-        });
+        Location dest = localFeet(
+                origin,
+                FarmTemplates.CROP_FARMER_DX,
+                FarmTemplates.CROP_FARMER_DY,
+                FarmTemplates.CROP_FARMER_DZ,
+                structureFacing
+        );
+        Location bed = localFeet(origin, -1, 1, 7, structureFacing);
+        Location job = localFeet(origin, 0, 0, 6, structureFacing);
+        MobSpawnService.SpawnRequest request = new MobSpawnService.SpawnRequest(
+                MobSpawnService.Kind.VILLAGER, 1, false, true, "farmer", "Farm Helper"
+        );
+        plugin.getMobSpawnService().spawnOne(world, playerPad, dest, request, bed, job);
     }
 
     /**
-     * Spawns 3 unemployed villagers per pod (claim farmer at composters) + nametag zombie.
-     * Pods face the zombie through iron bars so they panic; golems spawn on the TOP deck.
+     * Advanced iron farm: 3 villagers per pod (bed + job memory) + nametag zombie in a minecart.
+     * Spawn on the player pad first so Paper accepts the entities, then move them in.
      */
-    private void spawnIronFarmMobs(
+    private int spawnIronFarmMobs(
             @NotNull World world,
             @NotNull Location origin,
-            @NotNull BlockFace structureFacing
+            @NotNull BlockFace structureFacing,
+            @NotNull Location playerPad
     ) {
+        MobSpawnService mobs = plugin.getMobSpawnService();
         List<Villager> spawned = new ArrayList<>();
-        // Stand on side column at z=1,2,3 looking through iron bars at the center zombie
-        for (int side : new int[]{-5, 5}) {
-            for (int i = 0; i < 3; i++) {
-                int spawnZ = 1 + i;
-                int[] xz = rotate(side, spawnZ, structureFacing);
-                Location at = origin.clone().add(xz[0] + 0.5, 9.0, xz[1] + 0.5);
-                Block floor = at.getBlock().getRelative(0, -1, 0);
-                if (!floor.getType().isSolid()) {
-                    floor.setType(Material.STONE_BRICKS, false);
+        for (int side : FarmTemplates.IRON_POD_SIDES) {
+            int outer = side < 0 ? side - 1 : side + 1;
+            for (int i = 0; i < FarmTemplates.IRON_VILLAGERS_PER_POD; i++) {
+                int spawnZ = FarmTemplates.IRON_POD_Z0 + i;
+                Location dest = localFeet(origin, side, FarmTemplates.IRON_POD_Y, spawnZ, structureFacing);
+                Location bed = localFeet(origin, outer, FarmTemplates.IRON_POD_Y, spawnZ, structureFacing);
+                int jobZ = i == 2 ? 4 : 0;
+                int jobX = i == 1 ? side : outer;
+                Location job = localFeet(origin, jobX, FarmTemplates.IRON_POD_Y, jobZ, structureFacing);
+                MobSpawnService.SpawnRequest request = new MobSpawnService.SpawnRequest(
+                        MobSpawnService.Kind.VILLAGER, 1, false, false, "none", "Iron Villager"
+                );
+                if (mobs.spawnOne(world, playerPad, dest, request, bed, job) instanceof Villager villager) {
+                    spawned.add(villager);
                 }
-                Material here = at.getBlock().getType();
-                if (here != Material.AIR && !here.name().endsWith("_BED") && here != Material.COMPOSTER) {
-                    at.getBlock().setType(Material.AIR, false);
-                } else if (here.name().endsWith("_BED") || here == Material.COMPOSTER) {
-                    // Stand one step toward the zombie (bridge column is bars — use side±0 clear)
-                    at.getBlock().setType(Material.AIR, false);
-                }
-                at.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
-                Location spawnAt = at;
-                Villager villager = world.spawn(spawnAt, Villager.class, v -> {
-                    v.setProfession(Villager.Profession.NONE);
-                    v.setVillagerLevel(1);
-                    v.setAdult();
-                    v.setAI(true);
-                    v.setAware(true);
-                    v.setCanPickupItems(false);
-                    v.setRemoveWhenFarAway(false);
-                    v.setPersistent(true);
-                    v.customName(net.kyori.adventure.text.Component.text("Iron Villager"));
-                    v.setCustomNameVisible(false);
-                });
-                spawned.add(villager);
             }
         }
 
-        // Force farmer after a short delay so composters are claimed even if pathfinding is slow
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             for (Villager v : spawned) {
                 if (!v.isValid()) {
@@ -441,27 +421,29 @@ public final class BaseService {
             }
         }, 40L);
 
-        // Zombie in the center bars cage at local (0, 9, 2) — visible to both pods
-        int[] zx = rotate(0, 2, structureFacing);
-        Location zombieAt = origin.clone().add(zx[0] + 0.5, 9.0, zx[1] + 0.5);
-        Block zUnder = zombieAt.getBlock().getRelative(0, -1, 0);
-        if (!zUnder.getType().isSolid()) {
-            zUnder.setType(Material.STONE_BRICKS, false);
-        }
-        zombieAt.getBlock().setType(Material.AIR, false);
-        zombieAt.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
-        world.spawn(zombieAt, org.bukkit.entity.Zombie.class, zombie -> {
-            zombie.setRemoveWhenFarAway(false);
-            zombie.setPersistent(true);
-            zombie.setShouldBurnInDay(false);
-            zombie.setAware(true);
-            zombie.setAI(true);
-            zombie.customName(net.kyori.adventure.text.Component.text("Iron Panic"));
-            zombie.setCustomNameVisible(true);
-            zombie.setAdult();
-            zombie.setSilent(true);
-            zombie.setCanPickupItems(false);
-        });
+        Location zombieAt = localFeet(
+                origin,
+                FarmTemplates.IRON_ZOMBIE_X,
+                FarmTemplates.IRON_POD_Y,
+                FarmTemplates.IRON_ZOMBIE_Z,
+                structureFacing
+        );
+        MobSpawnService.SpawnRequest zombieReq = new MobSpawnService.SpawnRequest(
+                MobSpawnService.Kind.ZOMBIE, 1, true, true, null, "Iron Panic"
+        );
+        org.bukkit.entity.LivingEntity zombie = mobs.spawnOne(world, playerPad, zombieAt, zombieReq, null, null);
+        return spawned.size() + (zombie != null && zombie.isValid() ? 1 : 0);
+    }
+
+    private static @NotNull Location localFeet(
+            @NotNull Location origin,
+            int lx,
+            int ly,
+            int lz,
+            @NotNull BlockFace structureFacing
+    ) {
+        int[] xz = rotate(lx, lz, structureFacing);
+        return origin.clone().add(xz[0] + 0.5, ly, xz[1] + 0.5);
     }
 
     /**

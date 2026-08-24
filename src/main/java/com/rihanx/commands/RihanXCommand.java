@@ -11,6 +11,7 @@ import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
 import com.rihanx.commands.modules.KitModule;
+import com.rihanx.commands.modules.MobModule;
 import com.rihanx.commands.modules.PortalModule;
 import com.rihanx.commands.modules.ProtectModule;
 import com.rihanx.commands.modules.SpawnModule;
@@ -57,6 +58,7 @@ public final class RihanXCommand implements CommandExecutor {
             "tpa", "tpahere", "tpaccept", "tpdeny", "tpcancel",
             "kit", "kits",
             "msg", "reply", "afk", "spawn", "setspawn",
+            "mob", "spawnmob",
             "base", "farm", "station", "train", "railway", "portal", "portals", "bridge", "build",
             "platform", "wall", "pillar", "tower", "cyl", "hcyl",
             "sphere", "hsphere", "tunnel", "flatten", "drain",
@@ -79,6 +81,7 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull ChatModule chatModule;
     private final @NotNull AfkModule afkModule;
     private final @NotNull SpawnModule spawnModule;
+    private final @NotNull MobModule mobModule;
     private final @NotNull BaseModule baseModule;
     private final @NotNull FarmModule farmModule;
     private final @NotNull StationModule stationModule;
@@ -97,6 +100,7 @@ public final class RihanXCommand implements CommandExecutor {
         this.chatModule = new ChatModule(plugin);
         this.afkModule = new AfkModule(plugin);
         this.spawnModule = new SpawnModule(plugin);
+        this.mobModule = new MobModule(plugin);
         this.baseModule = new BaseModule(plugin);
         this.farmModule = new FarmModule(plugin);
         this.stationModule = new StationModule(plugin);
@@ -167,6 +171,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "msg", "reply" -> chatModule.handle(sender, module, subArgs, messages);
             case "afk" -> afkModule.handle(sender, subArgs, messages);
             case "spawn", "setspawn" -> spawnModule.handle(sender, module, subArgs, messages);
+            case "mob", "spawnmob" -> mobModule.handle(sender, subArgs, messages);
             case "base" -> baseModule.handle(sender, module, subArgs, messages);
             case "farm" -> farmModule.handle(sender, module, subArgs, messages);
             case "station", "train", "railway" -> stationModule.handle(sender, module, subArgs, messages);
@@ -232,6 +237,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "r" -> "reply";
             case "train", "railway" -> "station";
             case "portals" -> "portal";
+            case "spawnmob", "rxmob" -> "mob";
             default -> module;
         };
     }
@@ -269,6 +275,7 @@ public final class RihanXCommand implements CommandExecutor {
         sendHelpLine(messages, sender, "msg", "Private messages (/r to reply)");
         sendHelpLine(messages, sender, "afk", "Toggle AFK status");
         sendHelpLine(messages, sender, "spawn", "Teleport to spawn");
+        sendHelpLine(messages, sender, "mob", "Spawn villager or zombie at your feet");
         sendHelpLine(messages, sender, "admin", "Admin tools");
         messages.send(sender, "help-dual");
     }

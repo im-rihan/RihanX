@@ -15,6 +15,22 @@ import java.util.Set;
  */
 public final class FarmTemplates {
 
+    /** Mid-pod walk Y — villagers stand here looking through iron bars. */
+    public static final int IRON_POD_Y = 9;
+    /** Local X of the two villager pods. */
+    public static final int[] IRON_POD_SIDES = {-5, 5};
+    /** First local Z of the three stand cells in each pod. */
+    public static final int IRON_POD_Z0 = 1;
+    public static final int IRON_VILLAGERS_PER_POD = 3;
+    /** Center zombie cage (local). */
+    public static final int IRON_ZOMBIE_X = 0;
+    public static final int IRON_ZOMBIE_Z = 2;
+
+    /** Wheat/potato farmer stand cell (air beside the bed, not the bed head). */
+    public static final int CROP_FARMER_DX = 1;
+    public static final int CROP_FARMER_DY = 1;
+    public static final int CROP_FARMER_DZ = 7;
+
     private FarmTemplates() {
     }
 
@@ -570,7 +586,8 @@ public final class FarmTemplates {
      *   <li>Open-sky golem deck ON TOP (y=13) with dry pads + water trenches → drop</li>
      *   <li>Lava blade + hoppers → ground chests</li>
      * </ul>
-     * Plugin auto-spawns unemployed villagers (claim farmer) + nametag zombie.
+     * Plugin auto-spawns unemployed villagers (claim farmer) + nametag zombie
+     * in a minecart on the player spawn pad, then teleports them into the pods and cage.
      */
     public static @NotNull BaseTemplates.BaseBlueprint iron() {
         BaseTemplates.Builder b = new BaseTemplates.Builder();
@@ -688,7 +705,7 @@ public final class FarmTemplates {
             }
         }
         // Re-assert cage after corridor clear
-        b.set(0, 9, 2, Material.AIR);
+        b.set(0, 9, 2, Material.RAIL);
         b.set(0, 10, 2, Material.AIR);
         for (int y = 9; y <= 10; y++) {
             for (int x = -1; x <= 1; x++) {

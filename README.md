@@ -399,6 +399,25 @@ AFK is broadcast to the server and shows an `[AFK]` suffix next to your name in 
 
 `/setspawn` updates both the vanilla world spawn and a warp named `spawn` (visible via `/warps`), so `/spawn`, `/warp spawn`, and respawns all point to the same place. Also `/rx spawn` / `/rx setspawn`.
 
+### Mob spawn — `/mob` · `/spawnmob`
+
+Spawn a **villager** or **zombie** on the spot where you stand (persistent, nametag). OP-only by default.
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/mob villager [amount] [farmer]` | `rihanx.mob` | Spawn villagers at your feet |
+| `/mob zombie [amount] [minecart]` | `rihanx.mob` | Spawn zombies (add `minecart` to seat them) |
+| `/spawnmob …` · `/rx mob …` | same | Aliases |
+
+```text
+/mob villager              # 1 unemployed villager
+/mob villager farmer 3     # 3 farmers
+/mob zombie                # 1 nametag zombie
+/mob zombie minecart       # nametag zombie locked in a minecart (iron-farm style)
+```
+
+`/farm iron` uses this same advanced spawn: 6 villagers (beds + composters claimed) plus a nametag zombie in a minecart, appearing on your spawn pad then moving into the pods.
+
 ### Bases — `/base`
 
 Stand where the **front door / porch** should be, look toward where the house should go, then paste (or open `/base` GUI). You stay at the entrance while it builds, then face inside when done.
@@ -471,7 +490,7 @@ Stand at the **front / collection** side, face into the farm, then open the GUI:
 | `nether` | Soul sand wart, hoppers |
 | `animal` | 4 pens, water, hay, chests, hoppers |
 | `cactus` | Break fences, hoppers |
-| `iron` | Open deck, lava blade + magma floor, hoppers → chest (**add villagers + zombie**) |
+| `iron` | Open deck, lava blade + magma floor, hoppers → chest (**advanced: villagers + minecart zombie**) |
 | `xp` | Dark roofed pads, drop shaft, slab kill (**AFK in the ground house**) |
 
 Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm …`.
@@ -489,7 +508,7 @@ Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farm
 /farm list
 /farm wheat           # starter crop farm with hoppers
 /farm cane            # sugar cane auto farm
-/farm iron            # iron farm frame (add villagers + zombie)
+/farm iron            # iron farm (advanced spawn: villagers + minecart zombie)
 /farm xp              # XP farm building
 /farm undo
 ```

@@ -195,6 +195,11 @@ commands:
     usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list|undo]
     permission: rihanx.farm
     aliases: [autofarm, farms]
+  mob:
+    description: Spawn a villager or zombie at your feet (persistent, optional minecart).
+    usage: /mob <villager|zombie> [amount] [farmer|minecart|nametag]
+    permission: rihanx.mob
+    aliases: [spawnmob, rxmob]
   station:
     description: Paste train stations/railways and link stops together.
     usage: /station [build <template> [stop]|set <stop>|link <a> <b>|stops|list|undo]
@@ -310,6 +315,7 @@ permissions:
       rihanx.kit.*: true
       rihanx.base.*: true
       rihanx.farm.*: true
+      rihanx.mob.*: true
       rihanx.bridge.*: true
       rihanx.build.*: true
       rihanx.msg: true
@@ -745,6 +751,13 @@ permissions:
   rihanx.farm.undo:
     description: Undo the last farm or base paste.
     default: op
+  rihanx.mob:
+    description: Spawn a villager or zombie at your feet.
+    default: op
+  rihanx.mob.*:
+    default: op
+    children:
+      rihanx.mob: true
   rihanx.station:
     description: List and use train station / railway templates.
     default: op

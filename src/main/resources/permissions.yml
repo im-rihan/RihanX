@@ -88,3 +88,4 @@ nodes:
   - rihanx.bypass.cooldown
   - rihanx.bypass.teleportdelay
   - rihanx.see.vanished
+  - rihanx.mob
