@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Locale;
 
 /**
- * Handles /farm and /rx farm …
+ * Handles /farm, /autofarm, /farms, and /rx farm …
+ * <p>
+ * Subcommands: list, info, preview, validate, build, undo, gui.
+ * Bare {@code /farm <name>} still builds (same as {@code build}).
  */
 public final class FarmModule {
 
@@ -42,22 +45,43 @@ public final class FarmModule {
             farms.openMenu(player);
             return true;
         }
-        if (args[0].equalsIgnoreCase("list")) {
+
+        String sub = args[0].toLowerCase(Locale.ROOT);
+        if (sub.equals("list")) {
             farms.sendList(player);
             messages.send(player, "farm-usage");
             return true;
         }
-        if (args[0].equalsIgnoreCase("undo")) {
+        if (sub.equals("undo") || sub.equals("cancel")) {
             if (!CommandSupport.checkPerm(player, PermissionNodes.FARM_UNDO, messages)) {
                 return true;
             }
             plugin.getBaseService().undo(player);
             return true;
         }
+        if (sub.equals("info") && args.length >= 2) {
+            farms.info(player, args[1].toLowerCase(Locale.ROOT));
+            return true;
+        }
+        if (sub.equals("preview") && args.length >= 2) {
+            farms.preview(player, args[1].toLowerCase(Locale.ROOT));
+            return true;
+        }
+        if (sub.equals("validate") && args.length >= 2) {
+            farms.validate(player, args[1].toLowerCase(Locale.ROOT));
+            return true;
+        }
+        if (sub.equals("build") && args.length >= 2) {
+            if (!CommandSupport.checkPerm(player, PermissionNodes.FARM_BUILD, messages)) {
+                return true;
+            }
+            farms.paste(player, args[1].toLowerCase(Locale.ROOT));
+            return true;
+        }
         if (!CommandSupport.checkPerm(player, PermissionNodes.FARM_BUILD, messages)) {
             return true;
         }
-        farms.paste(player, args[0].toLowerCase(Locale.ROOT));
+        farms.paste(player, sub);
         return true;
     }
 }

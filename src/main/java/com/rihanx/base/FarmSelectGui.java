@@ -57,8 +57,40 @@ public final class FarmSelectGui implements InventoryHolder, Listener {
         ENTRIES.put("iron", new MenuEntry(Material.IRON_INGOT, 23, "<white><bold>Iron Farm</bold></white>",
                 List.of("<gray>Open deck · lava blade · magma alcove</gray>",
                         "<green>Advanced: villagers + minecart zombie</green>")));
-        ENTRIES.put("xp", new MenuEntry(Material.EXPERIENCE_BOTTLE, 24, "<light_purple><bold>XP Farm</bold></light_purple>",
-                List.of("<gray>Dark roofed pads · 2×2 drop shaft · one-hit XP</gray>")));
+        ENTRIES.put("xp", new MenuEntry(Material.EXPERIENCE_BOTTLE, 24, "<light_purple><bold>XP Dark Room</bold></light_purple>",
+                List.of("<gray>Sealed blackstone pads · 24+ spawn range</gray>",
+                        "<gray>22-block drop · punch 1HP at the window</gray>")));
+        ENTRIES.put("xp-zombie", new MenuEntry(Material.ROTTEN_FLESH, 25, "<green><bold>XP Zombie</bold></green>",
+                List.of("<gray>4 zombie spawners · stay at the window</gray>",
+                        "<yellow>Best for testing — spawners always work</yellow>")));
+        ENTRIES.put("xp-skeleton", new MenuEntry(Material.BONE, 28, "<white><bold>XP Skeleton</bold></white>",
+                List.of("<gray>4 skeleton spawners · stay at the window</gray>")));
+        ENTRIES.put("xp-spider", new MenuEntry(Material.SPIDER_EYE, 29, "<dark_red><bold>XP Cave Spider</bold></dark_red>",
+                List.of("<gray>4 cave-spider spawners · milk for poison</gray>")));
+        ENTRIES.put("xp-enderman", new MenuEntry(Material.ENDER_PEARL, 30, "<dark_purple><bold>XP Enderman</bold></dark_purple>",
+                List.of("<gray>3-high sealed pads · no water (they teleport)</gray>",
+                        "<gray>Walk-off drop · 24+ spawn range</gray>")));
+        ENTRIES.put("chicken", new MenuEntry(Material.COOKED_CHICKEN, 31, "<gold><bold>Chicken Cooker</bold></gold>",
+                List.of("<gray>Eggs fall through trapdoors</gray>",
+                        "<yellow>Lava auto-cooks chicken → chests</yellow>")));
+        ENTRIES.put("cow", new MenuEntry(Material.COOKED_BEEF, 32, "<red><bold>Cow Cooker</bold></red>",
+                List.of("<gray>Wheat dispensers breed at dawn</gray>",
+                        "<yellow>Lava auto-cooks beef + leather</yellow>")));
+        ENTRIES.put("pig", new MenuEntry(Material.COOKED_PORKCHOP, 33, "<light_purple><bold>Pig Cooker</bold></light_purple>",
+                List.of("<gray>Carrot dispensers breed at dawn</gray>",
+                        "<yellow>Lava auto-cooks porkchops</yellow>")));
+        ENTRIES.put("cook", new MenuEntry(Material.SMOKER, 34, "<yellow><bold>Auto Smoker</bold></yellow>",
+                List.of("<gray>Raw food in the top chests</gray>",
+                        "<gray>Coal in the back chests → loot south</gray>")));
+        ENTRIES.put("slime", new MenuEntry(Material.SLIME_BALL, 37, "<green><bold>Slime Farm</bold></green>",
+                List.of("<gray>4 slime spawners · stand at the window</gray>",
+                        "<yellow>Slimeballs → loot chests</yellow>")));
+        ENTRIES.put("redstone", new MenuEntry(Material.REDSTONE, 38, "<red><bold>Redstone (Witch)</bold></red>",
+                List.of("<gray>4 witch spawners · stand at the window</gray>",
+                        "<gray>Redstone, glowstone, sugar, sticks</gray>")));
+        ENTRIES.put("diamond", new MenuEntry(Material.DIAMOND, 39, "<aqua><bold>Diamond Hall</bold></aqua>",
+                List.of("<gray>Not an ore gen — 4 master toolsmiths + 2 farmers</gray>",
+                        "<yellow>Trade emeralds for diamond gear</yellow>")));
     }
 
     private final @NotNull RihanX plugin;

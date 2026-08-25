@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
@@ -28,6 +29,7 @@ import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
+import org.bukkit.entity.EntityType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
@@ -105,12 +107,21 @@ public final class BaseService {
             @NotNull BaseTemplates.BaseBlueprint blueprint,
             @NotNull String kind
     ) {
+        pasteBlueprint(player, blueprint, kind, yawToFace(player.getLocation().getYaw()));
+    }
+
+    public void pasteBlueprint(
+            @NotNull Player player,
+            @NotNull BaseTemplates.BaseBlueprint blueprint,
+            @NotNull String kind,
+            @NotNull BlockFace facing
+    ) {
         if (!building.add(player.getUniqueId())) {
             messages.send(player, "base-busy");
             return;
         }
         try {
-            startPaste(player, blueprint, kind);
+            startPaste(player, blueprint, kind, facing);
         } catch (RuntimeException ex) {
             building.remove(player.getUniqueId());
             throw ex;
@@ -150,10 +161,10 @@ public final class BaseService {
     private void startPaste(
             @NotNull Player player,
             @NotNull BaseTemplates.BaseBlueprint blueprint,
-            @NotNull String kind
+            @NotNull String kind,
+            @NotNull BlockFace facing
     ) {
         World world = player.getWorld();
-        BlockFace facing = yawToFace(player.getLocation().getYaw());
 
         // Align so the blueprint entrance lands on the player's feet (not the house center).
         Location playerBlock = player.getLocation().getBlock().getLocation();
@@ -287,7 +298,9 @@ public final class BaseService {
                     // North water sources need physics ticks to flow south over hoppers
                     startKelpWaterStream(world, origin, facing);
                 }
-                if ("farm".equals(kind) && Set.of("iron", "xp", "bamboo", "cane", "kelp", "wheat", "potato", "animal").contains(blueprint.id())) {
+                if ("farm".equals(kind) && (Set.of("iron", "bamboo", "cane", "kelp", "wheat", "potato", "animal",
+                        "chicken", "cow", "pig", "cook", "slime", "redstone", "diamond")
+                        .contains(blueprint.id()) || blueprint.id().startsWith("xp"))) {
                     messages.send(player, "farm-" + blueprint.id() + "-hint");
                 }
                 Location pad = done.clone();
@@ -307,6 +320,26 @@ public final class BaseService {
                 }
                 if ("farm".equals(kind) && blueprint.id().equals("animal")) {
                     spawnAnimalFarmMobs(world, origin, facing);
+                }
+                if ("farm".equals(kind) && (blueprint.id().equals("chicken")
+                        || blueprint.id().equals("cow") || blueprint.id().equals("pig"))) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> spawnLivestockFarm(world, origin, facing, pad, blueprint.id()), 10L);
+                }
+                if ("farm".equals(kind) && blueprint.id().equals("diamond")) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> spawnDiamondHall(world, origin, facing, pad, player), 10L);
+                }
+                if ("farm".equals(kind) && Set.of("chicken", "cow", "pig", "cook", "diamond").contains(blueprint.id())) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> stockAdvancedFarm(world, origin, facing, blueprint.id(), player), 15L);
+                }
+                if ("farm".equals(kind) && (XpFarmTemplates.spawnerEntityName(blueprint.id()) != null
+                        || AdvancedFarmTemplates.spawnerEntityName(blueprint.id()) != null)) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> armXpSpawners(world, origin, facing, blueprint, player, true), 5L);
+                    plugin.getServer().getScheduler().runTaskLater(plugin,
+                            () -> armXpSpawners(world, origin, facing, blueprint, player, false), 40L);
                 }
                 messages.send(player, kindMessage(kind, "undo-hint"));
             }
@@ -639,6 +672,273 @@ public final class BaseService {
             return false;
         }
         chest.update(true, false);
+        return true;
+    }
+
+    /**
+     * After paste, monster spawners are empty pig cages until we set the type.
+     */
+    @SuppressWarnings("deprecation")
+    private void armXpSpawners(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing,
+            @NotNull BaseTemplates.BaseBlueprint blueprint,
+            @NotNull Player player,
+            boolean announce
+    ) {
+        String name = XpFarmTemplates.spawnerEntityName(blueprint.id());
+        if (name == null) {
+            name = AdvancedFarmTemplates.spawnerEntityName(blueprint.id());
+        }
+        if (name == null) {
+            return;
+        }
+        EntityType type = switch (name) {
+            case "ZOMBIE" -> EntityType.ZOMBIE;
+            case "SKELETON" -> EntityType.SKELETON;
+            case "CAVE_SPIDER" -> EntityType.CAVE_SPIDER;
+            case "SLIME" -> EntityType.SLIME;
+            case "WITCH" -> EntityType.WITCH;
+            default -> null;
+        };
+        if (type == null) {
+            return;
+        }
+        int armed = 0;
+        for (BaseTemplates.RelBlock rel : blueprint.blocks()) {
+            if (rel.material() != Material.SPAWNER) {
+                continue;
+            }
+            int[] xz = rotate(rel.dx(), rel.dz(), structureFacing);
+            Block block = world.getBlockAt(
+                    origin.getBlockX() + xz[0],
+                    origin.getBlockY() + rel.dy(),
+                    origin.getBlockZ() + xz[1]
+            );
+            if (block.getType() != Material.SPAWNER) {
+                block.setType(Material.SPAWNER, false);
+            }
+            if (!(block.getState() instanceof CreatureSpawner spawner)) {
+                continue;
+            }
+            spawner.setSpawnedType(type);
+            spawner.setDelay(20);
+            spawner.setMinSpawnDelay(40);
+            spawner.setMaxSpawnDelay(80);
+            spawner.setSpawnCount(4);
+            spawner.setMaxNearbyEntities(16);
+            spawner.setRequiredPlayerRange(32);
+            spawner.setSpawnRange(4);
+            if (spawner.update(true, false)) {
+                armed++;
+            }
+        }
+        if (announce && player.isOnline() && armed > 0) {
+            messages.send(player, "farm-xp-spawners-armed", MessageManager.placeholders(
+                    "count", armed,
+                    "mob", name.toLowerCase(Locale.ROOT).replace('_', ' ')
+            ));
+        }
+    }
+
+    private void spawnLivestockFarm(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing,
+            @NotNull Location playerPad,
+            @NotNull String id
+    ) {
+        int[][] stands = switch (id) {
+            case "chicken" -> AdvancedFarmTemplates.CHICKEN_STANDS;
+            case "cow" -> AdvancedFarmTemplates.COW_STANDS;
+            case "pig" -> AdvancedFarmTemplates.PIG_STANDS;
+            default -> new int[0][];
+        };
+        int y = "chicken".equals(id) ? AdvancedFarmTemplates.CHICKEN_Y : AdvancedFarmTemplates.LIVESTOCK_Y;
+        Class<? extends org.bukkit.entity.Animals> type = switch (id) {
+            case "chicken" -> org.bukkit.entity.Chicken.class;
+            case "cow" -> org.bukkit.entity.Cow.class;
+            case "pig" -> org.bukkit.entity.Pig.class;
+            default -> null;
+        };
+        if (type == null) {
+            return;
+        }
+        String label = switch (id) {
+            case "chicken" -> "Cooker Hen";
+            case "cow" -> "Cooker Cow";
+            default -> "Cooker Pig";
+        };
+        for (int[] stand : stands) {
+            Location dest = localFeet(origin, stand[0], y, stand[1], structureFacing);
+            Block feet = dest.getBlock();
+            if (feet.getType().isSolid() && !feet.getType().name().contains("TRAPDOOR")) {
+                feet.setType(Material.AIR, false);
+            }
+            dest.clone().add(0, 1, 0).getBlock().setType(Material.AIR, false);
+            world.spawn(dest, type, animal -> {
+                animal.setAdult();
+                animal.setRemoveWhenFarAway(false);
+                animal.setPersistent(true);
+                animal.customName(net.kyori.adventure.text.Component.text(label));
+                animal.setCustomNameVisible(false);
+            });
+        }
+        // Nudge the player-pad air so Paper accepted the spawn even if dest was tight
+        playerPad.getBlock().setType(Material.AIR, false);
+    }
+
+    private void spawnDiamondHall(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing,
+            @NotNull Location playerPad,
+            @NotNull Player player
+    ) {
+        MobSpawnService mobs = plugin.getMobSpawnService();
+        int spawned = 0;
+        for (int x : AdvancedFarmTemplates.DIAMOND_SMITH_X) {
+            Location dest = localFeet(origin, x, AdvancedFarmTemplates.DIAMOND_Y,
+                    AdvancedFarmTemplates.DIAMOND_SMITH_STAND_Z, structureFacing);
+            Location bed = localFeet(origin, x, AdvancedFarmTemplates.DIAMOND_Y,
+                    AdvancedFarmTemplates.DIAMOND_BED_Z, structureFacing);
+            Location job = localFeet(origin, x, AdvancedFarmTemplates.DIAMOND_Y,
+                    AdvancedFarmTemplates.DIAMOND_JOB_Z, structureFacing);
+            MobSpawnService.SpawnRequest request = new MobSpawnService.SpawnRequest(
+                    MobSpawnService.Kind.VILLAGER, 1, false, true, "toolsmith", "Diamond Smith"
+            );
+            if (mobs.spawnOne(world, playerPad, dest, request, bed, job) instanceof Villager villager) {
+                villager.setProfession(Villager.Profession.TOOLSMITH);
+                villager.setVillagerLevel(5);
+                villager.setVillagerExperience(250);
+                spawned++;
+            }
+        }
+        for (int[] farmer : AdvancedFarmTemplates.DIAMOND_FARMERS) {
+            Location dest = localFeet(origin, farmer[0], AdvancedFarmTemplates.DIAMOND_Y, farmer[1], structureFacing);
+            Location bed = localFeet(origin, farmer[0], AdvancedFarmTemplates.DIAMOND_Y, farmer[1] - 2, structureFacing);
+            Location job = localFeet(origin, farmer[0], 0, farmer[1], structureFacing);
+            MobSpawnService.SpawnRequest request = new MobSpawnService.SpawnRequest(
+                    MobSpawnService.Kind.VILLAGER, 1, false, true, "farmer", "Emerald Farmer"
+            );
+            if (mobs.spawnOne(world, playerPad, dest, request, bed, job) instanceof Villager villager) {
+                villager.setProfession(Villager.Profession.FARMER);
+                villager.setVillagerLevel(5);
+                villager.setVillagerExperience(250);
+                spawned++;
+            }
+        }
+        if (player.isOnline()) {
+            messages.send(player, "farm-diamond-spawned", MessageManager.placeholders("count", spawned));
+        }
+    }
+
+    private void stockAdvancedFarm(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing,
+            @NotNull String id,
+            @NotNull Player player
+    ) {
+        int filled = 0;
+        switch (id) {
+            case "cow" -> {
+                org.bukkit.inventory.ItemStack wheat = new org.bukkit.inventory.ItemStack(Material.WHEAT, 64);
+                for (int[] d : AdvancedFarmTemplates.COW_DISPENSERS) {
+                    filled += fillContainer(world, origin, structureFacing, d[0], 3, d[2], wheat) ? 1 : 0;
+                    filled += fillContainer(world, origin, structureFacing, d[0], 1, d[2], wheat) ? 1 : 0;
+                }
+            }
+            case "pig" -> {
+                org.bukkit.inventory.ItemStack carrot = new org.bukkit.inventory.ItemStack(Material.CARROT, 64);
+                for (int[] d : AdvancedFarmTemplates.PIG_DISPENSERS) {
+                    filled += fillContainer(world, origin, structureFacing, d[0], 3, d[2], carrot) ? 1 : 0;
+                    filled += fillContainer(world, origin, structureFacing, d[0], 1, d[2], carrot) ? 1 : 0;
+                }
+            }
+            case "chicken" -> {
+                org.bukkit.inventory.ItemStack eggs = new org.bukkit.inventory.ItemStack(Material.EGG, 16);
+                org.bukkit.inventory.ItemStack seeds = new org.bukkit.inventory.ItemStack(Material.WHEAT_SEEDS, 64);
+                filled += fillContainer(world, origin, structureFacing,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_X,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_Y,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_Z, eggs) ? 1 : 0;
+                filled += fillContainer(world, origin, structureFacing,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_X,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_Y,
+                        AdvancedFarmTemplates.CHICKEN_EGG_DISPENSER_Z, seeds) ? 1 : 0;
+            }
+            case "cook" -> {
+                org.bukkit.inventory.ItemStack beef = new org.bukkit.inventory.ItemStack(Material.BEEF, 64);
+                org.bukkit.inventory.ItemStack coal = new org.bukkit.inventory.ItemStack(Material.COAL, 64);
+                for (int x = -AdvancedFarmTemplates.COOK_SMOKER_HALF; x <= AdvancedFarmTemplates.COOK_SMOKER_HALF; x++) {
+                    filled += fillContainer(world, origin, structureFacing,
+                            x, AdvancedFarmTemplates.COOK_RAW_CHEST_Y, 0, beef) ? 1 : 0;
+                    filled += fillContainer(world, origin, structureFacing,
+                            x, AdvancedFarmTemplates.COOK_FUEL_CHEST_Y,
+                            AdvancedFarmTemplates.COOK_FUEL_CHEST_Z, coal) ? 1 : 0;
+                }
+            }
+            case "diamond" -> {
+                org.bukkit.inventory.ItemStack emeralds = new org.bukkit.inventory.ItemStack(Material.EMERALD, 64);
+                org.bukkit.inventory.ItemStack wheat = new org.bukkit.inventory.ItemStack(Material.WHEAT, 64);
+                filled += fillContainer(world, origin, structureFacing,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_X,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Y,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Z, emeralds) ? 1 : 0;
+                filled += fillContainer(world, origin, structureFacing,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_X + 1,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Y,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Z, emeralds) ? 1 : 0;
+                filled += fillContainer(world, origin, structureFacing,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_X - 1,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Y,
+                        AdvancedFarmTemplates.DIAMOND_EMERALD_Z, wheat) ? 1 : 0;
+            }
+            default -> {
+            }
+        }
+        if (player.isOnline() && filled > 0) {
+            messages.send(player, "farm-advanced-stocked", MessageManager.placeholders("count", filled));
+        }
+    }
+
+    private boolean fillContainer(
+            @NotNull World world,
+            @NotNull Location origin,
+            @NotNull BlockFace structureFacing,
+            int lx,
+            int ly,
+            int lz,
+            @NotNull org.bukkit.inventory.ItemStack stack
+    ) {
+        int[] xz = rotate(lx, lz, structureFacing);
+        Block block = world.getBlockAt(
+                origin.getBlockX() + xz[0],
+                origin.getBlockY() + ly,
+                origin.getBlockZ() + xz[1]
+        );
+        if (!(block.getState() instanceof org.bukkit.block.Container container)) {
+            return false;
+        }
+        org.bukkit.inventory.Inventory inv = container.getSnapshotInventory();
+        boolean placed = false;
+        for (int slot = 0; slot < inv.getSize(); slot++) {
+            org.bukkit.inventory.ItemStack existing = inv.getItem(slot);
+            if (existing != null && !existing.getType().isAir()) {
+                continue;
+            }
+            inv.setItem(slot, stack.clone());
+            placed = true;
+            if (slot >= 3) {
+                break;
+            }
+        }
+        if (!placed) {
+            return false;
+        }
+        container.update(true, false);
         return true;
     }
 

@@ -191,8 +191,8 @@ commands:
     permission: rihanx.base
     aliases: [house, buildbase]
   farm:
-    description: Paste an automatic farm (wheat, cane, bamboo, melon, nether, animal, cactus, iron, xp).
-    usage: /farm [wheat|potato|cane|bamboo|melon|cocoa|kelp|mushroom|nether|animal|cactus|iron|xp|list|undo]
+    description: Paste an automatic farm (crops, food cookers, iron, XP, slime, redstone, diamond).
+    usage: /farm [list|info|preview|validate|build|undo|<name>]
     permission: rihanx.farm
     aliases: [autofarm, farms]
   mob:

@@ -18,7 +18,7 @@ class BlueprintValidatorTest {
     @Test
     void everyFarmHasGadgetsAndValidStructure() {
         Map<String, BaseTemplates.BaseBlueprint> farms = FarmTemplates.all();
-        assertEquals(13, farms.size(), "expected 13 farm templates");
+        assertEquals(24, farms.size(), "expected 24 farm templates");
         for (Map.Entry<String, BaseTemplates.BaseBlueprint> entry : farms.entrySet()) {
             Set<String> errors = BlueprintValidator.validateFarm(entry.getValue());
             assertTrue(errors.isEmpty(), () -> entry.getKey() + " failed: " + errors);
@@ -145,64 +145,288 @@ class BlueprintValidatorTest {
     }
 
     @Test
-    void xpFarmHasContinuousDropShaftAndDarkRoof() {
+    void xpFarmHasSealedDarkRoofAndPadsOutOfAfkRange() {
         BaseTemplates.BaseBlueprint xp = FarmTemplates.all().get("xp");
         boolean hasButton = false;
         boolean darkRoof = false;
-        boolean hasMagmaLanding = false;
+        boolean roofHole = false;
+        // Kill pad: bottom slabs on hoppers + solid ceiling (legs-only, no trapdoors)
+        boolean hasKillSlabs = false;
+        boolean hasKillCeiling = false;
+        boolean hasTrapdoorOnKill = false;
         boolean hasSign = false;
-        boolean hasSlabOnLanding = false;
         int shaftAir = 0;
         int waterSources = 0;
+        int darkBlocks = 0;
+        double minPadDist = Double.MAX_VALUE;
+        java.util.Map<String, org.bukkit.Material> at = new java.util.HashMap<>();
         for (BaseTemplates.RelBlock block : xp.blocks()) {
+            at.put(block.dx() + "," + block.dy() + "," + block.dz(), block.material());
             if (block.material().name().endsWith("_BUTTON")) {
                 hasButton = true;
                 assertTrue(Math.abs(block.dx()) >= 1, "XP door buttons must be on wall beside door");
             }
-            // Continuous shaft through deck
             if ((block.dx() == -1 || block.dx() == 0)
                     && (block.dz() == 0 || block.dz() == 1)
-                    && block.dy() >= 1 && block.dy() <= 26
+                    && block.dy() >= 1 && block.dy() < XpFarmTemplates.NATURAL_ROOF_Y
                     && block.material() == org.bukkit.Material.AIR) {
                 shaftAir++;
             }
-            if (block.dy() == 27 && block.material() == org.bukkit.Material.COBBLESTONE
-                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 0 && block.dz() <= 1)) {
+            if (XpFarmTemplates.isDarkShell(block.material()) && block.dy() >= XpFarmTemplates.NATURAL_ROOF_Y) {
                 darkRoof = true;
             }
-            // Dark roof over spawn deck (deck y=23 → roof at 26)
-            if (block.material() == org.bukkit.Material.COBBLESTONE && block.dy() == 26
-                    && !(block.dx() >= -1 && block.dx() <= 0 && block.dz() >= 0 && block.dz() <= 1)) {
-                darkRoof = true;
-            }
-            // Open trapdoors over hoppers = punch-XP landing
-            if (block.material() == org.bukkit.Material.IRON_TRAPDOOR
-                    && (block.dx() == -1 || block.dx() == 0)
+            if ((block.dx() == -1 || block.dx() == 0)
                     && (block.dz() == 0 || block.dz() == 1)
-                    && block.dy() == 1) {
-                hasMagmaLanding = true;
+                    && block.dy() >= XpFarmTemplates.NATURAL_ROOF_Y
+                    && block.material() == org.bukkit.Material.AIR) {
+                roofHole = true;
             }
             if (block.material().name().contains("SLAB")
-                    && (block.dx() == -1 || block.dx() == 0)
-                    && (block.dz() == 0 || block.dz() == 1)
-                    && block.dy() == 1) {
-                hasSlabOnLanding = true;
+                    && XpFarmTemplates.isKillPadCell(block.dx(), block.dz())
+                    && block.dy() == XpFarmTemplates.KILL_SLAB_Y) {
+                hasKillSlabs = true;
             }
-            if (block.material().name().contains("SIGN") && (block.dy() == 22 || block.dy() == 21)) {
+            if (block.material() == org.bukkit.Material.AIR
+                    && XpFarmTemplates.isKillPadCell(block.dx(), block.dz())
+                    && block.dy() == XpFarmTemplates.KILL_CEILING_Y) {
+                hasKillCeiling = true;
+            }
+            if (block.material() == org.bukkit.Material.IRON_TRAPDOOR
+                    && XpFarmTemplates.isKillPadCell(block.dx(), block.dz())) {
+                hasTrapdoorOnKill = true;
+            }
+            if (block.material().name().contains("SIGN")
+                    && (block.dy() == XpFarmTemplates.NATURAL_DECK_Y - 1
+                    || block.dy() == XpFarmTemplates.NATURAL_DECK_Y - 2)) {
                 hasSign = true;
             }
-            if (block.material() == org.bukkit.Material.WATER && block.dy() == 23) {
+            if (block.material() == org.bukkit.Material.WATER && block.dy() == XpFarmTemplates.NATURAL_DECK_Y) {
                 waterSources++;
+            }
+            if (XpFarmTemplates.isDarkShell(block.material())) {
+                darkBlocks++;
+            }
+        }
+        int deck = XpFarmTemplates.NATURAL_DECK_Y;
+        for (int x = XpFarmTemplates.PAD_MIN_X; x <= XpFarmTemplates.PAD_MAX_X; x++) {
+            for (int z = XpFarmTemplates.PAD_MIN_Z; z <= XpFarmTemplates.PAD_MAX_Z; z++) {
+                if (!XpFarmTemplates.isSpawnPadCell(x, z)) {
+                    continue;
+                }
+                org.bukkit.Material floor = at.get(x + "," + deck + "," + z);
+                org.bukkit.Material above = at.get(x + "," + (deck + 1) + "," + z);
+                if (floor == null || floor == org.bukkit.Material.AIR || floor == org.bukkit.Material.WATER) {
+                    continue;
+                }
+                if (above != null && above != org.bukkit.Material.AIR) {
+                    continue;
+                }
+                minPadDist = Math.min(minPadDist, XpFarmTemplates.afkDistance(x, deck, z));
             }
         }
         assertTrue(hasButton, "xp farm needs door buttons");
-        assertTrue(shaftAir >= 80, "xp farm needs continuous drop shaft, got " + shaftAir);
+        // Vertical shaft under center hole (not an open tower over the kill pad)
+        int holeShaftAir = 0;
+        for (BaseTemplates.RelBlock block : xp.blocks()) {
+            if ((block.dx() == -1 || block.dx() == 0)
+                    && block.dz() >= XpFarmTemplates.HOLE_MIN_Z && block.dz() <= XpFarmTemplates.HOLE_MAX_Z
+                    && block.dy() >= 1 && block.dy() < XpFarmTemplates.NATURAL_DECK_Y
+                    && block.material() == org.bukkit.Material.AIR) {
+                holeShaftAir++;
+            }
+        }
+        assertTrue(holeShaftAir >= 40, "xp farm needs vertical drop under center hole, got " + holeShaftAir);
         assertTrue(darkRoof, "xp spawn deck needs solid dark roof");
-        assertTrue(hasMagmaLanding, "xp kill landing must be open trapdoors over hoppers");
-        assertFalse(hasSlabOnLanding, "xp landing must not use slabs that block collection");
+        assertFalse(roofHole, "xp roof must not have a skylight hole over the drop");
+        assertTrue(hasKillSlabs, "xp kill box needs bottom slabs on hoppers (legs-only)");
+        assertTrue(hasKillCeiling, "xp kill box needs open y=2 (shaft onto slabs)");
+        assertFalse(hasTrapdoorOnKill, "xp kill box must not use trapdoors");
         assertTrue(hasSign, "xp hole needs water-break signs");
-        assertTrue(waterSources > 0 && waterSources <= 12,
-                "xp water should be trench-end sources only, got " + waterSources);
+        assertTrue(waterSources > 0 && waterSources <= 48,
+                "xp water should be spaced sources that reach the drop, got " + waterSources);
+        assertTrue(darkBlocks >= 150, "xp farm needs a dark-block shell, got " + darkBlocks);
+        assertTrue(minPadDist >= 24.0, "xp pads must be 24+ from AFK window, closest was " + minPadDist);
+
+        // Square deck: center hole = kill XZ (GitHub straight drop)
+        org.bukkit.Material holeCenter = at.get(
+                XpFarmTemplates.DECK_CENTER_X + "," + deck + "," + XpFarmTemplates.DECK_CENTER_Z);
+        assertEquals(org.bukkit.Material.AIR, holeCenter, "xp square must have air at deck center hole");
+        assertTrue(XpFarmTemplates.isDeckHole(XpFarmTemplates.DECK_CENTER_X, XpFarmTemplates.DECK_CENTER_Z),
+                "deck center must be inside the hole");
+        assertTrue(XpFarmTemplates.isKillPadCell(XpFarmTemplates.HOLE_MIN_X, XpFarmTemplates.HOLE_MIN_Z),
+                "hole must align with kill pad (old GitHub design)");
+        assertEquals(XpFarmTemplates.PAD_MAX_X - XpFarmTemplates.PAD_MIN_X,
+                XpFarmTemplates.PAD_MAX_Z - XpFarmTemplates.PAD_MIN_Z,
+                "xp spawn floor must be square");
+
+        org.bukkit.Material waterNearHole = at.get(
+                XpFarmTemplates.PAD_MIN_X + "," + deck + "," + XpFarmTemplates.HOLE_MIN_Z);
+        assertEquals(org.bukkit.Material.WATER, waterNearHole,
+                "xp water must flow on E-W trench toward center hole from west edge");
+        org.bukkit.Material waterSouthOfHole = at.get(
+                XpFarmTemplates.HOLE_MIN_X + "," + deck + "," + (XpFarmTemplates.HOLE_MAX_Z + 1));
+        assertEquals(org.bukkit.Material.WATER, waterSouthOfHole,
+                "xp water must continue on N-S trench beside center hole");
+        assertFalse(at.get(XpFarmTemplates.DECK_CENTER_X + "," + deck + "," + XpFarmTemplates.DECK_CENTER_Z)
+                        == org.bukkit.Material.WATER,
+                "center hole must stay air, not water");
+        long trenchWater = xp.blocks().stream()
+                .filter(b -> b.dy() == deck && b.material() == org.bukkit.Material.WATER
+                        && XpFarmTemplates.isWaterTrenchCell(b.dx(), b.dz()))
+                .count();
+        assertTrue(trenchWater >= 8, "xp + trench needs water on all four arms toward center, got " + trenchWater);
+
+        // Path: center hole ↓ open shaft → slabs (no side tunnel)
+        assertEquals(org.bukkit.Material.AIR, at.get(
+                        XpFarmTemplates.DECK_CENTER_X + "," + deck + "," + XpFarmTemplates.DECK_CENTER_Z),
+                "center hole must stay open at deck");
+        assertEquals(org.bukkit.Material.AIR, at.get("0,10,0"),
+                "vertical shaft must be open under center hole onto kill");
+        assertEquals(org.bukkit.Material.AIR, at.get("0," + XpFarmTemplates.KILL_CEILING_Y + ",0"),
+                "kill top must stay open for the drop");
+        assertTrue(String.valueOf(at.get("0," + XpFarmTemplates.KILL_SLAB_Y + ",0")).contains("SLAB"),
+                "drop must land on kill slabs");
+        assertEquals(org.bukkit.Material.WATER, at.get("0," + deck + "," + (XpFarmTemplates.HOLE_MAX_Z + 1)),
+                "deck south of center hole must keep water trench");
+
+        org.bukkit.Material lip = at.get("0,0,2");
+        assertTrue(lip == org.bukkit.Material.HOPPER || lip == org.bukkit.Material.STONE_BRICKS,
+                "xp safety lip at window feet must be solid");
+        assertEquals(org.bukkit.Material.IRON_BARS, at.get("-1,1,2"),
+                "xp punch window feet must stay barred (no walk-in)");
+        assertEquals(org.bukkit.Material.IRON_BARS, at.get("0,1,2"),
+                "xp punch window feet must stay barred (no walk-in)");
+        assertEquals(org.bukkit.Material.STONE_BRICKS, at.get("-1,2,2"),
+                "xp punch window must seal eye level so mobs cannot walk out");
+        assertEquals(org.bukkit.Material.STONE_BRICKS, at.get("0,2,2"),
+                "xp punch window must seal eye level so mobs cannot walk out");
+        assertEquals(org.bukkit.Material.GLASS_PANE, at.get("-2,1,2"),
+                "xp side window should be glass for clear view");
+        assertEquals(org.bukkit.Material.CHEST, at.get("0,0,8"),
+                "xp loot chests must sit on the floor");
+        boolean hopperOnChest = false;
+        for (BaseTemplates.RelBlock block : xp.blocks()) {
+            if (block.material() == org.bukkit.Material.HOPPER
+                    && block.dy() == 1 && block.dz() == 8
+                    && block.facing() == org.bukkit.block.BlockFace.DOWN) {
+                hopperOnChest = true;
+                break;
+            }
+        }
+        assertTrue(hopperOnChest, "xp loot must use hoppers on chests facing DOWN");
+        assertEquals(org.bukkit.Material.IRON_DOOR, at.get("0,1,11"),
+                "xp safety room needs an iron door");
+    }
+
+    @Test
+    void xpSpawnerFarmsHaveFourSpawnersNearTheWindow() {
+        for (String id : List.of("xp-zombie", "xp-skeleton", "xp-spider")) {
+            BaseTemplates.BaseBlueprint bp = FarmTemplates.all().get(id);
+            assertTrue(bp != null, id + " missing");
+            assertEquals(
+                    switch (id) {
+                        case "xp-zombie" -> "ZOMBIE";
+                        case "xp-skeleton" -> "SKELETON";
+                        case "xp-spider" -> "CAVE_SPIDER";
+                        default -> null;
+                    },
+                    XpFarmTemplates.spawnerEntityName(id)
+            );
+            int spawners = 0;
+            double maxSpawnerDist = 0;
+            for (BaseTemplates.RelBlock block : bp.blocks()) {
+                if (block.material() != org.bukkit.Material.SPAWNER) {
+                    continue;
+                }
+                spawners++;
+                double dist = Math.sqrt(
+                        (double) block.dx() * block.dx()
+                                + Math.pow(block.dy() - 1, 2)
+                                + Math.pow(block.dz() - XpFarmTemplates.AFK_WINDOW_Z, 2)
+                );
+                maxSpawnerDist = Math.max(maxSpawnerDist, dist);
+            }
+            assertEquals(4, spawners, id + " should have 4 spawners");
+            assertTrue(maxSpawnerDist <= 32.0, id + " spawners must be within 32 of the window, was " + maxSpawnerDist);
+            assertTrue(bp.blocks().stream().anyMatch(b -> XpFarmTemplates.isDarkShell(b.material())),
+                    id + " should use dark shell blocks");
+        }
+    }
+
+    @Test
+    void xpEndermanFarmIsThreeHighWithNoWaterOnPads() {
+        BaseTemplates.BaseBlueprint bp = FarmTemplates.all().get("xp-enderman");
+        assertTrue(bp != null, "xp-enderman missing");
+        int deck = XpFarmTemplates.NATURAL_DECK_Y;
+        boolean threeHigh = false;
+        boolean waterOnPad = false;
+        for (BaseTemplates.RelBlock block : bp.blocks()) {
+            if (block.dy() == deck + 3 && block.material() == org.bukkit.Material.AIR
+                    && block.dx() >= XpFarmTemplates.PAD_MIN_X + 2
+                    && block.dx() <= XpFarmTemplates.PAD_MAX_X - 2
+                    && block.dz() >= XpFarmTemplates.PAD_MIN_Z + 2
+                    && block.dz() <= XpFarmTemplates.PAD_MAX_Z - 2) {
+                threeHigh = true;
+            }
+            if (block.material() == org.bukkit.Material.WATER && block.dy() == deck
+                    && block.dz() <= XpFarmTemplates.PAD_MAX_Z) {
+                waterOnPad = true;
+            }
+        }
+        assertTrue(threeHigh, "enderman farm needs 3-high interior air");
+        assertFalse(waterOnPad, "enderman pads must not have water (they teleport)");
+        assertTrue(bp.blocks().stream().noneMatch(b -> b.material() == org.bukkit.Material.SPAWNER));
+    }
+
+    @Test
+    void advancedFoodSlimeRedstoneDiamondFarmsHaveGadgets() {
+        BaseTemplates.BaseBlueprint chicken = FarmTemplates.all().get("chicken");
+        BaseTemplates.BaseBlueprint cow = FarmTemplates.all().get("cow");
+        BaseTemplates.BaseBlueprint pig = FarmTemplates.all().get("pig");
+        BaseTemplates.BaseBlueprint cook = FarmTemplates.all().get("cook");
+        BaseTemplates.BaseBlueprint slime = FarmTemplates.all().get("slime");
+        BaseTemplates.BaseBlueprint redstone = FarmTemplates.all().get("redstone");
+        BaseTemplates.BaseBlueprint diamond = FarmTemplates.all().get("diamond");
+        assertTrue(chicken != null && cow != null && pig != null && cook != null
+                && slime != null && redstone != null && diamond != null);
+        assertTrue(chicken.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.LAVA
+                || b.material() == org.bukkit.Material.IRON_TRAPDOOR));
+        assertTrue(chicken.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.DISPENSER));
+        assertTrue(cow.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.LAVA));
+        assertTrue(cow.blocks().stream().filter(b -> b.material() == org.bukkit.Material.DISPENSER).count() >= 3);
+        assertTrue(pig.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.CARROTS
+                || b.material() == org.bukkit.Material.CARROT));
+        assertTrue(pig.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.LAVA));
+        assertEquals(3, cook.blocks().stream().filter(b -> b.material() == org.bukkit.Material.SMOKER).count());
+        assertTrue(cook.blocks().stream().filter(b -> b.material() == org.bukkit.Material.CHEST).count() >= 6,
+                "cook needs raw top + coal back chests (+ loot)");
+        assertFalse(cook.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.BAMBOO),
+                "cook uses coal chests, not bamboo fuel");
+        assertTrue(cook.blocks().stream().anyMatch(b ->
+                b.material() == org.bukkit.Material.HOPPER && b.dz() == -1 && b.facing() == org.bukkit.block.BlockFace.SOUTH));
+        assertEquals(4, slime.blocks().stream().filter(b -> b.material() == org.bukkit.Material.SPAWNER).count());
+        assertEquals("SLIME", AdvancedFarmTemplates.spawnerEntityName("slime"));
+        assertEquals(4, redstone.blocks().stream().filter(b -> b.material() == org.bukkit.Material.SPAWNER).count());
+        assertEquals("WITCH", AdvancedFarmTemplates.spawnerEntityName("redstone"));
+        assertTrue(diamond.blocks().stream().filter(b -> b.material() == org.bukkit.Material.SMITHING_TABLE).count() >= 4);
+        assertTrue(diamond.blocks().stream().anyMatch(b -> b.material() == org.bukkit.Material.COMPOSTER));
+        assertEquals(2, diamond.blocks().stream()
+                .filter(b -> b.material() == org.bukkit.Material.IRON_DOOR && b.dy() == 1
+                        && (b.dz() == AdvancedFarmTemplates.DIAMOND_INNER_DOOR_Z
+                        || b.dz() == AdvancedFarmTemplates.DIAMOND_OUTER_DOOR_Z))
+                .count(), "diamond needs dual airlock iron doors");
+        assertTrue(diamond.blocks().stream().anyMatch(b ->
+                b.material() == org.bukkit.Material.IRON_DOOR
+                        && b.dx() == AdvancedFarmTemplates.DIAMOND_SECRET_DOOR_X),
+                "diamond needs secret west lever door");
+        assertTrue(diamond.blocks().stream().filter(b -> b.material() == org.bukkit.Material.LEVER).count() >= 5,
+                "diamond needs levers for airlock + secret door");
+        boolean lootDown = diamond.blocks().stream().anyMatch(b ->
+                b.material() == org.bukkit.Material.HOPPER
+                        && b.dy() == AdvancedFarmTemplates.DIAMOND_LOOT_DRAIN_Y
+                        && b.dz() == AdvancedFarmTemplates.DIAMOND_LOOT_CHEST_Z
+                        && b.facing() == org.bukkit.block.BlockFace.DOWN);
+        assertTrue(lootDown, "diamond loot hoppers must sit on chests facing DOWN");
     }
 
     @Test

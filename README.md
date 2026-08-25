@@ -51,6 +51,34 @@ mvn clean package
 
 Upload **`RihanX-1.0.0.jar`** (not any `original-*` jar).
 
+### Pre-live test gate (before deploying)
+
+Automated blueprint tests validate **all 24 farms** without joining the server:
+
+- Structure, spawn pads, ceilings, beds
+- Every hopper chain reaches a chest/barrel/smoker
+- Observer → piston circuits
+- XP kill window (glass view, punch gap, floor chests, 3D pad distance ≥ 24)
+- Chicken / cow / pig lava cooker + water canal
+- Slime / witch sealed kill box
+- Bamboo dual-side hopper collection
+
+**One command:**
+
+```powershell
+.\scripts\pre-live-test.ps1
+```
+
+Or manually:
+
+```bash
+mvn test
+```
+
+**68 tests** must pass (including `PreLiveFarmGateTest`). Exit code **0** = safe to deploy. If anything fails, read `target/surefire-reports/` — do not go live until green.
+
+After a passing gate: restart Paper, then **re-paste** farms (`/farm undo`, `/farm <id>`) so blueprint fixes apply in-world.
+
 ---
 
 ## Command reference
@@ -471,45 +499,83 @@ Advanced bases take cues from [GrabCraft](https://www.grabcraft.com/) amenity la
 /base undo            # remove the last house paste
 ```
 
-### Farms — `/farm`
+### Farms — `/farm` · `/autofarm` · `/farms` · `/rx farm`
 
-Stand at the **front / collection** side, face into the farm, then open the GUI:
+Stand at the **front / collection** side, face into the farm, then open the GUI.
+
+Research log: [`docs/FARM_MECHANICS.md`](docs/FARM_MECHANICS.md) (Paper **26.2** / Java **25**).
 
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/farm` | `rihanx.farm` | Open farm selection GUI |
-| `/farm <name>` | `rihanx.farm.build` | Paste a farm |
 | `/farm list` | `rihanx.farm` | List farms |
+| `/farm info <name>` | `rihanx.farm` | Dimensions + block totals (from blueprint) |
+| `/farm preview <name>` | `rihanx.farm` | Dry-run report (no world change) |
+| `/farm validate <name>` | `rihanx.farm` | Dry-run validation (hoppers, facings, …) |
+| `/farm build <name>` | `rihanx.farm.build` | Paste a farm |
+| `/farm <name>` | `rihanx.farm.build` | Same as build |
 | `/farm undo` | `rihanx.farm.undo` | Undo your last farm/base paste |
 
-| Farm | Gadgets |
-|------|---------|
-| `wheat` / `potato` | Water cross, hoppers, chests, composters |
-| `cane` / `bamboo` | Observers pulse dust → pistons; hoppers under the drop → chest |
-| `kelp` | Glass aquarium; observers/pistons break tips; items float → hoppers |
-| `nether` | Soul sand wart, hoppers |
-| `animal` | 4 pens, water, hay, chests, hoppers |
-| `cactus` | Break fences, hoppers |
-| `iron` | Open deck, lava blade + magma floor, hoppers → chest (**advanced: villagers + minecart zombie**) |
-| `xp` | Dark roofed pads, drop shaft, slab kill (**AFK in the ground house**) |
+Dimensions below are **calculated from the live blueprints** (`FarmPlan` / `MaterialCalculator`), not placeholders. Format: **W×L×H** (relative X × Z × Y span), blocks = unique cells.
 
-Lanterns hang from **chains** under roofs or post caps. Also `/autofarm`, `/farms`, `/rx farm …`.
+| Farm | Command | Dimensions | Blocks | Main mechanic | Output |
+|------|---------|----------:|-------:|---------------|--------|
+| wheat | `/farm wheat` | 9×16×7 | 460 | water cross + farmer/composter | wheat |
+| potato | `/farm potato` | 9×16×7 | 460 | water cross + farmer/composter | potato |
+| cane | `/farm cane` | 15×10×8 | 308 | observer/piston tip-break | sugar cane |
+| bamboo | `/farm bamboo` | 13×9×7 | 251 | observer/piston tip-break | bamboo |
+| kelp | `/farm kelp` | 11×16×9 | 796 | aquarium tip-break + stream | kelp |
+| nether | `/farm nether` | 9×13×7 | 267 | soul sand wart | nether wart |
+| animal | `/farm animal` | 15×18×6 | 501 | 4 sealed pens | livestock |
+| cactus | `/farm cactus` | 11×13×7 | 192 | fence break + hoppers | cactus |
+| iron | `/farm iron` | 15×16×18 | 1682 | panic villagers + lava blade | iron |
+| xp | `/farm xp` | 19×37×30 | 4542 | center hole → sealed tunnel → kill | XP + drops |
+| xp-zombie | `/farm xp-zombie` | 11×21×11 | 1159 | 4 zombie spawners | XP + drops |
+| xp-skeleton | `/farm xp-skeleton` | 11×21×11 | 1159 | 4 skeleton spawners | XP + drops |
+| xp-spider | `/farm xp-spider` | 11×21×11 | 1159 | 4 cave-spider spawners | XP + drops |
+| xp-enderman | `/farm xp-enderman` | 19×37×31 | 4923 | 3-high pads, no water | XP + pearls |
+| chicken | `/farm chicken` | 8×15×6 | 215 | hens + lava cooker | cooked chicken + feathers |
+| cow | `/farm cow` | 9×17×6 | 244 | wheat dispensers + lava | cooked beef + leather |
+| pig | `/farm pig` | 9×17×6 | 244 | carrot dispensers + lava | cooked porkchops |
+| cook | `/farm cook` | 9×12×7 | 175 | 3 smokers; raw top / coal back | cooked food |
+| slime | `/farm slime` | 10×19×12 | 1060 | 4 slime spawners | slimeballs |
+| redstone | `/farm redstone` | 10×19×12 | 1060 | 4 witch spawners | redstone, glowstone, sugar, sticks |
+| diamond | `/farm diamond` | 16×14×7 | 1162 | 4 master toolsmiths + 2 farmers | diamond gear trades |
+
+Also registered: `melon` (13×14×8), `cocoa` (11×12×7), `mushroom` (9×14×8).
+
+#### Advanced food / trade farms (how to use)
+
+Vanilla has **no** AFK diamond-ore generator — `diamond` is a master toolsmith trading hall (emeralds in, diamond gear out). The food farms lava-cook meat into the loot chests. Animals, feed, coal, eggs, and emeralds are stocked when the farm pastes.
+
+| Command | What you get | How to use |
+|---------|--------------|------------|
+| `/farm chicken` | Hens on trapdoors, eggs → hoppers, lava cooker | Cooked chicken + feathers in the loot chests |
+| `/farm cow` | Cows + wheat dispensers (breed at dawn) | Extra cows wash into lava → cooked beef + leather |
+| `/farm pig` | Pigs + carrot dispensers (breed at dawn) | Extra pigs → cooked porkchops |
+| `/farm cook` | 3-smoker battery | Raw food in the top chests, coal in the back chests |
+| `/farm slime` | 4 slime spawners | Stand at the window → slimeballs |
+| `/farm redstone` | 4 witch spawners | Stand at the window → redstone, glowstone, sugar, sticks |
+| `/farm diamond` | 4 master toolsmiths + 2 farmers | Trade starter emeralds through the iron bars for diamond gear |
+
+Lanterns hang from **chains** under roofs or post caps.
 
 **How to use**
 1. Clear a flat area (or flatten first with `/flatten 16`).
 2. Stand where the **entrance / chest side** should be.
 3. Look into the space the farm will fill.
-4. `/farm` → pick a type, or `/farm wheat`.
+4. `/farm preview wheat` (optional) → `/farm wheat`.
 5. Mistake? `/farm undo`.
 
 **Examples**
 ```text
 /farm                 # open farm GUI
 /farm list
-/farm wheat           # starter crop farm with hoppers
-/farm cane            # sugar cane auto farm
-/farm iron            # iron farm (advanced spawn: villagers + minecart zombie)
-/farm xp              # XP farm building
+/farm preview cane    # dry-run dimensions + errors (no paste)
+/farm validate iron
+/farm info xp
+/farm wheat           # paste
+/farm build wheat     # same
 /farm undo
 ```
 

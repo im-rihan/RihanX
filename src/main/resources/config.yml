@@ -176,6 +176,13 @@ base:
   # Extra blocks around the house bounds for the protected region
   protect-padding: 2
 
+# AutoFarm paste uses BaseService (same queue as /base). Preview/validate never mutate the world.
+# Mechanics research: docs/FARM_MECHANICS.md (Paper 26.2 / Java 25)
+farm:
+  # Reserved for future dedicated farm build-queue overrides (currently uses base.blocks-per-tick)
+  preview-particles: false
+  max-build-distance: 128
+
 # Train stations — /station link builds a powered rail path between stops
 station:
   # Skip pad cells; join back into each station platform, then exit toward the other stop
