@@ -35,7 +35,8 @@ public final class RihanXTabCompleter implements TabCompleter {
             "search", "server", "performance", "protect", "edit", "home", "warp", "tpa", "kit",
             "msg", "reply", "afk", "spawn", "setspawn", "mob", "base", "farm", "station", "portal", "bridge", "build",
             "platform", "wall", "pillar", "cyl", "hcyl", "sphere", "hsphere", "tunnel",
-            "flatten", "drain", "plain", "clearland", "clearpad", "plot", "pyramid", "stairs", "stack", "admin"
+            "flatten", "drain", "plain", "clearland", "clearpad", "plot", "pyramid", "stairs", "stack",
+            "kingdom", "scout", "admin"
     );
 
     private static final List<String> BUILD_TOOLS = List.of(
@@ -125,6 +126,8 @@ public final class RihanXTabCompleter implements TabCompleter {
                  "pyramid", "hpyramid", "stairs", "stack" -> completeBuild(module, prefixed);
             case "afk", "spawn", "setspawn" -> new ArrayList<>();
             case "mob", "spawnmob" -> completeMob(prefixed);
+            case "kingdom", "realm", "citadel" -> completeKingdom(prefixed);
+            case "scout" -> completeScout(prefixed);
             case "admin" -> completeAdmin(prefixed);
             default -> new ArrayList<>();
         };
@@ -686,6 +689,82 @@ public final class RihanXTabCompleter implements TabCompleter {
     private @NotNull List<String> completeAdmin(@NotNull String[] args) {
         if (args.length == 2) {
             return filter(List.of("reload", "debug", "cache", "config", "cancel"), args[1]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeKingdom(@NotNull String[] args) {
+        if (args.length <= 2) {
+            return filter(List.of(
+                    "create", "expand", "seal", "unseal", "towers", "beacon", "info", "list",
+                    "dissolve", "invite", "accept", "kick", "role", "chat", "rules", "gate",
+                    "ward", "drain", "restore", "banner", "compass", "members", "undo", "help"
+            ), args.length < 2 ? "" : args[1]);
+        }
+        String sub = args[1].toLowerCase(Locale.ROOT);
+        if (args.length == 3) {
+            return switch (sub) {
+                case "unseal" -> filter(List.of("outer", "elemental", "sky", "deep", "inner", "beacon"), args[2]);
+                case "towers", "tower" -> filter(List.of("build", "height", "light", "undo"), args[2]);
+                case "beacon" -> filter(List.of("color"), args[2]);
+                case "dissolve" -> filter(List.of("confirm"), args[2]);
+                case "invite", "kick", "role" -> players(args[2]);
+                case "accept", "join", "info" -> filter(plugin.getKingdomService().kingdomNames(), args[2]);
+                case "rules", "rule" -> filter(List.of("pvp", "mobs", "fire", "explosions"), args[2]);
+                case "gate" -> filter(List.of("create", "open", "close", "list"), args[2]);
+                case "ward" -> filter(List.of("show"), args[2]);
+                default -> new ArrayList<>();
+            };
+        }
+        if (args.length == 4) {
+            if (sub.equals("towers") && args[2].equalsIgnoreCase("light")) {
+                return filter(List.of("all", "1", "2", "3", "4"), args[3]);
+            }
+            if (sub.equals("beacon") && args[2].equalsIgnoreCase("color")) {
+                return filter(List.of("#B87333", "#50C878", "#4A90D9", "rainbow"), args[3]);
+            }
+            if (sub.equals("role")) {
+                return filter(List.of("warden", "citizen", "guest", "sovereign"), args[3]);
+            }
+            if (sub.equals("gate") && args[2].equalsIgnoreCase("create")) {
+                return new ArrayList<>();
+            }
+            if (sub.equals("gate") && (args[2].equalsIgnoreCase("open") || args[2].equalsIgnoreCase("close"))) {
+                return new ArrayList<>();
+            }
+        }
+        if (args.length == 5 && sub.equals("gate") && args[2].equalsIgnoreCase("create")) {
+            return filter(List.of("north", "south", "east", "west", "above", "below"), args[4]);
+        }
+        if (args.length == 5 && sub.equals("gate") && args[2].equalsIgnoreCase("open")) {
+            return filter(List.of("10s", "30s", "1m", "5m"), args[4]);
+        }
+        return new ArrayList<>();
+    }
+
+    private @NotNull List<String> completeScout(@NotNull String[] args) {
+        if (args.length == 2) {
+            List<String> options = new ArrayList<>();
+            options.add("tower");
+            options.add("kingdom");
+            options.add("player");
+            options.add("loc");
+            options.addAll(plugin.getKingdomService().kingdomNames());
+            options.addAll(plugin.getKingdomService().towerNames());
+            options.addAll(players(args[1]));
+            return filter(options, args[1]);
+        }
+        if (args.length == 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("tower")) {
+                return filter(plugin.getKingdomService().towerNames(), args[2]);
+            }
+            if (sub.equals("kingdom") || sub.equals("realm") || sub.equals("citadel")) {
+                return filter(plugin.getKingdomService().kingdomNames(), args[2]);
+            }
+            if (sub.equals("player")) {
+                return players(args[2]);
+            }
         }
         return new ArrayList<>();
     }

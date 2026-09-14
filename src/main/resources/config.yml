@@ -1,7 +1,7 @@
 ﻿# RihanX Configuration
 # Paper API: 26.2.build.84-stable | Java 25
 
-prefix: "<gradient:#7C4DFF:#00E5FF><bold>RihanX</bold></gradient> <dark_gray>Â»</dark_gray> "
+prefix: "<gradient:#8B7355:#B87333><bold>RihanX</bold></gradient> <dark_gray>»</dark_gray> "
 
 search:
   default-radius: 32
@@ -276,3 +276,64 @@ build:
     max-length: 128
     max-width: 15
     railings: true
+
+# Old Kingdom Citadel — sealed volume, towers, beacons, gates
+kingdom:
+  defaults:
+    radius: 128
+    min-radius: 16
+    max-radius: 256
+    max-height: 320
+    min-height: -64
+    max-per-player: 3
+    seal-water: true
+    seal-lava: true
+    seal-ceiling: true
+    seal-foundation: true
+  wards:
+    ceiling-y: 320
+    foundation-y: -64
+    breach-alert: true
+    visualize-for-members: true
+  towers:
+    corner-count: 4
+    central-spire: true
+    default-height: 128
+    max-height: 320
+    auto-light-tiers: true
+    auto-build: true
+    tier-spacing: 32
+    inset: 3
+    blocks-per-tick: 1500
+    max-undo: 5
+  citadel:
+    enabled: true
+    template: citadel
+  beacon:
+    enabled: true
+    color: "#B87333"
+    rainbow: false
+    cycle-speed: 20
+    visible-distance: 256
+  gates:
+    max-gates: 8
+    default-open-duration: 10s
+    lanterns: true
+    guards: true
+  drain:
+    blocks-per-tick: 4000
+  history:
+    max-fluid-entries: 4000
+
+theme:
+  primary: "<gradient:#8B7355:#4A4A4A>"
+  accent: "<color:#B87333>"
+  highlight: "<color:#50C878>"
+  ward-line: "<color:#4A90D9>"
+
+lighting:
+  dynamic-players: true
+  update-interval: 10
+  water-extinguish: true
+  particle-auras: true
+

@@ -1,6 +1,10 @@
-﻿# RihanX
+﻿# RihanX — Old Kingdom Citadel Edition
 
-Production-ready Paper utility suite for **Minehut / Paper 26.2** (`paper-api 26.2.build.84-stable`).
+Production-ready Paper utility suite for **Minehut / Paper 26.2** (`paper-api 26.2.build.84-stable`), rebuilt around a single concept: an impenetrable Old Kingdom citadel — protected from every direction, sealed against water, ringed by boundaries, and lit from within by towering beacons that reach the sky.
+
+**The Kingdom That Cannot Be Breached.**
+
+Every kingdom is a sealed volume with six directional wards (north, south, east, west, above, below), a fluid blockade, an Old Kingdom keep at the heart, four corner towers, and a tower-network teleport. All original RihanX modules remain.
 
 ## Dual commands (with or without `/rx`)
 
@@ -8,10 +12,10 @@ Every module works **both** ways:
 
 | Style | Example |
 |-------|---------|
-| Prefixed | `/rx slime nearest` · `/rihanx player fly` · `/rihan protect wand` |
-| Standalone | `/slime nearest` · `/player fly` · `/protect wand` |
+| Prefixed | `/rx slime nearest` · `/rihanx player fly` · `/rihan protect wand` · `/rx kingdom create Camelot 128` |
+| Standalone | `/slime nearest` · `/player fly` · `/protect wand` · `/kingdom create Camelot 128` |
 
-Aliases: `/rx` = `/rihanx` = `/rihan` · `/inv` = `/inventory` · `/perf` = `/performance` · `/guard` = `/protect` · `/we` = `/edit`
+Aliases: `/rx` = `/rihanx` = `/rihan` · `/inv` = `/inventory` · `/perf` = `/performance` · `/guard` = `/protect` · `/we` = `/edit` · `/kingdom` = `/realm` = `/citadel`
 
 **Teleport exception:** standalone is `/rxtp …` (not `/tp`) so vanilla `/tp` is not overridden. `/rx tp …`, `/rx back`, and `/back` still work.
 
@@ -75,7 +79,7 @@ Or manually:
 mvn test
 ```
 
-**68 tests** must pass (including `PreLiveFarmGateTest`). Exit code **0** = safe to deploy. If anything fails, read `target/surefire-reports/` — do not go live until green.
+**101 tests** must pass (including `PreLiveFarmGateTest` and kingdom founding / tower / undo tests). Exit code **0** = safe to deploy. If anything fails, read `target/surefire-reports/` — do not go live until green.
 
 After a passing gate: restart Paper, then **re-paste** farms (`/farm undo`, `/farm <id>`) so blueprint fixes apply in-world.
 
@@ -90,6 +94,63 @@ Below, `/rx <module> …` and `/<module> …` are equivalent unless noted.
 | Command | Permission | Description |
 |---------|------------|-------------|
 | `/rx help` | `rihanx.use` | List modules |
+
+### Kingdom — `/rx kingdom` · `/kingdom` · `/realm` · `/citadel`
+
+A kingdom is a sealed volume: six directional wards, a water/lava blockade, an Old Kingdom keep at the heart, four corner towers, membership, and a tower-network teleport.
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/kingdom create <name> [radius]` | `rihanx.kingdom.create` | Found a citadel at your feet — pastes the keep, then raises corner towers (default radius 128) |
+| `/kingdom expand <blocks>` | `rihanx.kingdom` | Extend the boundary ring |
+| `/kingdom seal` | `rihanx.kingdom.seal` | Activate all six wards |
+| `/kingdom unseal <layer>` | `rihanx.kingdom.seal` | Lift one ward (`outer`, `elemental`, `sky`, `deep`, `inner`, `beacon`) |
+| `/kingdom towers build` | `rihanx.kingdom.towers` | Raise four corner towers (the keep is the heart; no central spire through the hall) |
+| `/kingdom undo` | `rihanx.kingdom.towers` | Undo last towers / drain / gate lanterns (up to 5). Undo the keep with `/base undo` |
+| `/kingdom towers height <blocks>` | `rihanx.kingdom.towers` | Set tower height (up to 320) |
+| `/kingdom towers light <tier\|all>` | `rihanx.kingdom.towers` | Illuminate observation decks |
+| `/kingdom beacon color <#hex\|rainbow>` | `rihanx.kingdom.beacon` | Beacon column color |
+| `/kingdom gate create <name> <side>` | `rihanx.kingdom.gate` | Cut a gate (`north/south/east/west/above/below`) |
+| `/kingdom gate open <name> [10s]` | `rihanx.kingdom.gate` | Open a gate for a duration |
+| `/kingdom gate close <name>` | `rihanx.kingdom.gate` | Reseal a gate |
+| `/kingdom gate list` | `rihanx.kingdom.gate` | List gates |
+| `/kingdom invite <player>` | `rihanx.kingdom.invite` | Invite a Citizen |
+| `/kingdom accept <name>` | `rihanx.kingdom` | Accept an invitation |
+| `/kingdom kick <player>` | `rihanx.kingdom.kick` | Dismiss a member |
+| `/kingdom role <player> <rank>` | `rihanx.kingdom` | `sovereign` / `warden` / `citizen` / `guest` |
+| `/kingdom chat [message]` | `rihanx.kingdom.chat` | Toggle members-only chat, or send one line |
+| `/kingdom rules <pvp\|mobs\|fire\|explosions>` | `rihanx.kingdom` | Toggle interior flags |
+| `/kingdom drain` | `rihanx.kingdom.drain` | Remove all fluids inside the wards |
+| `/kingdom restore` | `rihanx.kingdom.drain` | Revert recorded unauthorized fluids |
+| `/kingdom ward show` | `rihanx.kingdom` | Toggle persistent ward particle lines |
+| `/kingdom compass` | `rihanx.kingdom` | Give the Warden's Compass (hold to see wards) |
+| `/kingdom banner` | `rihanx.kingdom` | Set the kingdom standard from the banner in hand |
+| `/kingdom info` · `/kingdom list` · `/kingdom members` | `rihanx.kingdom` | Status |
+| `/kingdom dissolve` | `rihanx.kingdom` | Disband (confirm with `/kingdom dissolve confirm`) |
+
+**Founding:** `/kingdom create Camelot` pastes the `citadel` keep at your feet, then raises four corner towers around it (no central spire through the hall). Undo the keep with `/base undo`; undo towers with `/kingdom undo`. Toggle with `kingdom.citadel.enabled` / `kingdom.citadel.template` in `config.yml`.
+
+**Wards**
+
+| Layer | Name | Purpose |
+|-------|------|---------|
+| 1. Outer | Boundary Ring | Invisible vertical barrier — non-members need an open gate |
+| 2. Elemental | Water Ward | Blocks water/lava flow across any face; rain is cleared inside |
+| 3. Sky | Ceiling | Stops falling entities, phantoms, lightning from above |
+| 4. Deep | Foundation | Stops tunneling below min-Y |
+| 5. Inner | Core Zone | Build/break/PvP/mobs/explosions/fire via protection region |
+| 6. Beacon | Towers | Copper/stone spires with RGB light columns |
+
+Data: `plugins/RihanX/kingdoms.yml`. Sub-regions inside a kingdom still use `/protect wand`.
+
+### Scout — `/rx scout` · `/scout`
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/scout <player>` | `rihanx.scout` | Teleport to a player (copper arrival flash) |
+| `/scout kingdom [name]` | `rihanx.scout.kingdom` | Teleport to the citadel heart |
+| `/scout tower <name>` | `rihanx.scout.tower` | Travel the tower network (`Camelot-NorthEast`, `Camelot-SouthWest`, …) |
+| `/scout loc <x> <y> <z>` | `rihanx.scout` | Coordinate teleport |
 
 ### Slime — `/rx slime` · `/slime`
 
@@ -473,6 +534,9 @@ Built-in templates (front door faces you). Open the GUI with `/base`:
 | `chateau` | Advanced | Fantasy chateau — **turrets**, great hall, lift, 6 suites, pool |
 | `skyvilla` | Advanced | Modernist glass villa — balcony, garden + roof pools |
 | `palace` | Advanced | Grand palace — **courtyard fountain**, gold trim, dual lifts, 8 suites |
+| `nordic` | Classic | Spruce longhouse — hearth hall, loft beds |
+| `medieval` | Classic | Stone manor — towers, battlements, courtyard fountain |
+| `citadel` | Old Kingdom | **Keep** — stone, waxed copper, soul lanterns. Also pastes on `/kingdom create` |
 
 Also `/house`, `/buildbase`, or `/rx base …`. Large builds ask for confirm. Speed: `base.blocks-per-tick` (default 1200).
 
@@ -496,6 +560,7 @@ Advanced bases take cues from [GrabCraft](https://www.grabcraft.com/) amenity la
 /base mansion         # large multi-floor build
 /base estate          # GrabCraft-style mega estate
 /base palace          # grand palace with courtyard fountain
+/base citadel         # Old Kingdom keep (same keep as /kingdom create)
 /base undo            # remove the last house paste
 ```
 

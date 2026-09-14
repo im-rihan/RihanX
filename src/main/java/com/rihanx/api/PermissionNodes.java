@@ -209,6 +209,25 @@ public final class PermissionNodes {
     public static final String BUILD_STAIRS = BUILD + ".stairs";
     public static final String BUILD_STACK = BUILD + ".stack";
 
+    public static final String KINGDOM = ROOT + ".kingdom";
+    public static final String KINGDOM_ALL = KINGDOM + ".*";
+    public static final String KINGDOM_CREATE = KINGDOM + ".create";
+    public static final String KINGDOM_EXPAND = KINGDOM + ".expand";
+    public static final String KINGDOM_SEAL = KINGDOM + ".seal";
+    public static final String KINGDOM_TOWERS = KINGDOM + ".towers";
+    public static final String KINGDOM_BEACON = KINGDOM + ".beacon";
+    public static final String KINGDOM_GATE = KINGDOM + ".gate";
+    public static final String KINGDOM_INVITE = KINGDOM + ".invite";
+    public static final String KINGDOM_KICK = KINGDOM + ".kick";
+    public static final String KINGDOM_ADMIN = KINGDOM + ".admin";
+    public static final String KINGDOM_BYPASS = KINGDOM + ".bypass";
+    public static final String KINGDOM_CHAT = KINGDOM + ".chat";
+    public static final String KINGDOM_DRAIN = KINGDOM + ".drain";
+
+    public static final String SCOUT = ROOT + ".scout";
+    public static final String SCOUT_TOWER = SCOUT + ".tower";
+    public static final String SCOUT_KINGDOM = SCOUT + ".kingdom";
+
     public static final String BYPASS_COOLDOWN = ROOT + ".bypass.cooldown";
     public static final String BYPASS_TELEPORT_DELAY = ROOT + ".bypass.teleportdelay";
     public static final String SEE_VANISHED = ROOT + ".see.vanished";

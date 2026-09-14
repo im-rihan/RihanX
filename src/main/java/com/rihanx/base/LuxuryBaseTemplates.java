@@ -5,6 +5,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Slab;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Luxury / large real-world style bases (plus GrabCraft-inspired advanced estates).
  * Local space: front door faces +Z (SOUTH before rotation).
@@ -1181,6 +1184,42 @@ public final class LuxuryBaseTemplates {
         b.set(1, 0, maxZ + 2, Material.STONE_BRICKS);
 
         return b.build("medieval", "Medieval stone manor - towers, battlements, courtyard fountain", 0, 0, maxZ + 2);
+    }
+
+    /**
+     * Old Kingdom keep: the medieval manor retinted to stone, waxed copper, and soul lanterns.
+     * Pasted at the heart of a newly founded kingdom.
+     */
+    public static @NotNull BaseTemplates.BaseBlueprint citadel() {
+        BaseTemplates.BaseBlueprint medieval = medieval();
+        List<BaseTemplates.RelBlock> blocks = new ArrayList<>(medieval.blocks().size());
+        for (BaseTemplates.RelBlock block : medieval.blocks()) {
+            Material material = switch (block.material()) {
+                case COBBLESTONE, COBBLESTONE_WALL -> Material.WAXED_COPPER_BLOCK;
+                case LANTERN -> Material.SOUL_LANTERN;
+                default -> block.material();
+            };
+            blocks.add(new BaseTemplates.RelBlock(
+                    block.dx(),
+                    block.dy(),
+                    block.dz(),
+                    material,
+                    block.facing(),
+                    block.slabType(),
+                    block.bedPart(),
+                    block.upperHalf(),
+                    block.hinge(),
+                    block.hanging()
+            ));
+        }
+        return new BaseTemplates.BaseBlueprint(
+                "citadel",
+                "Old Kingdom keep — stone, copper, courtyard, battlements",
+                List.copyOf(blocks),
+                medieval.spawnDx(),
+                medieval.spawnDy(),
+                medieval.spawnDz()
+        );
     }
 
     /**

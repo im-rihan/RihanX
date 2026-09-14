@@ -179,6 +179,17 @@ public final class BaseSelectGui implements InventoryHolder, Listener {
                         "<yellow>Click to build</yellow>"
                 )
         ));
+        ENTRIES.put("citadel", new MenuEntry(
+                Material.WAXED_COPPER_BLOCK, 39,
+                "<gradient:#8B7355:#B87333><bold>Citadel</bold></gradient>",
+                List.of(
+                        "<gold>Old Kingdom keep</gold>",
+                        "<gray>Stone · copper · soul lanterns</gray>",
+                        "<dark_gray>Also rises on /kingdom create</dark_gray>",
+                        "",
+                        "<yellow>Click to build</yellow>"
+                )
+        ));
         ENTRIES.put("secret", new MenuEntry(
                 Material.CHEST, 40,
                 "<gradient:#334155:#94a3b8><bold>Secret</bold></gradient>",

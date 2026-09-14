@@ -121,7 +121,38 @@ public final class BaseService {
             return;
         }
         try {
-            startPaste(player, blueprint, kind, facing);
+            startPaste(player, blueprint, kind, facing, null);
+        } catch (RuntimeException ex) {
+            building.remove(player.getUniqueId());
+            throw ex;
+        }
+    }
+
+    /**
+     * Paste a keep for kingdom founding. Skips a nested base region (the kingdom already claims
+     * the volume). {@code afterDone} runs on the main thread after a successful paste.
+     *
+     * @return false if the template is missing, the player is already building, or protection denied
+     */
+    public boolean pasteForKingdom(
+            @NotNull Player player,
+            @NotNull String id,
+            @Nullable Runnable afterDone
+    ) {
+        BaseTemplates.BaseBlueprint blueprint = get(id);
+        if (blueprint == null) {
+            messages.send(player, "base-missing", MessageManager.placeholders(
+                    "name", id,
+                    "options", String.join(", ", listIds())
+            ));
+            return false;
+        }
+        if (!building.add(player.getUniqueId())) {
+            messages.send(player, "base-busy");
+            return false;
+        }
+        try {
+            return startPaste(player, blueprint, "citadel", yawToFace(player.getLocation().getYaw()), afterDone);
         } catch (RuntimeException ex) {
             building.remove(player.getUniqueId());
             throw ex;
@@ -158,11 +189,12 @@ public final class BaseService {
     public record AbsolutePlacement(int x, int y, int z, @NotNull Material material) {
     }
 
-    private void startPaste(
+    private boolean startPaste(
             @NotNull Player player,
             @NotNull BaseTemplates.BaseBlueprint blueprint,
             @NotNull String kind,
-            @NotNull BlockFace facing
+            @NotNull BlockFace facing,
+            @Nullable Runnable afterDone
     ) {
         World world = player.getWorld();
 
@@ -190,7 +222,7 @@ public final class BaseService {
                     || !protection.isAllowed(player, block.getLocation(), ProtectionFlag.PLACE))) {
                 building.remove(player.getUniqueId());
                 messages.send(player, "base-protected-deny");
-                return;
+                return false;
             }
             changes.add(new BlockChange(block, createData(rel, facing), pastePriority(rel.material())));
         }
@@ -231,7 +263,7 @@ public final class BaseService {
 
         final int[] index = {0};
         final int[] lastPct = {-1};
-        ActivePaste active = new ActivePaste(session, wasFlying, allowFlight, mode);
+        ActivePaste active = new ActivePaste(session, wasFlying, allowFlight, mode, afterDone);
         activePastes.put(player.getUniqueId(), active);
         active.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (active.cancelled || !player.isOnline()) {
@@ -342,8 +374,12 @@ public final class BaseService {
                             () -> armXpSpawners(world, origin, facing, blueprint, player, false), 40L);
                 }
                 messages.send(player, kindMessage(kind, "undo-hint"));
+                if (active.afterDone != null) {
+                    active.afterDone.run();
+                }
             }
         }, 1L, 1L);
+        return true;
     }
 
     /**
@@ -1076,7 +1112,7 @@ public final class BaseService {
         ));
 
         final int[] index = {0};
-        ActivePaste active = new ActivePaste(session, player.isFlying(), player.getAllowFlight(), player.getGameMode());
+        ActivePaste active = new ActivePaste(session, player.isFlying(), player.getAllowFlight(), player.getGameMode(), null);
         activePastes.put(player.getUniqueId(), active);
         active.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (active.cancelled || !player.isOnline()) {
@@ -1662,6 +1698,7 @@ public final class BaseService {
         final boolean wasFlying;
         final boolean allowFlight;
         final @NotNull GameMode mode;
+        final @Nullable Runnable afterDone;
         volatile boolean cancelled;
         @Nullable BukkitTask task;
 
@@ -1669,12 +1706,14 @@ public final class BaseService {
                 @NotNull PasteSession session,
                 boolean wasFlying,
                 boolean allowFlight,
-                @NotNull GameMode mode
+                @NotNull GameMode mode,
+                @Nullable Runnable afterDone
         ) {
             this.session = session;
             this.wasFlying = wasFlying;
             this.allowFlight = allowFlight;
             this.mode = mode;
+            this.afterDone = afterDone;
         }
     }
 }

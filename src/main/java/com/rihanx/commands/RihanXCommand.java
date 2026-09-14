@@ -11,9 +11,11 @@ import com.rihanx.commands.modules.ChatModule;
 import com.rihanx.commands.modules.EditModule;
 import com.rihanx.commands.modules.HomeModule;
 import com.rihanx.commands.modules.KitModule;
+import com.rihanx.commands.modules.KingdomModule;
 import com.rihanx.commands.modules.MobModule;
 import com.rihanx.commands.modules.PortalModule;
 import com.rihanx.commands.modules.ProtectModule;
+import com.rihanx.commands.modules.ScoutModule;
 import com.rihanx.commands.modules.SpawnModule;
 import com.rihanx.commands.modules.StationModule;
 import com.rihanx.commands.modules.TpaModule;
@@ -63,7 +65,8 @@ public final class RihanXCommand implements CommandExecutor {
             "platform", "wall", "pillar", "tower", "cyl", "hcyl",
             "sphere", "hsphere", "tunnel", "flatten", "drain",
             "plain", "clearland", "clearpad", "plot",
-            "pyramid", "hpyramid", "stairs", "stack"
+            "pyramid", "hpyramid", "stairs", "stack",
+            "kingdom", "realm", "citadel", "scout"
     );
 
     /** Shortcuts that map to /player <action> and default to the sender only. */
@@ -88,6 +91,8 @@ public final class RihanXCommand implements CommandExecutor {
     private final @NotNull PortalModule portalModule;
     private final @NotNull BridgeModule bridgeModule;
     private final @NotNull BuildModule buildModule;
+    private final @NotNull KingdomModule kingdomModule;
+    private final @NotNull ScoutModule scoutModule;
 
     public RihanXCommand(@NotNull RihanX plugin) {
         this.plugin = plugin;
@@ -107,6 +112,8 @@ public final class RihanXCommand implements CommandExecutor {
         this.portalModule = new PortalModule(plugin);
         this.bridgeModule = new BridgeModule(plugin);
         this.buildModule = new BuildModule(plugin);
+        this.kingdomModule = new KingdomModule(plugin);
+        this.scoutModule = new ScoutModule(plugin);
     }
 
     @Override
@@ -182,6 +189,8 @@ public final class RihanXCommand implements CommandExecutor {
                  "plain", "clearland", "clearpad", "plot",
                  "pyramid", "hpyramid", "stairs", "stack" ->
                     buildModule.handle(sender, module, subArgs, messages);
+            case "kingdom", "realm", "citadel" -> kingdomModule.handle(sender, subArgs, messages);
+            case "scout" -> scoutModule.handle(sender, subArgs, messages);
             case "admin" -> handleAdmin(sender, subArgs, messages);
             default -> {
                 usage(sender, "/" + label + " help");
@@ -238,6 +247,7 @@ public final class RihanXCommand implements CommandExecutor {
             case "train", "railway" -> "station";
             case "portals" -> "portal";
             case "spawnmob", "rxmob" -> "mob";
+            case "realm", "citadel" -> "kingdom";
             default -> module;
         };
     }
@@ -249,6 +259,8 @@ public final class RihanXCommand implements CommandExecutor {
         }
         MessageManager messages = plugin.getMessageManager();
         messages.send(sender, "help-header");
+        sendHelpLine(messages, sender, "kingdom", "Found and seal an Old Kingdom citadel");
+        sendHelpLine(messages, sender, "scout", "Tower network and themed teleport");
         sendHelpLine(messages, sender, "slime", "Slime chunk tools");
         sendHelpLine(messages, sender, "world", "World info and control");
         sendHelpLine(messages, sender, "find", "Locate biomes and structures");

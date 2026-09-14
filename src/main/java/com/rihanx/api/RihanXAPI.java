@@ -7,6 +7,7 @@ import com.rihanx.edit.EditService;
 import com.rihanx.home.HomeService;
 import com.rihanx.inventory.InventoryService;
 import com.rihanx.items.ItemService;
+import com.rihanx.kingdom.KingdomService;
 import com.rihanx.kits.KitService;
 import com.rihanx.managers.BackLocationManager;
 import com.rihanx.managers.ConfigManager;
@@ -59,6 +60,7 @@ public final class RihanXAPI {
     private final @NotNull WarpService warpService;
     private final @NotNull TpaService tpaService;
     private final @NotNull KitService kitService;
+    private final @NotNull KingdomService kingdomService;
 
     public RihanXAPI(
             @NotNull ConfigManager configManager,
@@ -86,7 +88,8 @@ public final class RihanXAPI {
             @NotNull HomeService homeService,
             @NotNull WarpService warpService,
             @NotNull TpaService tpaService,
-            @NotNull KitService kitService
+            @NotNull KitService kitService,
+            @NotNull KingdomService kingdomService
     ) {
         this.configManager = configManager;
         this.messageManager = messageManager;
@@ -114,6 +117,7 @@ public final class RihanXAPI {
         this.warpService = warpService;
         this.tpaService = tpaService;
         this.kitService = kitService;
+        this.kingdomService = kingdomService;
     }
 
     public @NotNull ConfigManager config() {
@@ -218,5 +222,9 @@ public final class RihanXAPI {
 
     public @NotNull KitService kit() {
         return kitService;
+    }
+
+    public @NotNull KingdomService kingdom() {
+        return kingdomService;
     }
 }

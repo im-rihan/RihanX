@@ -2,7 +2,7 @@ name: RihanX
 version: '${project.version}'
 main: com.rihanx.RihanX
 api-version: '1.21'
-description: Production-ready Paper utility suite — slime, world, find, chunk, teleport, player, inventory, items, search, and performance tools.
+description: Old Kingdom Citadel Edition — sealed six-directional kingdoms, towers, beacons, and Paper utilities for Minehut Paper 26.2.
 author: Rihan
 website: https://github.com/im-rihan/RihanX
 folia-supported: false
@@ -288,6 +288,15 @@ commands:
     usage: /stack <count> [direction]
     permission: rihanx.build.stack
     aliases: [rxstack]
+  kingdom:
+    description: Found, seal, and govern an Old Kingdom citadel (also /rx kingdom).
+    usage: /kingdom <create|seal|towers|gate|info|…>
+    permission: rihanx.kingdom
+    aliases: [realm, citadel]
+  scout:
+    description: Themed teleport across players, kingdoms, and the tower network.
+    usage: /scout [player|kingdom|tower|loc] …
+    permission: rihanx.scout
 
 permissions:
   rihanx.*:
@@ -318,6 +327,8 @@ permissions:
       rihanx.mob.*: true
       rihanx.bridge.*: true
       rihanx.build.*: true
+      rihanx.kingdom.*: true
+      rihanx.scout: true
       rihanx.msg: true
       rihanx.reply: true
       rihanx.afk: true
@@ -881,6 +892,59 @@ permissions:
     default: op
   rihanx.build.stack:
     description: Stack an edit selection.
+    default: op
+  rihanx.kingdom:
+    description: Base Old Kingdom citadel module.
+    default: op
+  rihanx.kingdom.*:
+    default: op
+    children:
+      rihanx.kingdom: true
+      rihanx.kingdom.create: true
+      rihanx.kingdom.expand: true
+      rihanx.kingdom.seal: true
+      rihanx.kingdom.towers: true
+      rihanx.kingdom.beacon: true
+      rihanx.kingdom.gate: true
+      rihanx.kingdom.invite: true
+      rihanx.kingdom.kick: true
+      rihanx.kingdom.admin: true
+      rihanx.kingdom.bypass: true
+      rihanx.kingdom.chat: true
+      rihanx.kingdom.drain: true
+  rihanx.kingdom.create:
+    default: op
+  rihanx.kingdom.expand:
+    default: op
+  rihanx.kingdom.seal:
+    default: op
+  rihanx.kingdom.towers:
+    default: op
+  rihanx.kingdom.beacon:
+    default: op
+  rihanx.kingdom.gate:
+    default: op
+  rihanx.kingdom.invite:
+    default: op
+  rihanx.kingdom.kick:
+    default: op
+  rihanx.kingdom.admin:
+    default: op
+  rihanx.kingdom.bypass:
+    default: op
+  rihanx.kingdom.chat:
+    default: op
+  rihanx.kingdom.drain:
+    default: op
+  rihanx.scout:
+    description: Scout teleport and tower network.
+    default: op
+    children:
+      rihanx.scout.tower: true
+      rihanx.scout.kingdom: true
+  rihanx.scout.tower:
+    default: op
+  rihanx.scout.kingdom:
     default: op
   rihanx.msg:
     description: Send private messages.

@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>RihanX</name>
-    <description>Production-ready Paper utility suite for Minehut Paper 26.2 — slime, world, find, chunk, teleport, player, inventory, items, search, and performance tools.</description>
+    <description>Old Kingdom Citadel Edition — sealed six-directional kingdoms, towers of light, and Paper utilities for Minehut Paper 26.2.</description>
     <url>https://github.com/im-rihan/RihanX</url>
 
     <properties>

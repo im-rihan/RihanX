@@ -89,3 +89,11 @@ nodes:
   - rihanx.bypass.teleportdelay
   - rihanx.see.vanished
   - rihanx.mob
+  - rihanx.kingdom
+  - rihanx.kingdom.create
+  - rihanx.kingdom.seal
+  - rihanx.kingdom.towers
+  - rihanx.kingdom.bypass
+  - rihanx.scout
+  - rihanx.scout.tower
+  - rihanx.scout.kingdom

@@ -40,6 +40,7 @@ public final class BaseTemplates {
         map.put("palace", LuxuryBaseTemplates.palace());
         map.put("nordic", LuxuryBaseTemplates.nordic());
         map.put("medieval", LuxuryBaseTemplates.medieval());
+        map.put("citadel", LuxuryBaseTemplates.citadel());
         map.put("secret", SecretBaseTemplates.secret());
         return map;
     }
